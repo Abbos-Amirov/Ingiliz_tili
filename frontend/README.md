@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ingliz✦Learn — Frontend
 
-## Getting Started
+Koreys tili orqali ingliz tilini o'rganish ilovasining frontend qismi: Next.js (App Router) + TypeScript + Tailwind CSS + Framer Motion.
 
-First, run the development server:
+So'z moslashtirish, gap tuzish (rangli grammatik rollar bilan), darslar bo'yicha o'rganish, spaced repetition, streak/progress va admin panel — barchasi uz/en/ko tillarida.
+
+> Bu loyihaning **frontend** qismi. To'liq loyiha (backend bilan birga) uchun: [Ingiliz_tili](https://github.com/Abbos-Amirov/Ingiliz_tili) repositoriyasiga qarang.
+
+## Ishga tushirish
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.local.example .env.local   # NEXT_PUBLIC_API_BASE_URL backend manzilini ko'rsatadi
+npm run dev                          # http://localhost:5050
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Backend alohida ishga tushirilishi kerak (standart: `http://localhost:5051`) — ko'rsatmalar backend reposida.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Muhit o'zgaruvchisi (`.env.local`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| O'zgaruvchi | Tavsif |
+|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | Backend API manzili, masalan `http://localhost:5051/api` |
 
-## Learn More
+## Sahifalar
 
-To learn more about Next.js, take a look at the following resources:
+- `/` — bosh sahifa
+- `/login`, `/register` — kirish/ro'yxatdan o'tish
+- `/learn/match` — So'z moslashtirish (SRS asosida)
+- `/learn/sentence` — Gap tuzish (grammatik rol rang kodlash, formula ko'rsatkichi bilan)
+- `/learn/recall` — Active Recall testi
+- `/lessons`, `/lessons/practice`, `/all-words` — darslar bo'yicha yoki umumiy mashq
+- `/progress` — streak va statistikalar
+- `/admin/*` — so'z/gap CRUD, CSV yuklash, AI yordamchilar (parol bilan himoyalangan)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin kirish
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Backendda `npm run seed` ishga tushirilgan bo'lsa:
 
-## Deploy on Vercel
+- Email: `admin@ingiliztili.local`
+- Parol: `Admin123!`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Skriptlar
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev` — Turbopack bilan development server (`http://localhost:5050`)
+- `npm run build` — production build
+- `npm run start` — production serverni ishga tushirish
+- `npm run lint` — ESLint
+
+## Texnologiyalar
+
+Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, Framer Motion, Zustand (auth/locale/session state, `persist` bilan), brauzerning Web Speech API'si (talaffuz, qo'shimcha xarajatsiz).
