@@ -1,5 +1,6 @@
 import { parse } from "csv-parse/sync";
 import { Word } from "../models/Word";
+import type { LessonRange } from "../utils/lessonRange";
 
 export interface WordCsvRow {
   english: string;
@@ -9,6 +10,7 @@ export interface WordCsvRow {
   category?: string;
   difficulty?: string;
   lessonNumber?: string;
+  lessonNumberEnd?: string;
 }
 
 interface WordInsert {
@@ -19,6 +21,7 @@ interface WordInsert {
   category: string;
   difficulty: string;
   lessonNumber: number;
+  lessonNumberEnd: number;
 }
 
 export interface BulkUploadResult {
@@ -31,7 +34,7 @@ const ALLOWED_DIFFICULTIES = new Set(["beginner", "intermediate", "advanced"]);
 
 export async function bulkUploadWordsFromCsv(
   buffer: Buffer,
-  defaultLessonNumber: number,
+  defaultLessonRange: LessonRange,
 ): Promise<BulkUploadResult> {
   const rows = parse(buffer, {
     columns: true,
@@ -64,8 +67,17 @@ export async function bulkUploadWordsFromCsv(
     }
     seenInBatch.add(key);
     const difficulty = ALLOWED_DIFFICULTIES.has(row.difficulty ?? "") ? (row.difficulty as string) : "beginner";
-    const parsedLesson = Number(row.lessonNumber);
-    const lessonNumber = Number.isFinite(parsedLesson) && parsedLesson > 0 ? parsedLesson : defaultLessonNumber;
+
+    const parsedStart = Number(row.lessonNumber);
+    const lessonNumber = Number.isFinite(parsedStart) && parsedStart > 0 ? parsedStart : defaultLessonRange.lessonNumber;
+    const parsedEnd = Number(row.lessonNumberEnd);
+    const lessonNumberEnd =
+      Number.isFinite(parsedEnd) && parsedEnd >= lessonNumber
+        ? parsedEnd
+        : Number.isFinite(parsedStart) && parsedStart > 0
+          ? lessonNumber
+          : defaultLessonRange.lessonNumberEnd;
+
     toInsert.push({
       english: row.english.trim(),
       korean: row.korean.trim(),
@@ -74,6 +86,7 @@ export async function bulkUploadWordsFromCsv(
       category: row.category?.trim() || "general",
       difficulty,
       lessonNumber,
+      lessonNumberEnd,
     });
   });
 

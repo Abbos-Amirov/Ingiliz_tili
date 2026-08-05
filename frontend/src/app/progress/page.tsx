@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/api";
 import type { UserStats, Word } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useT } from "@/hooks/useT";
 
 export default function ProgressPage() {
@@ -40,7 +41,7 @@ export default function ProgressPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl sm:text-3xl font-extrabold mb-8">{t.title}</h1>
+        <PageHeader title={t.title} />
 
         {loading || !stats ? (
           <div className="flex justify-center py-20">

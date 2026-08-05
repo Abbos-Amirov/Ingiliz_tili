@@ -19,6 +19,17 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
+/** Re-shuffles only the slots not in `matched`, leaving locked pairs in place. */
+function shuffleUnmatched(order: string[], matched: Set<string>): string[] {
+  const openIndices = order.map((_, i) => i).filter((i) => !matched.has(order[i]));
+  const openValues = shuffle(openIndices.map((i) => order[i]));
+  const next = [...order];
+  openIndices.forEach((idx, k) => {
+    next[idx] = openValues[k];
+  });
+  return next;
+}
+
 export function MatchBoard({
   words,
   onRoundComplete,
@@ -29,9 +40,9 @@ export function MatchBoard({
   const { submitReview } = useSrsActions();
   const t = useT("match");
 
-  const englishItems = words;
   const wordsById = useMemo(() => new Map(words.map((w) => [w._id, w])), [words]);
 
+  const [englishOrder, setEnglishOrder] = useState<string[]>(() => words.map((w) => w._id));
   // Right-column display order. On a correct match, the matched word swaps into
   // the same row index as its English pair, so the pair ends up side by side
   // instead of needing a diagonal connecting line.
@@ -48,10 +59,10 @@ export function MatchBoard({
       if (!leftId || !rightId || locked) return;
       setLocked(true);
       if (leftId === rightId) {
-        const targetIndex = englishItems.findIndex((w) => w._id === leftId);
         setKoreanOrder((prev) => {
+          const targetIndex = englishOrder.indexOf(leftId);
           const currentIndex = prev.indexOf(leftId);
-          if (currentIndex === -1 || currentIndex === targetIndex) return prev;
+          if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) return prev;
           const next = [...prev];
           [next[targetIndex], next[currentIndex]] = [next[currentIndex], next[targetIndex]];
           return next;
@@ -73,7 +84,7 @@ export function MatchBoard({
         }, 400);
       }
     },
-    [englishItems, locked, submitReview],
+    [englishOrder, locked, submitReview],
   );
 
   function handleLeftClick(word: Word) {
@@ -90,6 +101,14 @@ export function MatchBoard({
     attempt(selectedLeft, word._id);
   }
 
+  function handleShuffle() {
+    if (locked) return;
+    setEnglishOrder((prev) => shuffleUnmatched(prev, matched));
+    setKoreanOrder((prev) => shuffleUnmatched(prev, matched));
+    setSelectedLeft(null);
+    setSelectedRight(null);
+  }
+
   const allMatched = matched.size === words.length && words.length > 0;
 
   function tileState(id: string, side: "left" | "right"): "idle" | "selected" | "matched" | "wrong" {
@@ -102,18 +121,39 @@ export function MatchBoard({
 
   return (
     <div className="w-full">
-      <ProgressBar value={matched.size} total={words.length} label={t.pairsFound} />
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <ProgressBar value={matched.size} total={words.length} label={t.pairsFound} />
+        </div>
+        <motion.button
+          type="button"
+          onClick={handleShuffle}
+          disabled={locked || allMatched}
+          whileTap={{ scale: 0.92 }}
+          whileHover={{ rotate: 15 }}
+          title={t.shuffleBtn}
+          className="shrink-0 flex items-center gap-1.5 h-10 px-3.5 rounded-xl border-2 border-border bg-surface text-sm font-semibold text-foreground/70 hover:border-primary hover:text-primary disabled:opacity-40 disabled:pointer-events-none transition-colors"
+        >
+          <span aria-hidden>🔀</span>
+          <span className="hidden sm:inline">{t.shuffleBtn}</span>
+        </motion.button>
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-8">
         <div className="flex flex-col gap-3">
-          {englishItems.map((w) => (
-            <MatchWordTile
-              key={w._id}
-              text={w.english}
-              state={tileState(w._id, "left")}
-              onClick={() => handleLeftClick(w)}
-            />
-          ))}
+          {englishOrder.map((id) => {
+            const w = wordsById.get(id);
+            if (!w) return null;
+            return (
+              <motion.div key={id} layout transition={{ type: "spring", stiffness: 500, damping: 35 }}>
+                <MatchWordTile
+                  text={w.english}
+                  state={tileState(w._id, "left")}
+                  onClick={() => handleLeftClick(w)}
+                />
+              </motion.div>
+            );
+          })}
         </div>
 
         <div className="flex flex-col gap-3">

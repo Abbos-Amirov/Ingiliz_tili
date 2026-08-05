@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSessionStore } from "@/store/session";
 import { RecallQuiz } from "@/components/recall/RecallQuiz";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useT } from "@/hooks/useT";
 
 export default function RecallPage() {
@@ -15,6 +16,7 @@ export default function RecallPage() {
   const router = useRouter();
   const words = useSessionStore((s) => s.lastRoundWords);
   const t = useT("recall");
+  const tLessons = useT("lessons");
   const [summary, setSummary] = useState<{ correct: number; total: number } | null>(null);
 
   useEffect(() => {
@@ -30,10 +32,7 @@ export default function RecallPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl sm:text-3xl font-extrabold">{t.title}</h1>
-          <p className="text-foreground/60 mt-1.5 text-sm sm:text-base">{t.subtitle}</p>
-        </div>
+        <PageHeader title={t.title} subtitle={t.subtitle} count={words.length} countLabel={tLessons.wordsSuffix} />
 
         {summary ? (
           <motion.div

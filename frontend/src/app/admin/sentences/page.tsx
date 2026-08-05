@@ -7,15 +7,22 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { SentenceForm } from "@/components/admin/SentenceForm";
+import { formatLessonRange } from "@/lib/lessonRange";
+import { ROLE_COLORS } from "@/lib/roleColors";
 
-function groupByLesson(sentences: Sentence[]): [number, Sentence[]][] {
-  const map = new Map<number, Sentence[]>();
+function groupByLesson(sentences: Sentence[]): [string, Sentence[]][] {
+  const map = new Map<string, Sentence[]>();
   for (const s of sentences) {
-    const list = map.get(s.lessonNumber) ?? [];
+    const key = formatLessonRange(s.lessonNumber, s.lessonNumberEnd);
+    const list = map.get(key) ?? [];
     list.push(s);
-    map.set(s.lessonNumber, list);
+    map.set(key, list);
   }
-  return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+  return Array.from(map.entries()).sort((a, b) => {
+    const startA = Number(a[0].split("-")[0]);
+    const startB = Number(b[0].split("-")[0]);
+    return startA - startB;
+  });
 }
 
 export default function AdminSentencesPage() {
@@ -77,21 +84,35 @@ export default function AdminSentencesPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {groupByLesson(sentences).map(([lessonNumber, lessonSentences]) => (
-            <div key={lessonNumber}>
+          {groupByLesson(sentences).map(([lessonLabel, lessonSentences]) => (
+            <div key={lessonLabel}>
               <h2 className="font-bold text-sm text-foreground/60 mb-2 uppercase tracking-wide">
-                {lessonNumber}-dars ({lessonSentences.length})
+                {lessonLabel}-dars ({lessonSentences.length})
               </h2>
               <div className="space-y-3">
                 {lessonSentences.map((s) => (
                   <Card key={s._id} className="p-4 flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-semibold">{s.korean}</p>
-                      <p className="text-sm text-foreground/60 mt-1">{s.englishWords.join(" ")}</p>
+                      <p className="font-semibold mb-1.5">{s.korean}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {s.words.map((w, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 rounded-md text-xs font-semibold"
+                            style={{ backgroundColor: ROLE_COLORS[w.role].bg, color: ROLE_COLORS[w.role].text }}
+                            title={ROLE_COLORS[w.role].label}
+                          >
+                            {w.text}
+                          </span>
+                        ))}
+                      </div>
                       {s.distractorWords.length > 0 && (
-                        <p className="text-xs text-foreground/40 mt-1">
-                          Chalg&apos;ituvchi: {s.distractorWords.join(", ")}
+                        <p className="text-xs text-foreground/40 mt-1.5">
+                          Chalg&apos;ituvchi: {s.distractorWords.map((w) => w.text).join(", ")}
                         </p>
+                      )}
+                      {s.formula && (
+                        <p className="text-xs text-foreground/40 mt-1 font-mono">{s.formula}</p>
                       )}
                       <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-surface-muted text-xs font-medium">
                         {s.level}

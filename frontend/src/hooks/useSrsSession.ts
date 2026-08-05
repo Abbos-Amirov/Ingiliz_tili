@@ -15,10 +15,9 @@ export function useDailyCheckIn() {
 
 export function useSrsActions() {
   const fetchNextBatch = useCallback(async (mode: "match" | "sentence", limit = 8) => {
-    const res = await apiFetch<{ words: Word[] }>(
+    return apiFetch<{ words: Word[]; bonusPractice: boolean }>(
       `/srs/next-batch?mode=${mode}&limit=${limit}`,
     );
-    return res.words;
   }, []);
 
   const submitReview = useCallback(async (wordId: string, result: "correct" | "wrong") => {

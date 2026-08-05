@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSrsActions, useDailyCheckIn } from "@/hooks/useSrsSession";
 import { useSessionStore } from "@/store/session";
 import { MatchBoard } from "@/components/match/MatchBoard";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useT } from "@/hooks/useT";
 import type { Word } from "@/lib/types";
 
@@ -16,9 +17,11 @@ export default function MatchPage() {
   const { fetchNextBatch } = useSrsActions();
   const setLastRoundWords = useSessionStore((s) => s.setLastRoundWords);
   const t = useT("match");
+  const tLessons = useT("lessons");
   useDailyCheckIn();
 
   const [words, setWords] = useState<Word[] | null>(null);
+  const [bonusPractice, setBonusPractice] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,8 +31,9 @@ export default function MatchPage() {
   const loadRound = useCallback(async () => {
     setLoading(true);
     try {
-      const batch = await fetchNextBatch("match", 8);
-      setWords(batch);
+      const res = await fetchNextBatch("match", 8);
+      setWords(res.words);
+      setBonusPractice(res.bonusPractice);
     } finally {
       setLoading(false);
     }
@@ -52,10 +56,12 @@ export default function MatchPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl sm:text-3xl font-extrabold">{t.title}</h1>
-          <p className="text-foreground/60 mt-1.5 text-sm sm:text-base">{t.subtitle}</p>
-        </div>
+        <PageHeader
+          title={t.title}
+          subtitle={t.subtitle}
+          count={words?.length}
+          countLabel={tLessons.wordsSuffix}
+        />
 
         <AnimatePresence mode="wait">
           {loading || !words ? (
@@ -79,6 +85,11 @@ export default function MatchPage() {
             </motion.div>
           ) : (
             <motion.div key="round" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              {bonusPractice && (
+                <div className="mb-5 rounded-xl bg-accent-soft border border-accent/30 px-4 py-3 text-sm text-accent text-center">
+                  {t.bonusPractice}
+                </div>
+              )}
               <MatchBoard
                 key={words.map((w) => w._id).join(",")}
                 words={words}

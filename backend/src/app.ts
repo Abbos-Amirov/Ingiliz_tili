@@ -8,6 +8,8 @@ import adminRoutes from "./routes/admin.routes";
 import srsRoutes from "./routes/srs.routes";
 import statsRoutes from "./routes/stats.routes";
 import lessonsRoutes from "./routes/lessons.routes";
+import configRoutes from "./routes/config.routes";
+import chatRoutes from "./routes/chat.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -27,6 +29,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/srs", srsRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/lessons", lessonsRoutes);
+app.use("/api/config", configRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.use(errorHandler);
 

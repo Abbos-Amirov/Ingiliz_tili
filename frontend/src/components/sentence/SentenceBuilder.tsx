@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Sentence } from "@/lib/types";
+import type { Sentence, GrammarRole } from "@/lib/types";
 import { WordChip } from "./WordChip";
+import { FormulaBar } from "./FormulaBar";
 import { Button } from "@/components/ui/Button";
 import { speak } from "@/lib/tts";
 import { useT } from "@/hooks/useT";
+import { ROLE_COLORS } from "@/lib/roleColors";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -20,6 +22,7 @@ function shuffle<T>(arr: T[]): T[] {
 interface PoolItem {
   key: string;
   text: string;
+  role: GrammarRole;
 }
 
 export function SentenceBuilder({
@@ -31,8 +34,8 @@ export function SentenceBuilder({
 }) {
   const t = useT("sentence");
   const pool = useMemo(() => {
-    const all = [...sentence.englishWords, ...sentence.distractorWords];
-    return shuffle(all.map((text, i) => ({ key: `${text}-${i}`, text })));
+    const all = [...sentence.words, ...sentence.distractorWords];
+    return shuffle(all.map((rw, i) => ({ key: `${rw.text}-${i}`, text: rw.text, role: rw.role })));
   }, [sentence]);
 
   const [remaining, setRemaining] = useState<PoolItem[]>(pool);
@@ -40,22 +43,32 @@ export function SentenceBuilder({
   const [wrongKey, setWrongKey] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [tempLabelsOn, setTempLabelsOn] = useState(false);
+  const [pulseKey, setPulseKey] = useState(0);
+
+  const showLabels =
+    sentence.level === "beginner" ? true : sentence.level === "advanced" ? false : tempLabelsOn;
 
   function handlePick(item: PoolItem) {
     if (wrongKey || done) return;
-    const expected = sentence.englishWords[placed.length];
-    if (item.text === expected) {
+    const expected = sentence.words[placed.length];
+    if (item.text === expected.text) {
       const nextPlaced = [...placed, item];
       setPlaced(nextPlaced);
       setRemaining((prev) => prev.filter((p) => p.key !== item.key));
       setHint(null);
-      if (nextPlaced.length === sentence.englishWords.length) {
+      setPulseKey((k) => k + 1);
+      if (nextPlaced.length === sentence.words.length) {
         setDone(true);
-        speak(sentence.englishWords.join(" "), "en-US");
+        speak(sentence.words.map((w) => w.text).join(" "), "en-US");
       }
     } else {
       setWrongKey(item.key);
       setHint(t.wrongHint);
+      if (sentence.level === "intermediate") {
+        setTempLabelsOn(true);
+        window.setTimeout(() => setTempLabelsOn(false), 2000);
+      }
       window.setTimeout(() => {
         setWrongKey(null);
       }, 400);
@@ -78,14 +91,22 @@ export function SentenceBuilder({
         <p className="text-xl sm:text-2xl font-bold">{sentence.korean}</p>
       </div>
 
-      <div className="mt-6 min-h-16 rounded-2xl border-2 border-dashed border-border p-4 flex flex-wrap gap-2 items-center justify-center">
+      {sentence.formula && (
+        <div className="mt-4">
+          <FormulaBar formula={sentence.formula} pulseKey={pulseKey} />
+        </div>
+      )}
+
+      <div className="mt-6 min-h-16 rounded-2xl border-2 border-dashed border-border p-4 flex flex-wrap gap-3 items-start justify-center">
         <AnimatePresence>
-          {placed.length === 0 && <span className="text-foreground/40 text-sm">{t.placeholder}</span>}
+          {placed.length === 0 && <span className="text-foreground/40 text-sm mt-2.5">{t.placeholder}</span>}
           {placed.map((item, i) => (
             <WordChip
               key={item.key}
               text={item.text}
-              variant={done ? "placed" : "placed"}
+              role={item.role}
+              variant="placed"
+              showLabel={showLabels || done}
               onClick={() => handleUndo(item, i)}
             />
           ))}
@@ -105,7 +126,7 @@ export function SentenceBuilder({
         )}
       </AnimatePresence>
 
-      <div className="mt-6 flex flex-wrap gap-2.5 justify-center">
+      <div className="mt-6 flex flex-wrap gap-3 justify-center">
         <AnimatePresence>
           {remaining.map((item) => (
             <motion.div
@@ -117,7 +138,9 @@ export function SentenceBuilder({
             >
               <WordChip
                 text={item.text}
+                role={item.role}
                 variant={item.key === wrongKey ? "wrong" : "pool"}
+                showLabel={showLabels}
                 onClick={() => handlePick(item)}
               />
             </motion.div>
@@ -132,6 +155,17 @@ export function SentenceBuilder({
           className="mt-8 flex flex-col items-center gap-3"
         >
           <p className="text-success font-bold text-lg">{t.correct}</p>
+          <p className="text-sm text-center max-w-md leading-relaxed">
+            {sentence.words.map((rw, i) => (
+              <span key={i}>
+                {i > 0 && <span className="text-foreground/30"> + </span>}
+                <span style={{ color: ROLE_COLORS[rw.role].text }} className="font-semibold">
+                  &quot;{rw.text}&quot;
+                </span>
+                <span className="text-foreground/50"> ({ROLE_COLORS[rw.role].label})</span>
+              </span>
+            ))}
+          </p>
           <Button onClick={onComplete}>{t.nextBtn}</Button>
         </motion.div>
       )}

@@ -7,12 +7,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 import type { Sentence, Difficulty } from "@/lib/types";
 import { SentenceBuilder } from "@/components/sentence/SentenceBuilder";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { AiChatWidget } from "@/components/chat/AiChatWidget";
 import { useT } from "@/hooks/useT";
 
 export default function SentencePage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("sentence");
+  const tLessons = useT("lessons");
 
   const levels: { value: Difficulty; label: string }[] = [
     { value: "beginner", label: t.levels.beginner },
@@ -59,10 +62,7 @@ export default function SentencePage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl sm:text-3xl font-extrabold">{t.title}</h1>
-          <p className="text-foreground/60 mt-1.5 text-sm sm:text-base">{t.subtitle}</p>
-        </div>
+        <PageHeader title={t.title} subtitle={t.subtitle} count={pool.length} countLabel={tLessons.sentencesSuffix} />
 
         <div className="flex justify-center gap-2 mb-8">
           {levels.map((l) => (
@@ -116,6 +116,13 @@ export default function SentencePage() {
           )}
         </AnimatePresence>
       </div>
+
+      {current && (
+        <AiChatWidget
+          key={current._id}
+          context={{ korean: current.korean, englishWords: current.words.map((w) => w.text), formula: current.formula }}
+        />
+      )}
     </div>
   );
 }

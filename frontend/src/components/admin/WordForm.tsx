@@ -1,10 +1,12 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { Difficulty, Word } from "@/lib/types";
+import type { Difficulty, PartOfSpeech, Word } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { AiAssistButton } from "./AiAssistPanel";
+import { parseLessonRangeText, formatLessonRange } from "@/lib/lessonRange";
+import { PARTS_OF_SPEECH, PARTS_OF_SPEECH_LABELS } from "@/lib/partsOfSpeech";
 
 interface WordFormValues {
   english: string;
@@ -13,7 +15,7 @@ interface WordFormValues {
   exampleSentenceKo: string;
   category: string;
   difficulty: Difficulty;
-  lessonNumber: number;
+  partOfSpeech: PartOfSpeech | "";
 }
 
 const emptyValues: WordFormValues = {
@@ -23,7 +25,7 @@ const emptyValues: WordFormValues = {
   exampleSentenceKo: "",
   category: "general",
   difficulty: "beginner",
-  lessonNumber: 1,
+  partOfSpeech: "",
 };
 
 export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved: () => void }) {
@@ -36,18 +38,46 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
           exampleSentenceKo: initial.exampleSentenceKo,
           category: initial.category,
           difficulty: initial.difficulty,
-          lessonNumber: initial.lessonNumber,
+          partOfSpeech: initial.partOfSpeech ?? "",
         }
       : emptyValues,
+  );
+  const [lessonRangeText, setLessonRangeText] = useState(
+    initial ? formatLessonRange(initial.lessonNumber, initial.lessonNumberEnd) : "1",
   );
   const [error, setError] = useState<string | null>(null);
   const [dupWarning, setDupWarning] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [liveMatches, setLiveMatches] = useState<Word[]>([]);
+  const [checkedEnglish, setCheckedEnglish] = useState("");
+  const [checkingLive, setCheckingLive] = useState(false);
+
+  useEffect(() => {
+    const english = values.english.trim();
+    const skip = !english || (initial != null && english.toLowerCase() === initial.english.toLowerCase());
+    if (skip) return;
+    // Debounced live-search loading flag against the separate Express API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCheckingLive(true);
+    const timeout = window.setTimeout(() => {
+      apiFetch<{ words: Word[] }>(`/words?english=${encodeURIComponent(english)}`, { skipAuth: true })
+        .then((res) => {
+          setLiveMatches(res.words);
+          setCheckedEnglish(english.toLowerCase());
+        })
+        .catch(() => setLiveMatches([]))
+        .finally(() => setCheckingLive(false));
+    }, 400);
+    return () => window.clearTimeout(timeout);
+  }, [values.english, initial]);
+
+  const showLiveWarning =
+    !checkingLive && liveMatches.length > 0 && checkedEnglish === values.english.trim().toLowerCase();
 
   useEffect(() => {
     if (initial) return;
     apiFetch<{ nextLessonNumber: number }>("/lessons/next-number", { admin: true })
-      .then((res) => setValues((prev) => ({ ...prev, lessonNumber: res.nextLessonNumber })))
+      .then((res) => setLessonRangeText(String(res.nextLessonNumber)))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -58,19 +88,25 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
   }
 
   async function save(force = false) {
+    const lessonRange = parseLessonRangeText(lessonRangeText);
+    if (!lessonRange) {
+      setError("Dars raqami noto'g'ri. Masalan: 7 yoki 34-37");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
+      const payload = { ...values, partOfSpeech: values.partOfSpeech || null, ...lessonRange };
       if (initial) {
         await apiFetch(`/words/${initial._id}`, {
           method: "PUT",
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
           admin: true,
         });
       } else {
         await apiFetch(`/words${force ? "?force=true" : ""}`, {
           method: "POST",
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
           admin: true,
         });
       }
@@ -112,6 +148,23 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
         </Field>
       </div>
 
+      {checkingLive && <p className="text-xs text-foreground/40 -mt-2">Tekshirilmoqda...</p>}
+
+      {showLiveWarning && (
+        <div className="rounded-xl bg-accent-soft border border-accent/30 p-3 text-sm -mt-2">
+          <p className="text-accent font-semibold">
+            &quot;{values.english.trim()}&quot; so&apos;zi bazada allaqachon mavjud:
+          </p>
+          <ul className="mt-1 space-y-0.5 text-accent/90">
+            {liveMatches.map((w) => (
+              <li key={w._id}>
+                {w.english} — {w.korean} ({w.lessonNumber === w.lessonNumberEnd ? `${w.lessonNumber}-dars` : `${w.lessonNumber}-${w.lessonNumberEnd}-dars`})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <AiAssistButton
         english={values.english}
         onSuggestion={(s) =>
@@ -120,6 +173,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
             korean: s.korean,
             exampleSentenceEn: s.exampleSentenceEn,
             exampleSentenceKo: s.exampleSentenceKo,
+            partOfSpeech: s.partOfSpeech,
           }))
         }
       />
@@ -161,13 +215,27 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
         </Field>
       </div>
 
-      <Field label="Dars raqami">
+      <Field label="So'z turkumi (grammatik)">
+        <select
+          value={values.partOfSpeech}
+          onChange={(e) => update("partOfSpeech", e.target.value as PartOfSpeech | "")}
+          className="input"
+        >
+          <option value="">— tanlanmagan —</option>
+          {PARTS_OF_SPEECH.map((pos) => (
+            <option key={pos} value={pos}>
+              {PARTS_OF_SPEECH_LABELS[pos]}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="Dars raqami (masalan: 7 yoki 34-37)">
         <input
-          type="number"
-          min={1}
           required
-          value={values.lessonNumber}
-          onChange={(e) => update("lessonNumber", Number(e.target.value))}
+          value={lessonRangeText}
+          onChange={(e) => setLessonRangeText(e.target.value)}
+          placeholder="7 yoki 34-37"
           className="input"
         />
       </Field>

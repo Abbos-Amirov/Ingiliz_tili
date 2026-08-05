@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
+import type { PartOfSpeech } from "@/lib/types";
 
 interface Suggestion {
   korean: string;
   exampleSentenceEn: string;
   exampleSentenceKo: string;
+  partOfSpeech: PartOfSpeech;
 }
 
 export function AiAssistButton({

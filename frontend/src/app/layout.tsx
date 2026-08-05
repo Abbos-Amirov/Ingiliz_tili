@@ -10,7 +10,7 @@ const display = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Ingliz✦Learn — koreys tili orqali ingliz tilini o'rganing",
+  title: "English✦Learn — koreys tili orqali ingliz tilini o'rganing",
   description:
     "So'z moslashtirish va gap tuzish orqali ingliz tilini koreys tili yordamida interaktiv o'rganish ilovasi.",
 };

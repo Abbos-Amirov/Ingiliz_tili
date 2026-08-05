@@ -10,6 +10,14 @@ import { apiFetch } from "@/lib/api";
 import type { Lesson } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { formatLessonRange } from "@/lib/lessonRange";
+
+function lessonsQueryParam(lesson: Lesson): string {
+  const numbers: number[] = [];
+  for (let n = lesson.lessonNumber; n <= lesson.lessonNumberEnd; n++) numbers.push(n);
+  return numbers.join(",");
+}
 
 export default function LessonsPage() {
   const { user, ready } = useAuth();
@@ -19,7 +27,6 @@ export default function LessonsPage() {
   const tSentence = useT("sentence");
 
   const [lessons, setLessons] = useState<Lesson[] | null>(null);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -29,32 +36,17 @@ export default function LessonsPage() {
     apiFetch<{ lessons: Lesson[] }>("/lessons").then((res) => setLessons(res.lessons));
   }, []);
 
-  function toggle(lessonNumber: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(lessonNumber)) next.delete(lessonNumber);
-      else next.add(lessonNumber);
-      return next;
-    });
-  }
-
-  function startPractice(mode: "match" | "sentence") {
-    if (selected.size === 0) return;
-    const lessonsParam = Array.from(selected)
-      .sort((a, b) => a - b)
-      .join(",");
-    router.push(`/lessons/practice?lessons=${lessonsParam}&mode=${mode}`);
-  }
-
   if (!ready || !user) return null;
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl sm:text-3xl font-extrabold">{t.pageTitle}</h1>
-          <p className="text-foreground/60 mt-1.5 text-sm sm:text-base">{t.pageSubtitle}</p>
-        </div>
+        <PageHeader
+          title={t.pageTitle}
+          subtitle={t.pageSubtitle}
+          count={lessons?.length}
+          countLabel={t.lessonsSuffix}
+        />
 
         <div className="mb-8 flex justify-center">
           <Link href="/all-words">
@@ -69,36 +61,22 @@ export default function LessonsPage() {
         ) : lessons.length === 0 ? (
           <p className="text-center py-20 text-foreground/60">{t.empty}</p>
         ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {lessons.map((lesson) => {
-                const isSelected = selected.has(lesson.lessonNumber);
-                return (
-                  <motion.button
-                    key={lesson.lessonNumber}
-                    onClick={() => toggle(lesson.lessonNumber)}
-                    whileTap={{ scale: 0.97 }}
-                    className="text-left"
-                  >
-                    <Card
-                      className={`p-5 h-full transition-colors ${
-                        isSelected ? "border-primary ring-2 ring-primary/30 bg-primary/5" : ""
-                      }`}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {lessons.map((lesson) => {
+              const lessonsParam = lessonsQueryParam(lesson);
+              const label = `${formatLessonRange(lesson.lessonNumber, lesson.lessonNumberEnd)}${t.lessonSuffix}`;
+              return (
+                <motion.div key={`${lesson.lessonNumber}-${lesson.lessonNumberEnd}`} whileTap={{ scale: 0.97 }}>
+                  <Card className="p-5 h-full flex flex-col">
+                    <Link
+                      href={`/lessons/practice?lessons=${lessonsParam}&mode=match`}
+                      className="flex-1 block"
+                      title={tMatch.title}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="font-extrabold text-lg">
-                          {t.lessonPrefix}
-                          {lesson.lessonNumber}
-                          {t.lessonSuffix}
-                        </span>
-                        <span
-                          className={`h-5 w-5 rounded-md border-2 flex items-center justify-center text-xs ${
-                            isSelected ? "bg-primary border-primary text-white" : "border-border"
-                          }`}
-                        >
-                          {isSelected && "✓"}
-                        </span>
-                      </div>
+                      <span className="font-extrabold text-lg block mb-2">
+                        {t.lessonPrefix}
+                        {label}
+                      </span>
                       <p className="text-sm text-foreground/60">
                         {lesson.wordCount} {t.wordsSuffix}
                         {lesson.sentenceCount > 0 && (
@@ -108,30 +86,20 @@ export default function LessonsPage() {
                           </>
                         )}
                       </p>
-                    </Card>
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            <div className="mt-8 flex flex-col items-center gap-3">
-              {selected.size === 0 && <p className="text-sm text-foreground/50">{t.selectAtLeastOne}</p>}
-              <p className="font-semibold text-sm text-foreground/70">{t.modePickerTitle}</p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button size="lg" disabled={selected.size === 0} onClick={() => startPractice("match")}>
-                  {tMatch.title}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  disabled={selected.size === 0}
-                  onClick={() => startPractice("sentence")}
-                >
-                  {tSentence.title}
-                </Button>
-              </div>
-            </div>
-          </>
+                    </Link>
+                    {lesson.sentenceCount > 0 && (
+                      <Link
+                        href={`/lessons/practice?lessons=${lessonsParam}&mode=sentence`}
+                        className="mt-3 pt-3 border-t border-border text-xs font-semibold text-primary hover:underline"
+                      >
+                        {tSentence.title} →
+                      </Link>
+                    )}
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

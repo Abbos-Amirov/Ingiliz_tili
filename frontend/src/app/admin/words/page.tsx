@@ -7,15 +7,21 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { WordForm } from "@/components/admin/WordForm";
+import { formatLessonRange } from "@/lib/lessonRange";
 
-function groupByLesson(words: Word[]): [number, Word[]][] {
-  const map = new Map<number, Word[]>();
+function groupByLesson(words: Word[]): [string, Word[]][] {
+  const map = new Map<string, Word[]>();
   for (const w of words) {
-    const list = map.get(w.lessonNumber) ?? [];
+    const key = formatLessonRange(w.lessonNumber, w.lessonNumberEnd);
+    const list = map.get(key) ?? [];
     list.push(w);
-    map.set(w.lessonNumber, list);
+    map.set(key, list);
   }
-  return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+  return Array.from(map.entries()).sort((a, b) => {
+    const startA = Number(a[0].split("-")[0]);
+    const startB = Number(b[0].split("-")[0]);
+    return startA - startB;
+  });
 }
 
 export default function AdminWordsPage() {
@@ -80,10 +86,10 @@ export default function AdminWordsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {groupByLesson(words).map(([lessonNumber, lessonWords]) => (
-            <div key={lessonNumber}>
+          {groupByLesson(words).map(([lessonLabel, lessonWords]) => (
+            <div key={lessonLabel}>
               <h2 className="font-bold text-sm text-foreground/60 mb-2 uppercase tracking-wide">
-                {lessonNumber}-dars ({lessonWords.length})
+                {lessonLabel}-dars ({lessonWords.length})
               </h2>
               <Card className="overflow-x-auto">
                 <table className="w-full text-sm">

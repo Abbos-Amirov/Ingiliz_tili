@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { parseLessonRangeText } from "@/lib/lessonRange";
 
 interface UploadResult {
   inserted: number;
@@ -14,14 +15,14 @@ interface UploadResult {
 export function CsvUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [previewRows, setPreviewRows] = useState<string[][]>([]);
-  const [lessonNumber, setLessonNumber] = useState<number>(1);
+  const [lessonRangeText, setLessonRangeText] = useState("1");
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch<{ nextLessonNumber: number }>("/lessons/next-number", { admin: true })
-      .then((res) => setLessonNumber(res.nextLessonNumber))
+      .then((res) => setLessonRangeText(String(res.nextLessonNumber)))
       .catch(() => {});
   }, []);
 
@@ -45,13 +46,19 @@ export function CsvUploader() {
 
   async function handleUpload() {
     if (!file) return;
+    const lessonRange = parseLessonRangeText(lessonRangeText);
+    if (!lessonRange) {
+      setError("Dars raqami noto'g'ri. Masalan: 7 yoki 34-37");
+      return;
+    }
     setUploading(true);
     setError(null);
     setResult(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("lessonNumber", String(lessonNumber));
+      formData.append("lessonNumber", String(lessonRange.lessonNumber));
+      formData.append("lessonNumberEnd", String(lessonRange.lessonNumberEnd));
       const res = await apiFetch<UploadResult>("/words/bulk-upload", {
         method: "POST",
         body: formData,
@@ -71,17 +78,19 @@ export function CsvUploader() {
         <p className="text-sm text-foreground/60 mb-4">
           CSV ustunlari:{" "}
           <code className="text-xs bg-surface-muted px-1.5 py-0.5 rounded">
-            english, korean, exampleSentenceEn, exampleSentenceKo, category, difficulty, lessonNumber (ixtiyoriy)
+            english, korean, exampleSentenceEn, exampleSentenceKo, category, difficulty, lessonNumber (ixtiyoriy),
+            lessonNumberEnd (ixtiyoriy)
           </code>
         </p>
 
         <label className="block mb-4 max-w-xs">
-          <span className="block text-sm font-medium mb-1.5">Dars raqami (CSV&apos;da lessonNumber bo&apos;lmasa shu ishlatiladi)</span>
+          <span className="block text-sm font-medium mb-1.5">
+            Dars raqami (masalan: 7 yoki 34-37 — CSV&apos;da lessonNumber bo&apos;lmasa shu ishlatiladi)
+          </span>
           <input
-            type="number"
-            min={1}
-            value={lessonNumber}
-            onChange={(e) => setLessonNumber(Number(e.target.value))}
+            value={lessonRangeText}
+            onChange={(e) => setLessonRangeText(e.target.value)}
+            placeholder="7 yoki 34-37"
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           />
         </label>

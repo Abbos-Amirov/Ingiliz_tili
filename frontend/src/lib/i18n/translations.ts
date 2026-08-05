@@ -23,6 +23,7 @@ const uz = {
     pageSubtitle: "O'rganmoqchi bo'lgan darsni yoki darslarni tanlang",
     wordsSuffix: "so'z",
     sentencesSuffix: "gap",
+    lessonsSuffix: "dars",
     selectAtLeastOne: "Davom etish uchun kamida bitta darsni tanlang",
     startButton: "Boshlash",
     modePickerTitle: "Qaysi mashqni tanlaysiz?",
@@ -90,6 +91,8 @@ const uz = {
     empty: "Hozircha so'zlar mavjud emas. Admin panel orqali so'z qo'shing.",
     pairsFound: "Topilgan juftlar",
     continueBtn: "Davom etish →",
+    shuffleBtn: "Aralashtirish",
+    bonusPractice: "🎉 Siz hozircha barcha so'zlarni ko'rib chiqdingiz! Bu — mustahkamlash uchun qo'shimcha mashq, keyingi rejalashtirilgan takrorlash o'z vaqtida keladi.",
   },
   sentence: {
     title: "Gap tuzish",
@@ -125,6 +128,17 @@ const uz = {
     difficultWords: "Qiyin so'zlar",
     difficultWordsDesc: "Bu so'zlarda ko'p xato qildingiz — ularga ko'proq e'tibor bering.",
   },
+  chat: {
+    openLabel: "AI yordamchi bilan suhbat",
+    title: "AI yordamchi",
+    subtitle: "Gap haqida savol bering",
+    greeting: "Salom! 👋 Bu gap haqida savolingiz bo'lsa, bemalol so'rang — masalan \"nega bu so'z shu yerda?\" kabi.",
+    placeholder: "Savolingizni yozing...",
+    send: "Yuborish",
+    thinking: "O'ylayapti...",
+    error: "Kechirasiz, javob berishda xatolik yuz berdi. Qayta urinib ko'ring.",
+    close: "Yopish",
+  },
 };
 
 const en = {
@@ -144,6 +158,7 @@ const en = {
     pageSubtitle: "Choose the lesson or lessons you want to study",
     wordsSuffix: "words",
     sentencesSuffix: "sentences",
+    lessonsSuffix: "lessons",
     selectAtLeastOne: "Select at least one lesson to continue",
     startButton: "Start",
     modePickerTitle: "Which practice would you like?",
@@ -211,6 +226,8 @@ const en = {
     empty: "No words available yet. Add words via the admin panel.",
     pairsFound: "Pairs found",
     continueBtn: "Continue →",
+    shuffleBtn: "Shuffle",
+    bonusPractice: "🎉 You've been through all your words for now! This is bonus practice — your next scheduled review will come right on time.",
   },
   sentence: {
     title: "Sentence Building",
@@ -246,6 +263,17 @@ const en = {
     difficultWords: "Difficult words",
     difficultWordsDesc: "You've made mistakes on these words often — give them extra attention.",
   },
+  chat: {
+    openLabel: "Chat with AI helper",
+    title: "AI Helper",
+    subtitle: "Ask about this sentence",
+    greeting: "Hi! 👋 Feel free to ask anything about this sentence — like \"why does this word go here?\"",
+    placeholder: "Type your question...",
+    send: "Send",
+    thinking: "Thinking...",
+    error: "Sorry, something went wrong. Please try again.",
+    close: "Close",
+  },
 } satisfies typeof uz;
 
 const ko = {
@@ -265,6 +293,7 @@ const ko = {
     pageSubtitle: "공부하고 싶은 수업을 선택하세요",
     wordsSuffix: "개 단어",
     sentencesSuffix: "개 문장",
+    lessonsSuffix: "개 수업",
     selectAtLeastOne: "계속하려면 수업을 하나 이상 선택하세요",
     startButton: "시작하기",
     modePickerTitle: "어떤 연습을 하시겠어요?",
@@ -332,6 +361,8 @@ const ko = {
     empty: "아직 사용 가능한 단어가 없습니다. 관리자 패널에서 단어를 추가하세요.",
     pairsFound: "찾은 짝",
     continueBtn: "계속하기 →",
+    shuffleBtn: "섞기",
+    bonusPractice: "🎉 지금까지의 모든 단어를 살펴봤어요! 이건 보너스 연습이에요 — 다음 복습은 정해진 시간에 옵니다.",
   },
   sentence: {
     title: "문장 만들기",
@@ -366,6 +397,17 @@ const ko = {
     dailyGoal: "일일 목표",
     difficultWords: "어려운 단어",
     difficultWordsDesc: "이 단어들에서 실수가 많았어요 — 좀 더 신경 써 주세요.",
+  },
+  chat: {
+    openLabel: "AI 도우미와 대화하기",
+    title: "AI 도우미",
+    subtitle: "이 문장에 대해 질문하세요",
+    greeting: "안녕하세요! 👋 이 문장에 대해 궁금한 점이 있으면 편하게 물어보세요 — 예: \"왜 이 단어가 여기에 오나요?\"",
+    placeholder: "질문을 입력하세요...",
+    send: "보내기",
+    thinking: "생각 중...",
+    error: "죄송해요, 오류가 발생했어요. 다시 시도해 주세요.",
+    close: "닫기",
   },
 } satisfies typeof uz;
 

@@ -10,7 +10,10 @@ import { apiFetch } from "@/lib/api";
 import type { Word, Sentence } from "@/lib/types";
 import { MatchBoard } from "@/components/match/MatchBoard";
 import { SentenceBuilder } from "@/components/sentence/SentenceBuilder";
+import { RecallQuiz } from "@/components/recall/RecallQuiz";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { AiChatWidget } from "@/components/chat/AiChatWidget";
 
 const CHUNK_SIZE = 8;
 
@@ -35,6 +38,7 @@ function PracticeContent() {
   const [loading, setLoading] = useState(true);
   const [wordChunks, setWordChunks] = useState<Word[][]>([]);
   const [chunkIndex, setChunkIndex] = useState(0);
+  const [matchPhase, setMatchPhase] = useState<"match" | "recall">("match");
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [sentenceIndex, setSentenceIndex] = useState(0);
 
@@ -50,6 +54,7 @@ function PracticeContent() {
         const res = await apiFetch<{ words: Word[] }>(`/words?${query}limit=500`);
         setWordChunks(chunk(res.words, CHUNK_SIZE));
         setChunkIndex(0);
+        setMatchPhase("match");
       } else {
         const res = await apiFetch<{ sentences: Sentence[] }>(`/sentences?${query}limit=500`);
         setSentences(res.sentences);
@@ -79,14 +84,18 @@ function PracticeContent() {
           </Link>
         </div>
 
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl sm:text-3xl font-extrabold">
-            {mode === "match" ? tMatch.title : tSentence.title}
-          </h1>
-          <p className="text-foreground/60 mt-1.5 text-sm sm:text-base">
-            {mode === "match" ? tMatch.subtitle : tSentence.subtitle}
-          </p>
-        </div>
+        <PageHeader
+          title={mode === "match" ? tMatch.title : tSentence.title}
+          subtitle={mode === "match" ? tMatch.subtitle : tSentence.subtitle}
+          count={
+            loading
+              ? undefined
+              : mode === "match"
+                ? wordChunks.reduce((sum, c) => sum + c.length, 0)
+                : sentences.length
+          }
+          countLabel={mode === "match" ? t.wordsSuffix : t.sentencesSuffix}
+        />
 
         <AnimatePresence mode="wait">
           {loading ? (
@@ -121,12 +130,22 @@ function PracticeContent() {
                   <Button>{t.backToLessons}</Button>
                 </Link>
               </motion.div>
+            ) : matchPhase === "recall" ? (
+              <motion.div key="recall" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <RecallQuiz
+                  words={wordChunks[chunkIndex]}
+                  onFinish={() => {
+                    setMatchPhase("match");
+                    setChunkIndex((i) => i + 1);
+                  }}
+                />
+              </motion.div>
             ) : (
               <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <MatchBoard
                   key={wordChunks[chunkIndex].map((w) => w._id).join(",")}
                   words={wordChunks[chunkIndex]}
-                  onRoundComplete={() => setChunkIndex((i) => i + 1)}
+                  onRoundComplete={() => setMatchPhase("recall")}
                 />
                 {wordChunks.length > 1 && (
                   <p className="mt-6 text-center text-xs text-foreground/40">
@@ -160,6 +179,17 @@ function PracticeContent() {
           )}
         </AnimatePresence>
       </div>
+
+      {mode === "sentence" && sentences.length > 0 && sentences[sentenceIndex] && (
+        <AiChatWidget
+          key={sentences[sentenceIndex]._id}
+          context={{
+            korean: sentences[sentenceIndex].korean,
+            englishWords: sentences[sentenceIndex].words.map((w) => w.text),
+            formula: sentences[sentenceIndex].formula,
+          }}
+        />
+      )}
     </div>
   );
 }

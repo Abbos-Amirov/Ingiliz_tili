@@ -31,7 +31,24 @@ export const nextBatch: RequestHandler = async (req, res, next) => {
       words = [...words, ...backfill];
     }
 
-    res.json({ words });
+    // Nothing due and no brand-new words left either — the learner has been
+    // through everything. Rather than showing an empty round, offer bonus
+    // practice: a random sample of already-learned words, reviewed early.
+    let bonusPractice = false;
+    if (words.length < limit) {
+      const usedWordIds = words.map((w) => w._id);
+      const bonusProgress = await UserWordProgress.aggregate<{ wordId: Types.ObjectId }>([
+        { $match: { userId: new Types.ObjectId(userId), wordId: { $nin: usedWordIds } } },
+        { $sample: { size: limit - words.length } },
+      ]);
+      if (bonusProgress.length > 0) {
+        const bonusWords = await Word.find({ _id: { $in: bonusProgress.map((p) => p.wordId) } });
+        words = [...words, ...bonusWords];
+        bonusPractice = true;
+      }
+    }
+
+    res.json({ words, bonusPractice });
   } catch (err) {
     next(err);
   }
@@ -123,7 +140,7 @@ export const sentenceForWord: RequestHandler = async (req, res, next) => {
       return;
     }
     const sentence = await Sentence.findOne({
-      englishWords: { $regex: new RegExp(`^${escapeRegex(word.english)}$`, "i") },
+      "words.text": { $regex: new RegExp(`^${escapeRegex(word.english)}$`, "i") },
     });
     res.json({ sentence: sentence ?? null });
   } catch (err) {

@@ -1,6 +1,35 @@
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 export type Role = "user" | "admin";
 
+export type PartOfSpeech =
+  | "noun"
+  | "pronoun"
+  | "verb"
+  | "adjective"
+  | "adverb"
+  | "preposition"
+  | "conjunction"
+  | "article"
+  | "interjection";
+
+export type GrammarRole =
+  | "subject"
+  | "verb"
+  | "auxiliary"
+  | "object"
+  | "adjective"
+  | "adverb"
+  | "preposition"
+  | "conjunction"
+  | "article"
+  | "pronoun"
+  | "interjection";
+
+export interface RoleWord {
+  text: string;
+  role: GrammarRole;
+}
+
 export interface Word {
   _id: string;
   english: string;
@@ -9,25 +38,37 @@ export interface Word {
   exampleSentenceKo: string;
   category: string;
   difficulty: Difficulty;
+  partOfSpeech?: PartOfSpeech | null;
   audioUrl?: string | null;
   imageUrl?: string | null;
   lessonNumber: number;
+  lessonNumberEnd: number;
 }
 
 export interface Sentence {
   _id: string;
   korean: string;
-  englishWords: string[];
-  distractorWords: string[];
+  words: RoleWord[];
+  distractorWords: RoleWord[];
+  formula: string;
   level: Difficulty;
   lessonNumber: number;
+  lessonNumberEnd: number;
 }
 
 export interface Lesson {
   lessonNumber: number;
+  lessonNumberEnd: number;
   wordCount: number;
   sentenceCount: number;
 }
+
+export interface LevelDefinition {
+  formulas: string[];
+  activeRoles: GrammarRole[];
+}
+
+export type LevelConfig = Record<Difficulty, LevelDefinition>;
 
 export interface AuthUser {
   id: string;
