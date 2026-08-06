@@ -10,6 +10,8 @@ import statsRoutes from "./routes/stats.routes";
 import lessonsRoutes from "./routes/lessons.routes";
 import configRoutes from "./routes/config.routes";
 import chatRoutes from "./routes/chat.routes";
+import irregularVerbsRoutes from "./routes/irregularVerbs.routes";
+import grammarTopicsRoutes from "./routes/grammarTopics.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -31,6 +33,8 @@ app.use("/api/stats", statsRoutes);
 app.use("/api/lessons", lessonsRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/irregular-verbs", irregularVerbsRoutes);
+app.use("/api/grammar-topics", grammarTopicsRoutes);
 
 app.use(errorHandler);
 

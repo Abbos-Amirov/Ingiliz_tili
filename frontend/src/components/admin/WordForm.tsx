@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { Difficulty, PartOfSpeech, Word } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import type { Difficulty, IrregularVerb, PartOfSpeech, Word } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { AiAssistButton } from "./AiAssistPanel";
@@ -29,6 +30,7 @@ const emptyValues: WordFormValues = {
 };
 
 export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved: () => void }) {
+  const router = useRouter();
   const [values, setValues] = useState<WordFormValues>(
     initial
       ? {
@@ -51,6 +53,8 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
   const [liveMatches, setLiveMatches] = useState<Word[]>([]);
   const [checkedEnglish, setCheckedEnglish] = useState("");
   const [checkingLive, setCheckingLive] = useState(false);
+  const [irregularMatch, setIrregularMatch] = useState<IrregularVerb | null>(null);
+  const [dismissIrregularWarning, setDismissIrregularWarning] = useState(false);
 
   useEffect(() => {
     const english = values.english.trim();
@@ -75,6 +79,27 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
     !checkingLive && liveMatches.length > 0 && checkedEnglish === values.english.trim().toLowerCase();
 
   useEffect(() => {
+    const english = values.english.trim();
+    if (!english) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIrregularMatch(null);
+      return;
+    }
+    // Debounced irregular-verb duplicate check against the separate Express API.
+    const timeout = window.setTimeout(() => {
+      apiFetch<{ exists: boolean; verb?: IrregularVerb }>(
+        `/irregular-verbs/check?word=${encodeURIComponent(english)}`,
+        { admin: true },
+      )
+        .then((res) => setIrregularMatch(res.exists && res.verb ? res.verb : null))
+        .catch(() => setIrregularMatch(null));
+    }, 400);
+    return () => window.clearTimeout(timeout);
+  }, [values.english]);
+
+  const showIrregularWarning = Boolean(irregularMatch) && !dismissIrregularWarning;
+
+  useEffect(() => {
     if (initial) return;
     apiFetch<{ nextLessonNumber: number }>("/lessons/next-number", { admin: true })
       .then((res) => setLessonRangeText(String(res.nextLessonNumber)))
@@ -85,6 +110,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
   function update<K extends keyof WordFormValues>(key: K, value: WordFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
     setDupWarning(false);
+    if (key === "english") setDismissIrregularWarning(false);
   }
 
   async function save(force = false) {
@@ -162,6 +188,23 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {showIrregularWarning && irregularMatch && (
+        <div className="rounded-xl bg-accent-soft border border-accent/30 p-3 text-sm -mt-2 space-y-2">
+          <p className="text-accent font-semibold">
+            ⚠️ &quot;{values.english.trim()}&quot; — bu irregular verb ({irregularMatch.base} → {irregularMatch.past} →{" "}
+            {irregularMatch.participle}). Bu so&apos;z allaqachon Irregular Verbs bazasida mavjud.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" onClick={() => router.push("/admin/irregular-verbs")}>
+              Irregular Verbs bo&apos;limiga o&apos;t
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => setDismissIrregularWarning(true)}>
+              Baribir oddiy so&apos;z sifatida qo&apos;sh
+            </Button>
+          </div>
         </div>
       )}
 

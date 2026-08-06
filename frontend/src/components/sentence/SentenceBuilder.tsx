@@ -6,6 +6,7 @@ import type { Sentence, GrammarRole } from "@/lib/types";
 import { WordChip } from "./WordChip";
 import { FormulaBar } from "./FormulaBar";
 import { Button } from "@/components/ui/Button";
+import { MotivationToast } from "@/components/ui/MotivationToast";
 import { speak } from "@/lib/tts";
 import { useT } from "@/hooks/useT";
 import { ROLE_COLORS } from "@/lib/roleColors";
@@ -45,6 +46,7 @@ export function SentenceBuilder({
   const [done, setDone] = useState(false);
   const [tempLabelsOn, setTempLabelsOn] = useState(false);
   const [pulseKey, setPulseKey] = useState(0);
+  const [motivationSignal, setMotivationSignal] = useState(0);
 
   const showLabels =
     sentence.level === "beginner" ? true : sentence.level === "advanced" ? false : tempLabelsOn;
@@ -60,6 +62,7 @@ export function SentenceBuilder({
       setPulseKey((k) => k + 1);
       if (nextPlaced.length === sentence.words.length) {
         setDone(true);
+        setMotivationSignal((s) => s + 1);
         speak(sentence.words.map((w) => w.text).join(" "), "en-US");
       }
     } else {
@@ -84,6 +87,7 @@ export function SentenceBuilder({
 
   return (
     <div className="w-full">
+      <MotivationToast signal={motivationSignal} />
       <div className="rounded-2xl bg-surface-muted border border-border p-6 text-center">
         <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50 mb-2">
           {t.koreanSentenceLabel}

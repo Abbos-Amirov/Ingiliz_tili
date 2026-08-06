@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { suggestTranslation, suggestSentenceRoles } from "../services/ai.service";
+import { suggestTranslation, suggestSentenceRoles, suggestIrregularVerb } from "../services/ai.service";
 
 export const aiAssistTranslate: RequestHandler = async (req, res, next) => {
   try {
@@ -23,6 +23,20 @@ export const aiAssistSentenceRoles: RequestHandler = async (req, res, next) => {
       return;
     }
     const suggestion = await suggestSentenceRoles(english.trim(), korean.trim());
+    res.json({ suggestion });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const aiAssistIrregularVerb: RequestHandler = async (req, res, next) => {
+  try {
+    const { base } = req.body ?? {};
+    if (!base || typeof base !== "string") {
+      res.status(400).json({ error: "base is required" });
+      return;
+    }
+    const suggestion = await suggestIrregularVerb(base.trim());
     res.json({ suggestion });
   } catch (err) {
     next(err);

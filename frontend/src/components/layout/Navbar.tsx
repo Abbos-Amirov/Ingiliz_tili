@@ -20,6 +20,8 @@ export function Navbar() {
     { href: "/learn/sentence", label: t.sentence },
     { href: "/lessons", label: t.lessons },
     { href: "/all-words", label: t.allWords },
+    { href: "/irregular-verbs", label: t.irregularVerbs },
+    { href: "/grammar", label: t.grammar },
     { href: "/progress", label: t.progress },
   ];
 

@@ -93,3 +93,63 @@ export interface WordProgress {
   lapses: number;
   dueDate: string;
 }
+
+export type IrregularVerbCategory =
+  | "movement"
+  | "thinking"
+  | "feeling"
+  | "communication"
+  | "possession"
+  | "other";
+
+export interface IrregularVerb {
+  _id: string;
+  base: string;
+  past: string;
+  participle: string;
+  korean: string;
+  category: IrregularVerbCategory;
+  frequency: number | null;
+}
+
+export interface GrammarUsageCase {
+  uz: string;
+  example: string;
+}
+
+export interface GrammarRelatedFormula {
+  relatedTopicId: string;
+  title: string;
+  difference: string;
+}
+
+export interface GrammarCommonMistake {
+  wrong: string;
+  correct: string;
+  explanation: string;
+}
+
+export interface GrammarExample {
+  english: string;
+  korean: string;
+  uzbek: string;
+}
+
+export interface GrammarTopic {
+  _id: string;
+  title: { uz: string; en: string; ko: string };
+  formula: string;
+  level: Difficulty;
+  order: number;
+  ruleExplanation: { uz: string; en: string; ko: string };
+  usageCases: GrammarUsageCase[];
+  relatedFormulas: GrammarRelatedFormula[];
+  commonMistakes: GrammarCommonMistake[];
+  examples: GrammarExample[];
+}
+
+export interface GrammarTopicProgress {
+  topicId: string;
+  questionsCorrect: number;
+  questionsTotal: number;
+}

@@ -20,12 +20,16 @@ export function useSrsActions() {
     );
   }, []);
 
-  const submitReview = useCallback(async (wordId: string, result: "correct" | "wrong") => {
+  const submitReview = useCallback(async (wordId: string, result: "correct" | "wrong" | "helped") => {
     return apiFetch("/srs/review", {
       method: "POST",
       body: JSON.stringify({ wordId, result }),
     });
   }, []);
 
-  return { fetchNextBatch, submitReview };
+  const fetchDistractors = useCallback(async (wordId: string, count = 4) => {
+    return apiFetch<{ distractors: Word[] }>(`/srs/recall-distractors?wordId=${wordId}&count=${count}`);
+  }, []);
+
+  return { fetchNextBatch, submitReview, fetchDistractors };
 }

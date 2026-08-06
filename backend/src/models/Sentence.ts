@@ -18,6 +18,11 @@ const sentenceSchema = new Schema({
   distractorWords: { type: [roleWordSchema], default: [] },
   // The grammar pattern this sentence teaches, e.g. "S+be+V-ing+O".
   formula: { type: String, default: "" },
+  // Auto-generated practice material for the Grammar Hub module (see
+  // GrammarTopic). Kept out of the regular lesson curriculum — excluded from
+  // /sentences unless queried by `formula`, and from the lessons listing —
+  // so it never mixes into /learn/sentence or the Darslar lesson cards.
+  isGrammarPractice: { type: Boolean, default: false },
   level: {
     type: String,
     enum: ["beginner", "intermediate", "advanced"],

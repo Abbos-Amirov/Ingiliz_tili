@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { ApiError } from "@/lib/api";
@@ -69,14 +70,14 @@ export default function RegisterPage() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t.password}</label>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-muted px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary"
                 placeholder={t.minChars}
+                showLabel={t.showPassword}
+                hideLabel={t.hidePassword}
               />
             </div>
             {error && <p className="text-danger text-sm">{error}</p>}

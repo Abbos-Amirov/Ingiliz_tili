@@ -58,8 +58,8 @@ export const submitReview: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const { wordId, result } = req.body ?? {};
-    if (!wordId || (result !== "correct" && result !== "wrong")) {
-      res.status(400).json({ error: "wordId and result ('correct'|'wrong') are required" });
+    if (!wordId || (result !== "correct" && result !== "wrong" && result !== "helped")) {
+      res.status(400).json({ error: "wordId and result ('correct'|'wrong'|'helped') are required" });
       return;
     }
 
@@ -68,6 +68,8 @@ export const submitReview: RequestHandler = async (req, res, next) => {
       progress = await UserWordProgress.create({ userId, wordId });
     }
 
+    // A hint-assisted recall isn't independent retrieval, so it resets the
+    // SRS interval exactly like a wrong answer — the word resurfaces tomorrow.
     const updated = reviewWord(
       {
         easeFactor: progress.easeFactor,
@@ -75,7 +77,7 @@ export const submitReview: RequestHandler = async (req, res, next) => {
         repetitions: progress.repetitions,
         lapses: progress.lapses,
       },
-      result,
+      result === "helped" ? "wrong" : result,
     );
 
     progress.easeFactor = updated.easeFactor;
@@ -85,6 +87,7 @@ export const submitReview: RequestHandler = async (req, res, next) => {
     progress.dueDate = updated.dueDate;
     progress.lastReviewedAt = new Date();
     progress.lastResult = result;
+    if (result === "helped") progress.helpedCount += 1;
     await progress.save();
 
     if (result === "correct") {
@@ -143,6 +146,62 @@ export const sentenceForWord: RequestHandler = async (req, res, next) => {
       "words.text": { $regex: new RegExp(`^${escapeRegex(word.english)}$`, "i") },
     });
     res.json({ sentence: sentence ?? null });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const recallDistractors: RequestHandler = async (req, res, next) => {
+  try {
+    const wordId = req.query.wordId;
+    const count = Math.min(10, Math.max(1, Number(req.query.count) || 4));
+    if (!wordId || !Types.ObjectId.isValid(String(wordId))) {
+      res.status(400).json({ error: "Valid wordId query param is required" });
+      return;
+    }
+    const word = await Word.findById(wordId);
+    if (!word) {
+      res.status(404).json({ error: "Word not found" });
+      return;
+    }
+
+    let pool: WordDoc[] = [];
+
+    // Prefer distractors of the same part of speech (e.g. other verbs).
+    if (word.partOfSpeech) {
+      pool = await Word.aggregate<WordDoc>([
+        { $match: { _id: { $ne: word._id }, partOfSpeech: word.partOfSpeech } },
+        { $sample: { size: count } },
+      ]);
+    }
+
+    // Fall back to words from the same lesson range.
+    if (pool.length < count) {
+      const excludeIds = [word._id, ...pool.map((w) => w._id)];
+      const more = await Word.aggregate<WordDoc>([
+        {
+          $match: {
+            _id: { $nin: excludeIds },
+            lessonNumber: { $lte: word.lessonNumberEnd },
+            lessonNumberEnd: { $gte: word.lessonNumber },
+          },
+        },
+        { $sample: { size: count - pool.length } },
+      ]);
+      pool = [...pool, ...more];
+    }
+
+    // Last resort: any other word in the dictionary.
+    if (pool.length < count) {
+      const excludeIds = [word._id, ...pool.map((w) => w._id)];
+      const more = await Word.aggregate<WordDoc>([
+        { $match: { _id: { $nin: excludeIds } } },
+        { $sample: { size: count - pool.length } },
+      ]);
+      pool = [...pool, ...more];
+    }
+
+    res.json({ distractors: pool });
   } catch (err) {
     next(err);
   }

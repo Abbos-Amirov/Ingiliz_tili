@@ -21,9 +21,16 @@ function isValidRoleWordArray(value: unknown): boolean {
 
 export const listSentences: RequestHandler = async (req, res, next) => {
   try {
-    const { level, lessons, page = "1", limit = "50" } = req.query;
+    const { level, lessons, formula, page = "1", limit = "50" } = req.query;
     const filter: Record<string, unknown> = {};
     if (level) filter.level = level;
+    if (formula) {
+      filter.formula = formula;
+    } else {
+      // Grammar Hub practice sentences are only reachable via an explicit
+      // formula query — keep them out of the regular curriculum listing.
+      filter.isGrammarPractice = { $ne: true };
+    }
     if (lessons) {
       const lessonNumbers = String(lessons)
         .split(",")

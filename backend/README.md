@@ -15,6 +15,13 @@ npm run seed            # bazani so'z/gap/admin hisob bilan to'ldiradi
 npm run dev              # http://localhost:5051
 ```
 
+### Docker
+
+```bash
+docker build -t ingiliztili-backend .
+docker run -p 5051:5051 --env-file .env ingiliztili-backend
+```
+
 ## Muhit o'zgaruvchilari (`.env`)
 
 | O'zgaruvchi | Tavsif |
@@ -52,6 +59,7 @@ Barcha yo'llar `/api` prefiksi bilan boshlanadi.
 - `GET /srs/next-batch`, `POST /srs/review`, `GET /srs/difficult-words`, `POST /srs/recall-check`
 - `GET /stats/me`, `POST /stats/daily-check-in`
 - `POST /admin/ai-assist/translate`, `POST /admin/ai-assist/sentence-roles` (ikkalasi ham admin, AI yordamida)
+- `POST /chat/sentence` — joriy gap kontekstida AI bilan suhbat (autentifikatsiya talab qilinadi)
 - `GET /config/levels` — daraja bo'yicha grammatik formula/rol ro'yxati
 
 ## Texnologiyalar

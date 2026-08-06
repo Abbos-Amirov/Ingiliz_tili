@@ -16,6 +16,15 @@ npm run dev                          # http://localhost:5050
 
 Backend alohida ishga tushirilishi kerak (standart: `http://localhost:5051`) — ko'rsatmalar backend reposida.
 
+### Docker
+
+`NEXT_PUBLIC_*` o'zgaruvchilar build vaqtida JS bundle ichiga joylanadi, shuning uchun runtime emas, build-arg sifatida beriladi:
+
+```bash
+docker build -t ingiliztili-frontend --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:5051/api .
+docker run -p 5050:5050 ingiliztili-frontend
+```
+
 ## Muhit o'zgaruvchisi (`.env.local`)
 
 | O'zgaruvchi | Tavsif |

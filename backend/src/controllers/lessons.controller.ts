@@ -21,11 +21,17 @@ const GROUP_BY_RANGE_PIPELINE = [
   { $group: { _id: { start: "$lessonNumber", end: "$lessonNumberEnd" }, count: { $sum: 1 } } },
 ];
 
+// Grammar Hub practice sentences aren't part of the lesson curriculum.
+const SENTENCE_GROUP_BY_RANGE_PIPELINE = [
+  { $match: { isGrammarPractice: { $ne: true } } },
+  ...GROUP_BY_RANGE_PIPELINE,
+];
+
 export const listLessons: RequestHandler = async (_req, res, next) => {
   try {
     const [wordCounts, sentenceCounts] = await Promise.all([
       Word.aggregate<RangeCount>(GROUP_BY_RANGE_PIPELINE),
-      Sentence.aggregate<RangeCount>(GROUP_BY_RANGE_PIPELINE),
+      Sentence.aggregate<RangeCount>(SENTENCE_GROUP_BY_RANGE_PIPELINE),
     ]);
 
     const rangeKey = (start: number, end: number) => `${start}-${end}`;
@@ -54,7 +60,10 @@ export const nextLessonNumber: RequestHandler = async (_req, res, next) => {
   try {
     const [topWord, topSentence] = await Promise.all([
       Word.findOne().sort({ lessonNumberEnd: -1 }).select("lessonNumberEnd").lean(),
-      Sentence.findOne().sort({ lessonNumberEnd: -1 }).select("lessonNumberEnd").lean(),
+      Sentence.findOne({ isGrammarPractice: { $ne: true } })
+        .sort({ lessonNumberEnd: -1 })
+        .select("lessonNumberEnd")
+        .lean(),
     ]);
     const max = Math.max(topWord?.lessonNumberEnd ?? 0, topSentence?.lessonNumberEnd ?? 0);
     res.json({ nextLessonNumber: max + 1 });

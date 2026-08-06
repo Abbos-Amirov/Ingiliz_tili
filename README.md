@@ -23,6 +23,20 @@ npm install
 npm run dev    # http://localhost:5050
 ```
 
+### Docker orqali (ikkalasini birga)
+
+```bash
+docker compose up -d --build
+```
+
+Bu `backend/.env`dagi qiymatlarni o'qib backend'ni **http://localhost:5051**da, frontend'ni **http://localhost:5050**da ishga tushiradi (ikkalasi ham konteynerlarda). To'xtatish uchun: `docker compose down`. Loglarni ko'rish: `docker compose logs -f`. Bazani to'ldirish konteyner ichida: `docker compose exec backend node dist/scripts/seed.js`.
+
+Agar frontend haqiqiy (localhost bo'lmagan) backend manziliga ulanishi kerak bo'lsa, build vaqtida uzating (Next.js `NEXT_PUBLIC_*` o'zgaruvchilarni build paytida ichiga joylab qo'yadi):
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=https://api.sizning-domeningiz.com/api docker compose up -d --build
+```
+
 ### Admin kirish
 
 Seed skripti quyidagi admin hisobni yaratadi:

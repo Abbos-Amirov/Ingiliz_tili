@@ -9,7 +9,10 @@ const userWordProgressSchema = new Schema({
   lapses: { type: Number, default: 0 },
   dueDate: { type: Date, default: Date.now },
   lastReviewedAt: { type: Date, default: null },
-  lastResult: { type: String, enum: ["correct", "wrong", null], default: null },
+  lastResult: { type: String, enum: ["correct", "wrong", "helped", null], default: null },
+  // Number of times this word was only recalled with the "Yordam" hint flow,
+  // rather than typed independently. Useful for progress stats.
+  helpedCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 

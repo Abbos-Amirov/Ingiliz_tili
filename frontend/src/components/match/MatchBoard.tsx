@@ -6,6 +6,7 @@ import type { Word } from "@/lib/types";
 import { MatchWordTile } from "./MatchWordTile";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Button } from "@/components/ui/Button";
+import { MotivationToast } from "@/components/ui/MotivationToast";
 import { speak } from "@/lib/tts";
 import { useSrsActions } from "@/hooks/useSrsSession";
 import { useT } from "@/hooks/useT";
@@ -53,6 +54,7 @@ export function MatchBoard({
   const [matched, setMatched] = useState<Set<string>>(new Set());
   const [wrongIds, setWrongIds] = useState<Set<string>>(new Set());
   const [locked, setLocked] = useState(false);
+  const [motivationSignal, setMotivationSignal] = useState(0);
 
   const attempt = useCallback(
     (leftId: string | null, rightId: string | null) => {
@@ -71,6 +73,7 @@ export function MatchBoard({
         setSelectedLeft(null);
         setSelectedRight(null);
         setLocked(false);
+        setMotivationSignal((s) => s + 1);
         submitReview(leftId, "correct").catch(() => {});
       } else {
         setWrongIds(new Set([leftId, rightId]));
@@ -121,6 +124,7 @@ export function MatchBoard({
 
   return (
     <div className="w-full">
+      <MotivationToast signal={motivationSignal} />
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <ProgressBar value={matched.size} total={words.length} label={t.pairsFound} />
