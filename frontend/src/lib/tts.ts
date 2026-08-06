@@ -1,28 +1,22 @@
 export function speak(text: string, lang: "en-US" | "ko-KR" = "en-US"): void {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  const synth = window.speechSynthesis;
-
-  const doSpeak = () => {
-    try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = 0.95;
-      synth.speak(utterance);
-    } catch (err) {
-      console.warn("speechSynthesis failed:", err);
-    }
-  };
-
+  // Must run synchronously inside the tap/click handler that calls it. iOS
+  // Safari and WKWebView-based in-app browsers (KakaoTalk, Instagram, ...)
+  // silently drop speak() the moment it's deferred (even via setTimeout(0)
+  // or a promise microtask) — the engine only permits it as a direct
+  // continuation of the user gesture. Only cancel when something is actually
+  // in the queue, both to avoid pointless interruption and because it keeps
+  // this whole call synchronous with the gesture.
   try {
-    synth.cancel();
-  } catch {
-    // Some browsers (notably Safari on a non-HTTPS origin) can throw here —
-    // fall through and try to speak anyway.
+    const synth = window.speechSynthesis;
+    if (synth.speaking || synth.pending) {
+      synth.cancel();
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.95;
+    synth.speak(utterance);
+  } catch (err) {
+    console.warn("speechSynthesis failed:", err);
   }
-
-  // WebKit/Safari silently drops a speak() call fired in the same tick as
-  // cancel() — pushing it to the next tick avoids that without being
-  // perceptible, and still runs close enough to the click for Safari's
-  // "must originate from a user gesture" requirement.
-  window.setTimeout(doSpeak, 0);
 }
