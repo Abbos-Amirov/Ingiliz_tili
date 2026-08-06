@@ -15,7 +15,11 @@ const wordSchema = new Schema({
   // The word's permanent dictionary-level part of speech (noun, verb, ...).
   // Distinct from a Sentence word's grammatical role, which is contextual.
   partOfSpeech: { type: String, enum: [...PARTS_OF_SPEECH, null], default: null },
+  // Pre-generated pronunciation clips (served as static files) — used
+  // instead of the browser's speechSynthesis API, which many in-app
+  // browsers (KakaoTalk, Instagram, ...) and Android WebView don't support.
   audioUrl: { type: String, default: null },
+  koreanAudioUrl: { type: String, default: null },
   imageUrl: { type: String, default: null },
   // A word belongs to a lesson range [lessonNumber, lessonNumberEnd] (inclusive).
   // A single lesson is stored as lessonNumber === lessonNumberEnd; combined

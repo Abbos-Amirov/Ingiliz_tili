@@ -7,7 +7,7 @@ import { MatchWordTile } from "./MatchWordTile";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
-import { speak } from "@/lib/tts";
+import { playAudio } from "@/lib/tts";
 import { useSrsActions } from "@/hooks/useSrsSession";
 import { useT } from "@/hooks/useT";
 
@@ -92,14 +92,14 @@ export function MatchBoard({
 
   function handleLeftClick(word: Word) {
     if (matched.has(word._id) || locked) return;
-    speak(word.english, "en-US");
+    playAudio(word.audioUrl, word.english, "en-US");
     setSelectedLeft(word._id);
     attempt(word._id, selectedRight);
   }
 
   function handleRightClick(word: Word) {
     if (matched.has(word._id) || locked) return;
-    speak(word.korean, "ko-KR");
+    playAudio(word.koreanAudioUrl, word.korean, "ko-KR");
     setSelectedRight(word._id);
     attempt(selectedLeft, word._id);
   }

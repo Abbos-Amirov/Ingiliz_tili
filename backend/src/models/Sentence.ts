@@ -18,6 +18,10 @@ const sentenceSchema = new Schema({
   distractorWords: { type: [roleWordSchema], default: [] },
   // The grammar pattern this sentence teaches, e.g. "S+be+V-ing+O".
   formula: { type: String, default: "" },
+  // Pre-generated pronunciation clip of the full English sentence (see
+  // Word.audioUrl for why — the browser speechSynthesis API isn't reliable
+  // across in-app browsers like KakaoTalk or Android WebView).
+  audioUrl: { type: String, default: null },
   // Auto-generated practice material for the Grammar Hub module (see
   // GrammarTopic). Kept out of the regular lesson curriculum — excluded from
   // /sentences unless queried by `formula`, and from the lessons listing —

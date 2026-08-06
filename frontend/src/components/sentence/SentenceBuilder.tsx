@@ -7,7 +7,7 @@ import { WordChip } from "./WordChip";
 import { FormulaBar } from "./FormulaBar";
 import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
-import { speak } from "@/lib/tts";
+import { playAudio } from "@/lib/tts";
 import { useT } from "@/hooks/useT";
 import { ROLE_COLORS } from "@/lib/roleColors";
 
@@ -63,7 +63,7 @@ export function SentenceBuilder({
       if (nextPlaced.length === sentence.words.length) {
         setDone(true);
         setMotivationSignal((s) => s + 1);
-        speak(sentence.words.map((w) => w.text).join(" "), "en-US");
+        playAudio(sentence.audioUrl, sentence.words.map((w) => w.text).join(" "), "en-US");
       }
     } else {
       setWrongKey(item.key);

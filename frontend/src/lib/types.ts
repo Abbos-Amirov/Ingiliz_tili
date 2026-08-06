@@ -40,6 +40,7 @@ export interface Word {
   difficulty: Difficulty;
   partOfSpeech?: PartOfSpeech | null;
   audioUrl?: string | null;
+  koreanAudioUrl?: string | null;
   imageUrl?: string | null;
   lessonNumber: number;
   lessonNumberEnd: number;
@@ -51,6 +52,7 @@ export interface Sentence {
   words: RoleWord[];
   distractorWords: RoleWord[];
   formula: string;
+  audioUrl?: string | null;
   level: Difficulty;
   lessonNumber: number;
   lessonNumberEnd: number;
