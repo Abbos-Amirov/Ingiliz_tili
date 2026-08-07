@@ -13,7 +13,9 @@ import { Sentence } from "../src/models/Sentence";
 // frontend/public/audio and served as plain static assets. This exists
 // because many in-app browsers (KakaoTalk, Instagram, ...) and Android
 // WebView simply don't implement window.speechSynthesis, so pronunciation
-// can't rely on it. Idempotent: only fills in words/sentences missing audio.
+// can't rely on it. Idempotent by default: only fills in words/sentences
+// missing audio. Set FORCE_REGENERATE=1 to re-synthesize everything (e.g.
+// after changing RATE/voice) — used once to slow the pace down for learners.
 
 const execFileAsync = promisify(execFile);
 
@@ -23,10 +25,14 @@ const SENTENCES_DIR = path.join(FRONTEND_PUBLIC, "audio", "sentences");
 
 const EN_VOICE = "Samantha";
 const KO_VOICE = "Yuna";
+// macOS `say` defaults to ~175-180 wpm; 160 is a touch slower and clearer
+// for learners without sounding unnaturally slow.
+const RATE = "160";
+const FORCE = process.env.FORCE_REGENERATE === "1";
 
 async function synthesize(text: string, voice: string, outPath: string) {
   const tmpAiff = outPath.replace(/\.m4a$/, ".aiff");
-  await execFileAsync("say", ["-v", voice, "-o", tmpAiff, text]);
+  await execFileAsync("say", ["-v", voice, "-r", RATE, "-o", tmpAiff, text]);
   await execFileAsync("afconvert", ["-f", "m4af", "-d", "aac", tmpAiff, outPath]);
   await rm(tmpAiff);
 }
@@ -37,19 +43,21 @@ async function main() {
   await mkdir(WORDS_DIR, { recursive: true });
   await mkdir(SENTENCES_DIR, { recursive: true });
 
-  const words = await Word.find({ $or: [{ audioUrl: null }, { koreanAudioUrl: null }] });
-  console.log(`Words needing audio: ${words.length}`);
+  const words = await Word.find(
+    FORCE ? {} : { $or: [{ audioUrl: null }, { koreanAudioUrl: null }] },
+  );
+  console.log(`Words needing audio: ${words.length}${FORCE ? " (forced regeneration)" : ""}`);
   let wCount = 0;
   for (const w of words) {
     const id = w._id.toString();
     let changed = false;
-    if (!w.audioUrl) {
+    if (FORCE || !w.audioUrl) {
       const file = path.join(WORDS_DIR, `${id}-en.m4a`);
       await synthesize(w.english, EN_VOICE, file);
       w.audioUrl = `/audio/words/${id}-en.m4a`;
       changed = true;
     }
-    if (!w.koreanAudioUrl) {
+    if (FORCE || !w.koreanAudioUrl) {
       const file = path.join(WORDS_DIR, `${id}-ko.m4a`);
       await synthesize(w.korean, KO_VOICE, file);
       w.koreanAudioUrl = `/audio/words/${id}-ko.m4a`;
@@ -63,8 +71,8 @@ async function main() {
   }
   console.log();
 
-  const sentences = await Sentence.find({ audioUrl: null });
-  console.log(`Sentences needing audio: ${sentences.length}`);
+  const sentences = await Sentence.find(FORCE ? {} : { audioUrl: null });
+  console.log(`Sentences needing audio: ${sentences.length}${FORCE ? " (forced regeneration)" : ""}`);
   let sCount = 0;
   for (const s of sentences) {
     const id = s._id.toString();
