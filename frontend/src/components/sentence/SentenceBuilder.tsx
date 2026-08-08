@@ -103,20 +103,37 @@ export function SentenceBuilder({
         </div>
       )}
 
-      <div className="mt-6 min-h-16 rounded-2xl border-2 border-dashed border-border p-4 flex flex-wrap gap-3 items-start justify-center">
-        <AnimatePresence>
-          {placed.length === 0 && <span className="text-foreground/40 text-sm mt-2.5">{t.placeholder}</span>}
-          {placed.map((item, i) => (
-            <WordChip
-              key={item.key}
-              text={item.text}
-              role={item.role}
-              variant="placed"
-              showLabel={showLabels || done}
-              onClick={() => handleUndo(item, i)}
-            />
-          ))}
-        </AnimatePresence>
+      <div className="relative mt-6">
+        {done && (
+          <button
+            type="button"
+            onClick={() => playAudio(sentence.audioUrl, sentence.words.map((w) => w.text).join(" "), "en-US")}
+            aria-label={t.replayAudio}
+            title={t.replayAudio}
+            className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 h-8 w-8 flex items-center justify-center rounded-full bg-success text-white shadow-md shadow-success/30 hover:brightness-105 transition-all"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+          </button>
+        )}
+        <div className="min-h-16 rounded-2xl border-2 border-dashed border-border p-4 flex flex-wrap gap-3 items-start justify-center">
+          <AnimatePresence>
+            {placed.length === 0 && <span className="text-foreground/40 text-sm mt-2.5">{t.placeholder}</span>}
+            {placed.map((item, i) => (
+              <WordChip
+                key={item.key}
+                text={item.text}
+                role={item.role}
+                variant="placed"
+                showLabel={showLabels || done}
+                onClick={() => handleUndo(item, i)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -160,22 +177,7 @@ export function SentenceBuilder({
           animate={{ opacity: 1, y: 0 }}
           className="mt-8 flex flex-col items-center gap-3"
         >
-          <div className="flex items-center gap-2">
-            <p className="text-success font-bold text-lg">{t.correct}</p>
-            <button
-              type="button"
-              onClick={() => playAudio(sentence.audioUrl, sentence.words.map((w) => w.text).join(" "), "en-US")}
-              aria-label={t.replayAudio}
-              title={t.replayAudio}
-              className="h-8 w-8 flex items-center justify-center rounded-full bg-success-soft text-success hover:brightness-95 transition-colors"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              </svg>
-            </button>
-          </div>
+          <p className="text-success font-bold text-lg">{t.correct}</p>
           <p className="text-sm text-center max-w-md leading-relaxed">
             {sentence.words.map((rw, i) => (
               <span key={i}>
