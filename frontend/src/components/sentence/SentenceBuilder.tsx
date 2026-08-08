@@ -106,7 +106,7 @@ export function SentenceBuilder({
         </div>
       )}
 
-      <div className="relative mt-6">
+      <div className={`relative mt-6 ${done && sentence.deepExplanation ? "mb-14" : ""}`}>
         {done && (
           <button
             type="button"
@@ -137,6 +137,28 @@ export function SentenceBuilder({
             ))}
           </AnimatePresence>
         </div>
+
+        <AnimatePresence>
+          {done && sentence.deepExplanation && (
+            <motion.button
+              type="button"
+              onClick={() => setExplanationOpen(true)}
+              initial={{ opacity: 0, y: -10, scale: 0.9 }}
+              animate={{ opacity: 1, y: [0, -5, 0], scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.9 }}
+              transition={{
+                opacity: { duration: 0.3, delay: 0.2 },
+                scale: { duration: 0.3, delay: 0.2 },
+                y: { duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 },
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="absolute left-1/2 -translate-x-1/2 -bottom-6 z-10 w-[92%] sm:w-auto sm:max-w-sm gradient-primary text-white rounded-2xl px-4 py-2.5 shadow-lg shadow-indigo-500/30 text-xs font-semibold text-center leading-snug hover:brightness-105 transition-[filter]"
+            >
+              {td.triggerBtn}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -192,15 +214,6 @@ export function SentenceBuilder({
               </span>
             ))}
           </p>
-          {sentence.deepExplanation && (
-            <button
-              type="button"
-              onClick={() => setExplanationOpen(true)}
-              className="text-xs font-medium text-foreground/50 hover:text-foreground underline underline-offset-2"
-            >
-              {td.triggerBtn}
-            </button>
-          )}
           <Button onClick={onComplete}>{t.nextBtn}</Button>
         </motion.div>
       )}
