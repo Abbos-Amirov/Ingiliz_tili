@@ -13,6 +13,7 @@ import { MatchWordTile } from "@/components/match/MatchWordTile";
 import { useSrsActions } from "@/hooks/useSrsSession";
 import { useT } from "@/hooks/useT";
 import { useSessionStore } from "@/store/session";
+import { playAudio, speak } from "@/lib/tts";
 
 interface RecallResult {
   wordId: string;
@@ -201,22 +202,43 @@ export function RecallQuiz({ words, onFinish }: { words: Word[]; onFinish: (resu
                 )}
               </AnimatePresence>
 
-              <motion.input
-                autoFocus
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={inputDisabled}
-                animate={writeError ? { x: [0, -6, 6, -4, 4, 0] } : {}}
-                transition={{ duration: 0.35 }}
-                placeholder={stage === "write" ? word.english : t.placeholder}
-                className={`w-full max-w-xs text-center rounded-xl border-2 bg-surface-muted px-4 py-3 text-lg font-semibold outline-none focus:ring-2 focus:ring-primary disabled:opacity-70 transition-colors ${
-                  writeError ? "border-danger" : "border-border"
-                } ${
-                  stage === "write"
-                    ? "placeholder:font-semibold placeholder:text-foreground/25"
-                    : "placeholder:font-normal placeholder:text-foreground/40"
-                }`}
-              />
+              <div className="relative w-full max-w-xs">
+                {input.trim() && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      normalize(input) === normalize(word.english)
+                        ? playAudio(word.audioUrl, word.english, "en-US")
+                        : speak(input.trim(), "en-US")
+                    }
+                    aria-label={t.listenBtn}
+                    title={t.listenBtn}
+                    className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 h-8 w-8 flex items-center justify-center rounded-full bg-success text-white shadow-md shadow-success/30 hover:brightness-105 transition-all"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </svg>
+                  </button>
+                )}
+                <motion.input
+                  autoFocus
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={inputDisabled}
+                  animate={writeError ? { x: [0, -6, 6, -4, 4, 0] } : {}}
+                  transition={{ duration: 0.35 }}
+                  placeholder={stage === "write" ? word.english : t.placeholder}
+                  className={`w-full text-center rounded-xl border-2 bg-surface-muted px-4 py-3 text-lg font-semibold outline-none focus:ring-2 focus:ring-primary disabled:opacity-70 transition-colors ${
+                    writeError ? "border-danger" : "border-border"
+                  } ${
+                    stage === "write"
+                      ? "placeholder:font-semibold placeholder:text-foreground/25"
+                      : "placeholder:font-normal placeholder:text-foreground/40"
+                  }`}
+                />
+              </div>
 
               {stage === "idle" && !feedback && (
                 <div className="flex flex-col items-center gap-2">

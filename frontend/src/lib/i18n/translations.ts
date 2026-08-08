@@ -130,6 +130,7 @@ const uz = {
     confirm: "Tasdiqlash",
     writeMismatch: "Yuqoridagi so'zni xuddi shunday yozing",
     helpedFeedback: "✅ Yordam bilan topildi — ertaga yana ko'rinadi",
+    listenBtn: "Eshitish",
   },
   motivation: {
     words: [
@@ -433,6 +434,7 @@ const en = {
     confirm: "Confirm",
     writeMismatch: "Type the word above exactly as shown",
     helpedFeedback: "✅ Found with help — it'll show again tomorrow",
+    listenBtn: "Listen",
   },
   motivation: {
     words: [
@@ -736,6 +738,7 @@ const ko = {
     confirm: "확인",
     writeMismatch: "위 단어를 그대로 입력하세요",
     helpedFeedback: "✅ 도움으로 찾았어요 — 내일 다시 나타나요",
+    listenBtn: "듣기",
   },
   motivation: {
     words: [
