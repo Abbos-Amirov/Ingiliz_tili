@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { apiFetch } from "@/lib/api";
 import { playAudio } from "@/lib/tts";
 import type { FunctionWord, FunctionWordCategory } from "@/lib/types";
@@ -17,6 +17,7 @@ export default function FunctionWordsPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("functionWords");
+  const { locale } = useLocale();
 
   const [words, setWords] = useState<FunctionWord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,9 +39,9 @@ export default function FunctionWordsPage() {
     const q = query.trim().toLowerCase();
     if (!q) return words;
     return words.filter(
-      (w) => w.word.toLowerCase().includes(q) || w.korean.includes(q) || w.simpleExplanation.toLowerCase().includes(q),
+      (w) => w.word.toLowerCase().includes(q) || w.korean.includes(q) || w.simpleExplanation[locale].toLowerCase().includes(q),
     );
-  }, [words, query]);
+  }, [words, query, locale]);
 
   const grouped = useMemo(() => {
     const map = new Map<FunctionWordCategory, FunctionWord[]>();
@@ -87,8 +88,8 @@ export default function FunctionWordsPage() {
                           <p className="font-bold">
                             {w.word} {w.korean && <span className="text-foreground/50 font-normal text-sm">— {w.korean}</span>}
                           </p>
-                          {w.simpleExplanation && (
-                            <p className="text-sm text-foreground/60 mt-1 line-clamp-2">{w.simpleExplanation}</p>
+                          {w.simpleExplanation[locale] && (
+                            <p className="text-sm text-foreground/60 mt-1 line-clamp-2">{w.simpleExplanation[locale]}</p>
                           )}
                         </div>
                         <span

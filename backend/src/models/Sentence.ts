@@ -1,5 +1,6 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
 import { GRAMMAR_ROLES } from "../config/grammar";
+import { trilingualSchema } from "./schemas/trilingual";
 
 const roleWordSchema = new Schema(
   {
@@ -22,7 +23,8 @@ const wordExplanationSchema = new Schema(
   {
     text: { type: String, required: true },
     role: { type: String, enum: GRAMMAR_ROLES, required: true },
-    simpleExplanation: { type: String, default: "" },
+    // Trilingual — follows the app's language switcher (see translations.ts).
+    simpleExplanation: { type: trilingualSchema, default: () => ({}) },
     moreExamples: { type: [String], default: [] },
     // Matches a FunctionWord.word (e.g. "to", "the") when this token is a
     // predloglar/artikl/so'roq so'zi worth a deeper, reusable explanation —
@@ -36,7 +38,7 @@ const wordExplanationSchema = new Schema(
 const deepExplanationSchema = new Schema(
   {
     wordBreakdown: { type: [wordExplanationSchema], default: [] },
-    generalRule: { type: String, default: "" },
+    generalRule: { type: trilingualSchema, default: () => ({}) },
     practiceExamples: { type: [String], default: [] },
   },
   { _id: false },

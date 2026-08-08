@@ -1,11 +1,15 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
 import { FUNCTION_WORD_CATEGORIES } from "../config/functionWords";
+import { trilingualSchema } from "./schemas/trilingual";
 
 const usageTypeSchema = new Schema(
   {
-    meaning: { type: String, required: true, trim: true },
+    // Trilingual — follows the app's language switcher.
+    meaning: { type: trilingualSchema, default: () => ({}) },
+    // Plain English example sentence — content, not UI chrome, so it stays
+    // in one language regardless of the switcher.
     example: { type: String, required: true, trim: true },
-    note: { type: String, default: "" },
+    note: { type: trilingualSchema, default: () => ({}) },
   },
   { _id: false },
 );
@@ -14,7 +18,7 @@ const mistakeSchema = new Schema(
   {
     wrong: { type: String, required: true, trim: true },
     correct: { type: String, required: true, trim: true },
-    explanation: { type: String, required: true, trim: true },
+    explanation: { type: trilingualSchema, default: () => ({}) },
   },
   { _id: false },
 );
@@ -26,7 +30,7 @@ const functionWordSchema = new Schema({
   word: { type: String, required: true, trim: true, lowercase: true },
   category: { type: String, enum: FUNCTION_WORD_CATEGORIES, required: true },
   korean: { type: String, default: "" },
-  simpleExplanation: { type: String, default: "" },
+  simpleExplanation: { type: trilingualSchema, default: () => ({}) },
   usageTypes: { type: [usageTypeSchema], default: [] },
   commonMistakes: { type: [mistakeSchema], default: [] },
   // Pre-generated pronunciation clip (see Word.audioUrl for why).

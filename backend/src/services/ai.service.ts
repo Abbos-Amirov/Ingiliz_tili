@@ -279,17 +279,36 @@ export interface RoleWordInput {
   role: GrammarRole;
 }
 
+// UI-facing prose that follows the app's language switcher (uz/en/ko) — see
+// translations.ts's Locale type. Example sentences stay plain English
+// strings elsewhere (they're content, not UI chrome).
+export interface Trilingual {
+  uz: string;
+  en: string;
+  ko: string;
+}
+
+const TRILINGUAL_SCHEMA = {
+  type: "object" as const,
+  properties: {
+    uz: { type: "string" as const, description: "Uzbek" },
+    en: { type: "string" as const, description: "English" },
+    ko: { type: "string" as const, description: "Korean" },
+  },
+  required: ["uz", "en", "ko"],
+};
+
 export interface SentenceWordExplanation {
   text: string;
   role: GrammarRole;
-  simpleExplanation: string;
+  simpleExplanation: Trilingual;
   moreExamples: string[];
   functionWordRef: string | null;
 }
 
 export interface SentenceExplanationSuggestion {
   wordBreakdown: SentenceWordExplanation[];
-  generalRule: string;
+  generalRule: Trilingual;
   practiceExamples: string[];
 }
 
@@ -317,8 +336,9 @@ const SUGGEST_EXPLANATION_TOOL = {
           type: "object" as const,
           properties: {
             simpleExplanation: {
-              type: "string" as const,
-              description: "1-2 short, simple sentences (in Uzbek) explaining this word's job in THIS sentence, written for a child",
+              ...TRILINGUAL_SCHEMA,
+              description:
+                "1-2 short, simple sentences explaining this word's job in THIS sentence, written for a child — provided in Uzbek, English, AND Korean",
             },
             moreExamples: {
               type: "array" as const,
@@ -336,8 +356,8 @@ const SUGGEST_EXPLANATION_TOOL = {
         description: "Exactly one entry per word, in the exact same order as the sentence's word list given below",
       },
       generalRule: {
-        type: "string" as const,
-        description: "One short sentence (Uzbek) stating the general rule this sentence's grammar pattern teaches",
+        ...TRILINGUAL_SCHEMA,
+        description: "One short sentence stating the general rule this sentence's grammar pattern teaches — in Uzbek, English, AND Korean",
       },
       practiceExamples: {
         type: "array" as const,
@@ -350,8 +370,8 @@ const SUGGEST_EXPLANATION_TOOL = {
 };
 
 interface RawExplanationSuggestion {
-  wordBreakdown: { simpleExplanation: string; moreExamples: string[]; functionWordRef: string }[];
-  generalRule: string;
+  wordBreakdown: { simpleExplanation: Trilingual; moreExamples: string[]; functionWordRef: string }[];
+  generalRule: Trilingual;
   practiceExamples: string[];
 }
 
@@ -366,13 +386,13 @@ export async function generateSentenceExplanation(
 
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 1500,
+    max_tokens: 4000,
     tools: [SUGGEST_EXPLANATION_TOOL],
     tool_choice: { type: "tool", name: "suggest_sentence_explanation" },
     messages: [
       {
         role: "user",
-        content: `English sentence: "${words.map((w) => w.text).join(" ")}"\nKorean translation: "${koreanSentence}"\nGrammar formula: "${formula}"\n\nThe sentence's words, in order, each already tagged with its grammatical role:\n${wordList}\n\nFor a young Uzbek beginner learning English via Korean, explain what each word's job is in THIS sentence — simple, warm, 1-2 sentences each, in Uzbek. Then give one short general rule (Uzbek) for the grammar pattern, and 3 practice example sentences. Call the suggest_sentence_explanation tool with your answer.`,
+        content: `English sentence: "${words.map((w) => w.text).join(" ")}"\nKorean translation: "${koreanSentence}"\nGrammar formula: "${formula}"\n\nThe sentence's words, in order, each already tagged with its grammatical role:\n${wordList}\n\nFor a young beginner learning English who speaks Uzbek and knows Korean, explain what each word's job is in THIS sentence — simple, warm, 1-2 sentences each. Provide every explanation in THREE languages (Uzbek, English, and Korean) so it can be shown in whichever language the learner's app is set to. Then give one short general rule for the grammar pattern (also in all three languages), and 3 practice example sentences (English only). Call the suggest_sentence_explanation tool with your answer.`,
       },
     ],
   });
@@ -403,19 +423,19 @@ export async function generateSentenceExplanation(
 }
 
 export interface FunctionWordUsageType {
-  meaning: string;
+  meaning: Trilingual;
   example: string;
-  note: string;
+  note: Trilingual;
 }
 
 export interface FunctionWordMistake {
   wrong: string;
   correct: string;
-  explanation: string;
+  explanation: Trilingual;
 }
 
 export interface FunctionWordSuggestion {
-  simpleExplanation: string;
+  simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
 }
@@ -423,22 +443,22 @@ export interface FunctionWordSuggestion {
 const SUGGEST_FUNCTION_WORD_TOOL = {
   name: "suggest_function_word",
   description:
-    "Explain an English function word (preposition, article, or question word) for a beginner Uzbek learner studying via Korean.",
+    "Explain an English function word (preposition, article, or question word) for a beginner learner who speaks Uzbek and knows Korean.",
   input_schema: {
     type: "object" as const,
     properties: {
       simpleExplanation: {
-        type: "string" as const,
-        description: "1-2 simple sentences (Uzbek) giving a general, easy-to-remember sense of the word",
+        ...TRILINGUAL_SCHEMA,
+        description: "1-2 simple sentences giving a general, easy-to-remember sense of the word — in Uzbek, English, AND Korean",
       },
       usageTypes: {
         type: "array" as const,
         items: {
           type: "object" as const,
           properties: {
-            meaning: { type: "string" as const, description: "Short Uzbek description of this specific meaning/use" },
+            meaning: { ...TRILINGUAL_SCHEMA, description: "Short description of this specific meaning/use — in Uzbek, English, AND Korean" },
             example: { type: "string" as const, description: "Short English example sentence demonstrating it" },
-            note: { type: "string" as const, description: "Short Uzbek clarifying note" },
+            note: { ...TRILINGUAL_SCHEMA, description: "Short clarifying note — in Uzbek, English, AND Korean" },
           },
           required: ["meaning", "example", "note"],
         },
@@ -451,7 +471,7 @@ const SUGGEST_FUNCTION_WORD_TOOL = {
           properties: {
             wrong: { type: "string" as const, description: "An incorrect sentence learners commonly write with this word" },
             correct: { type: "string" as const, description: "The corrected version" },
-            explanation: { type: "string" as const, description: "Short Uzbek explanation of the mistake" },
+            explanation: { ...TRILINGUAL_SCHEMA, description: "Short explanation of the mistake — in Uzbek, English, AND Korean" },
           },
           required: ["wrong", "correct", "explanation"],
         },
@@ -470,13 +490,13 @@ export async function generateFunctionWordContent(
 
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 1200,
+    max_tokens: 2200,
     tools: [SUGGEST_FUNCTION_WORD_TOOL],
     tool_choice: { type: "tool", name: "suggest_function_word" },
     messages: [
       {
         role: "user",
-        content: `Explain the English ${category.replace("_", " ")} "${word}" for a beginner Uzbek learner studying English via Korean. Category options for context: ${FUNCTION_WORD_CATEGORIES.join(", ")}. Call the suggest_function_word tool with your answer.`,
+        content: `Explain the English ${category.replace("_", " ")} "${word}" for a beginner learner who speaks Uzbek and knows Korean. Category options for context: ${FUNCTION_WORD_CATEGORIES.join(", ")}. Provide every explanation/meaning/note field in THREE languages (Uzbek, English, and Korean) so it can be shown in whichever language the learner's app is set to; keep example sentences in English only. Call the suggest_function_word tool with your answer.`,
       },
     ],
   });

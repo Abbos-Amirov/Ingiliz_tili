@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import { FunctionWordModal } from "@/components/functionWords/FunctionWordModal";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { useGrammarTopics } from "@/hooks/useGrammarTopics";
 import { apiFetch } from "@/lib/api";
 import { ROLE_COLORS } from "@/lib/roleColors";
@@ -39,6 +39,7 @@ export function DeepExplanationModal({
   onClose: () => void;
 }) {
   const t = useT("deepExplanation");
+  const { locale } = useLocale();
   const { fetchTopics } = useGrammarTopics();
   const [grammarTopicId, setGrammarTopicId] = useState<string | null>(null);
   const [functionWords, setFunctionWords] = useState<FunctionWord[]>([]);
@@ -103,7 +104,7 @@ export function DeepExplanationModal({
                         {color.label}
                       </span>
                     </div>
-                    <p className="text-sm leading-relaxed">{wb.simpleExplanation}</p>
+                    <p className="text-sm leading-relaxed">{wb.simpleExplanation[locale]}</p>
                     {wb.moreExamples.length > 0 && (
                       <ul className="mt-1.5 space-y-0.5">
                         {wb.moreExamples.map((ex, j) => (
@@ -130,12 +131,12 @@ export function DeepExplanationModal({
               })}
             </div>
 
-            {explanation.generalRule && (
+            {explanation.generalRule[locale] && (
               <div className="rounded-xl bg-accent-soft p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50 mb-1">
                   {t.generalRuleTitle}
                 </p>
-                <p className="text-sm">{explanation.generalRule}</p>
+                <p className="text-sm">{explanation.generalRule[locale]}</p>
               </div>
             )}
 

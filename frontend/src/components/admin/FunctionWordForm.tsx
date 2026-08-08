@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { FunctionWord, FunctionWordCategory, FunctionWordMistake, FunctionWordUsageType } from "@/lib/types";
+import type { FunctionWord, FunctionWordCategory, FunctionWordMistake, FunctionWordUsageType, Trilingual } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { AiFunctionWordAssistButton } from "./AiAssistPanel";
+import { TrilingualInput, TrilingualTextarea } from "./TrilingualField";
 
 const CATEGORY_LABELS: Record<FunctionWordCategory, string> = {
   preposition: "Predlog",
@@ -13,11 +14,13 @@ const CATEGORY_LABELS: Record<FunctionWordCategory, string> = {
   infinitive_marker: "Infinitive belgisi",
 };
 
+const emptyTrilingual: Trilingual = { uz: "", en: "", ko: "" };
+
 interface FormValues {
   word: string;
   category: FunctionWordCategory;
   korean: string;
-  simpleExplanation: string;
+  simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
   order: string;
@@ -27,7 +30,7 @@ const emptyValues: FormValues = {
   word: "",
   category: "preposition",
   korean: "",
-  simpleExplanation: "",
+  simpleExplanation: emptyTrilingual,
   usageTypes: [],
   commonMistakes: [],
   order: "0",
@@ -65,7 +68,7 @@ export function FunctionWordForm({
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
-  function applyAiSuggestion(s: { simpleExplanation: string; usageTypes: FunctionWordUsageType[]; commonMistakes: FunctionWordMistake[] }) {
+  function applyAiSuggestion(s: { simpleExplanation: Trilingual; usageTypes: FunctionWordUsageType[]; commonMistakes: FunctionWordMistake[] }) {
     setValues((prev) => ({
       ...prev,
       simpleExplanation: s.simpleExplanation,
@@ -145,51 +148,54 @@ export function FunctionWordForm({
 
       <AiFunctionWordAssistButton word={values.word} category={values.category} onSuggestion={applyAiSuggestion} />
 
-      <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Oddiy tushuntirish</span>
-        <textarea
-          value={values.simpleExplanation}
-          onChange={(e) => update("simpleExplanation", e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary min-h-20"
-        />
-      </label>
+      <div>
+        <span className="block text-sm font-medium mb-1.5">Oddiy tushuntirish (uz / en / ko)</span>
+        <TrilingualTextarea value={values.simpleExplanation} onChange={(v) => update("simpleExplanation", v)} />
+      </div>
 
       <div className="rounded-xl border border-border p-4 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">Ishlatilish turlari</p>
         {values.usageTypes.map((ut, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input
+          <div key={i} className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground/50">Tur #{i + 1}</span>
+              <button
+                type="button"
+                onClick={() => update("usageTypes", values.usageTypes.filter((_, j) => j !== i))}
+                className="shrink-0 text-danger text-lg leading-none w-7 h-7 flex items-center justify-center rounded-full hover:bg-danger-soft"
+              >
+                ×
+              </button>
+            </div>
+            <div>
+              <span className="block text-xs font-medium mb-1">Ma&apos;no</span>
+              <TrilingualInput
                 value={ut.meaning}
-                onChange={(e) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, meaning: e.target.value } : x)))}
-                placeholder="Ma'no"
-                className="input"
+                onChange={(v) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, meaning: v } : x)))}
               />
+            </div>
+            <div>
+              <span className="block text-xs font-medium mb-1">Misol (en)</span>
               <input
                 value={ut.example}
                 onChange={(e) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, example: e.target.value } : x)))}
-                placeholder="Misol (en)"
-                className="input"
-              />
-              <input
-                value={ut.note}
-                onChange={(e) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, note: e.target.value } : x)))}
-                placeholder="Izoh"
-                className="input"
+                className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => update("usageTypes", values.usageTypes.filter((_, j) => j !== i))}
-              className="shrink-0 text-danger text-lg leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-danger-soft"
-            >
-              ×
-            </button>
+            <div>
+              <span className="block text-xs font-medium mb-1">Izoh</span>
+              <TrilingualInput
+                value={ut.note}
+                onChange={(v) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, note: v } : x)))}
+              />
+            </div>
           </div>
         ))}
         <button
           type="button"
-          onClick={() => update("usageTypes", [...values.usageTypes, { meaning: "", example: "", note: "" }])}
+          onClick={() =>
+            update("usageTypes", [...values.usageTypes, { meaning: emptyTrilingual, example: "", note: emptyTrilingual }])
+          }
           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
         >
           + Tur qo&apos;shish
@@ -199,39 +205,45 @@ export function FunctionWordForm({
       <div className="rounded-xl border border-border p-4 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">Tez-tez uchraydigan xatolar</p>
         {values.commonMistakes.map((cm, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div key={i} className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground/50">Xato #{i + 1}</span>
+              <button
+                type="button"
+                onClick={() => update("commonMistakes", values.commonMistakes.filter((_, j) => j !== i))}
+                className="shrink-0 text-danger text-lg leading-none w-7 h-7 flex items-center justify-center rounded-full hover:bg-danger-soft"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input
                 value={cm.wrong}
                 onChange={(e) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, wrong: e.target.value } : x)))}
-                placeholder="✗ Noto'g'ri"
-                className="input"
+                placeholder="✗ Noto'g'ri (en)"
+                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
               />
               <input
                 value={cm.correct}
                 onChange={(e) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, correct: e.target.value } : x)))}
-                placeholder="✓ To'g'ri"
-                className="input"
-              />
-              <input
-                value={cm.explanation}
-                onChange={(e) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, explanation: e.target.value } : x)))}
-                placeholder="Tushuntirish"
-                className="input"
+                placeholder="✓ To'g'ri (en)"
+                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => update("commonMistakes", values.commonMistakes.filter((_, j) => j !== i))}
-              className="shrink-0 text-danger text-lg leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-danger-soft"
-            >
-              ×
-            </button>
+            <div>
+              <span className="block text-xs font-medium mb-1">Tushuntirish</span>
+              <TrilingualInput
+                value={cm.explanation}
+                onChange={(v) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, explanation: v } : x)))}
+              />
+            </div>
           </div>
         ))}
         <button
           type="button"
-          onClick={() => update("commonMistakes", [...values.commonMistakes, { wrong: "", correct: "", explanation: "" }])}
+          onClick={() =>
+            update("commonMistakes", [...values.commonMistakes, { wrong: "", correct: "", explanation: emptyTrilingual }])
+          }
           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
         >
           + Xato qo&apos;shish
@@ -253,21 +265,6 @@ export function FunctionWordForm({
       <Button type="submit" className="w-full" disabled={saving}>
         {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Qo'shish"}
       </Button>
-
-      <style jsx>{`
-        :global(.input) {
-          width: 100%;
-          border-radius: 0.75rem;
-          border: 1px solid var(--border);
-          background: var(--surface-muted);
-          padding: 0.6rem 0.9rem;
-          outline: none;
-          font-size: 0.875rem;
-        }
-        :global(.input:focus) {
-          box-shadow: 0 0 0 2px var(--primary);
-        }
-      `}</style>
     </form>
   );
 }

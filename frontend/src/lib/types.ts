@@ -1,6 +1,15 @@
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 export type Role = "user" | "admin";
 
+// UI-facing prose that follows the app's language switcher (see Locale in
+// i18n/translations.ts). Example sentences stay plain strings elsewhere —
+// they're content, not UI chrome, so they don't change with the switcher.
+export interface Trilingual {
+  uz: string;
+  en: string;
+  ko: string;
+}
+
 export type PartOfSpeech =
   | "noun"
   | "pronoun"
@@ -50,14 +59,14 @@ export interface Word {
 export interface SentenceWordExplanation {
   text: string;
   role: GrammarRole;
-  simpleExplanation: string;
+  simpleExplanation: Trilingual;
   moreExamples: string[];
   functionWordRef?: string | null;
 }
 
 export interface SentenceDeepExplanation {
   wordBreakdown: SentenceWordExplanation[];
-  generalRule: string;
+  generalRule: Trilingual;
   practiceExamples: string[];
 }
 
@@ -175,15 +184,15 @@ export interface GrammarTopicProgress {
 export type FunctionWordCategory = "preposition" | "article" | "question_word" | "infinitive_marker";
 
 export interface FunctionWordUsageType {
-  meaning: string;
+  meaning: Trilingual;
   example: string;
-  note: string;
+  note: Trilingual;
 }
 
 export interface FunctionWordMistake {
   wrong: string;
   correct: string;
-  explanation: string;
+  explanation: Trilingual;
 }
 
 export interface FunctionWord {
@@ -191,7 +200,7 @@ export interface FunctionWord {
   word: string;
   category: FunctionWordCategory;
   korean: string;
-  simpleExplanation: string;
+  simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
   audioUrl?: string | null;

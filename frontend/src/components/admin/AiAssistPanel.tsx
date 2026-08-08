@@ -14,6 +14,7 @@ import type {
   PartOfSpeech,
   RoleWord,
   SentenceWordExplanation,
+  Trilingual,
 } from "@/lib/types";
 
 interface Suggestion {
@@ -129,7 +130,7 @@ export function AiGrammarAssistButton({
 
 interface SentenceExplanationSuggestion {
   wordBreakdown: SentenceWordExplanation[];
-  generalRule: string;
+  generalRule: Trilingual;
   practiceExamples: string[];
 }
 
@@ -184,7 +185,7 @@ export function AiDeepExplanationAssistButton({
 }
 
 interface FunctionWordSuggestion {
-  simpleExplanation: string;
+  simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
 }

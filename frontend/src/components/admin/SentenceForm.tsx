@@ -8,6 +8,7 @@ import { parseLessonRangeText, formatLessonRange } from "@/lib/lessonRange";
 import { ROLE_COLORS, GRAMMAR_ROLES } from "@/lib/roleColors";
 import { useLevelsConfig } from "@/hooks/useLevelsConfig";
 import { AiDeepExplanationAssistButton } from "./AiAssistPanel";
+import { TrilingualTextarea } from "./TrilingualField";
 
 function splitToRoleWords(text: string, defaultRole: GrammarRole): RoleWord[] {
   return text
@@ -306,22 +307,21 @@ export function SentenceForm({
                   >
                     {wb.text} · {color.label}
                   </span>
-                  <textarea
+                  <TrilingualTextarea
                     value={wb.simpleExplanation}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setDeepExplanation((prev) =>
                         prev
                           ? {
                               ...prev,
                               wordBreakdown: prev.wordBreakdown.map((x, j) =>
-                                j === i ? { ...x, simpleExplanation: e.target.value } : x,
+                                j === i ? { ...x, simpleExplanation: v } : x,
                               ),
                             }
                           : prev,
                       )
                     }
                     placeholder="Oddiy tushuntirish"
-                    className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary min-h-16"
                   />
                   <div className="flex gap-2">
                     <input
@@ -371,16 +371,13 @@ export function SentenceForm({
               );
             })}
 
-            <label className="block">
+            <div>
               <span className="block text-xs font-medium mb-1">Umumiy qoida</span>
-              <textarea
+              <TrilingualTextarea
                 value={deepExplanation.generalRule}
-                onChange={(e) =>
-                  setDeepExplanation((prev) => (prev ? { ...prev, generalRule: e.target.value } : prev))
-                }
-                className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary min-h-14"
+                onChange={(v) => setDeepExplanation((prev) => (prev ? { ...prev, generalRule: v } : prev))}
               />
-            </label>
+            </div>
 
             <div>
               <span className="block text-xs font-medium mb-1">Mustaqil mashq gaplari</span>

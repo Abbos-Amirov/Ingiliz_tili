@@ -97,8 +97,8 @@ export default function AdminFunctionWordsPage() {
                       <p className="font-semibold mb-1">
                         {w.word} {w.korean && <span className="text-foreground/50 font-normal">— {w.korean}</span>}
                       </p>
-                      {w.simpleExplanation && (
-                        <p className="text-sm text-foreground/70 max-w-xl">{w.simpleExplanation}</p>
+                      {w.simpleExplanation.uz && (
+                        <p className="text-sm text-foreground/70 max-w-xl">{w.simpleExplanation.uz}</p>
                       )}
                       <div className="flex gap-3 mt-1.5 text-xs text-foreground/40">
                         <span>{w.usageTypes.length} ta ishlatilish turi</span>

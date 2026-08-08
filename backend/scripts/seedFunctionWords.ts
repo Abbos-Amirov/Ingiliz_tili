@@ -35,6 +35,8 @@ const SEED: { word: string; category: FunctionWordCategory; korean: string; orde
   { word: "which", category: "question_word", korean: "어느", order: 20 },
 ];
 
+const FORCE = process.env.FORCE_REGENERATE === "1";
+
 async function main() {
   await mongoose.connect(env.MONGODB_URI);
   console.log("Connected to MongoDB for function-words seeding");
@@ -49,8 +51,10 @@ async function main() {
   }
   console.log(`Seeded ${created} new function words (${SEED.length - created} already existed).`);
 
-  const needsContent = await FunctionWord.find({ simpleExplanation: "" });
-  console.log(`Function words needing AI content: ${needsContent.length}`);
+  const needsContent = FORCE
+    ? await FunctionWord.find({})
+    : await FunctionWord.find({ "simpleExplanation.uz": "" });
+  console.log(`Function words needing AI content: ${needsContent.length}${FORCE ? " (forced regeneration)" : ""}`);
   let filled = 0;
   for (const fw of needsContent) {
     try {

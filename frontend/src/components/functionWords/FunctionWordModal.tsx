@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "@/components/ui/Modal";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { playAudio } from "@/lib/tts";
 import type { FunctionWord } from "@/lib/types";
 
@@ -11,6 +11,7 @@ import type { FunctionWord } from "@/lib/types";
  * word's functionWordRef is tapped. */
 export function FunctionWordModal({ functionWord, onClose }: { functionWord: FunctionWord | null; onClose: () => void }) {
   const t = useT("functionWords");
+  const { locale } = useLocale();
 
   return (
     <Modal open={Boolean(functionWord)} onClose={onClose} title={functionWord?.word ?? ""}>
@@ -19,8 +20,8 @@ export function FunctionWordModal({ functionWord, onClose }: { functionWord: Fun
           <div className="flex items-start justify-between gap-3">
             <div>
               {functionWord.korean && <p className="text-foreground/60 text-sm">{functionWord.korean}</p>}
-              {functionWord.simpleExplanation && (
-                <p className="text-sm leading-relaxed mt-1">{functionWord.simpleExplanation}</p>
+              {functionWord.simpleExplanation[locale] && (
+                <p className="text-sm leading-relaxed mt-1">{functionWord.simpleExplanation[locale]}</p>
               )}
             </div>
             <button
@@ -43,9 +44,9 @@ export function FunctionWordModal({ functionWord, onClose }: { functionWord: Fun
               <div className="space-y-2">
                 {functionWord.usageTypes.map((ut, i) => (
                   <div key={i} className="rounded-xl bg-surface-muted p-3">
-                    <p className="font-semibold text-sm">{ut.meaning}</p>
+                    <p className="font-semibold text-sm">{ut.meaning[locale]}</p>
                     <p className="text-sm text-foreground/70 mt-0.5">{ut.example}</p>
-                    {ut.note && <p className="text-xs text-foreground/50 mt-0.5">{ut.note}</p>}
+                    {ut.note[locale] && <p className="text-xs text-foreground/50 mt-0.5">{ut.note[locale]}</p>}
                   </div>
                 ))}
               </div>
@@ -64,7 +65,7 @@ export function FunctionWordModal({ functionWord, onClose }: { functionWord: Fun
                     <p className="text-success mt-0.5">
                       {t.correctLabel}: {cm.correct}
                     </p>
-                    <p className="text-foreground/60 text-xs mt-1">{cm.explanation}</p>
+                    <p className="text-foreground/60 text-xs mt-1">{cm.explanation[locale]}</p>
                   </div>
                 ))}
               </div>

@@ -7,21 +7,25 @@ import { generateSentenceExplanation } from "../src/services/ai.service";
 // One-time/occasional backfill for FEATURE 1 ("Gap tahlili / Chuqur
 // tushuntirish") — generates deepExplanation for every existing sentence
 // that doesn't have one yet, via the same AI endpoint the admin's "AI bilan
-// chuqur tushuntirish yaratish" button calls. Idempotent: only touches
-// sentences with deepExplanation === null. Set LIMIT to cap how many are
-// processed in one run (useful for a first smoke-test before running it on
-// the full curriculum).
+// chuqur tushuntirish yaratish" button calls. Idempotent by default: only
+// touches sentences with deepExplanation === null. Set FORCE_REGENERATE=1 to
+// regenerate every sentence regardless (e.g. after changing the tool schema
+// shape, as when simpleExplanation/generalRule became trilingual). Set LIMIT
+// to cap how many are processed in one run.
 
 const LIMIT = process.env.LIMIT ? Number(process.env.LIMIT) : undefined;
+const FORCE = process.env.FORCE_REGENERATE === "1";
 
 async function main() {
   await mongoose.connect(env.MONGODB_URI);
   console.log("Connected to MongoDB for deep-explanation generation");
 
-  let query = Sentence.find({ deepExplanation: null });
+  let query = Sentence.find(FORCE ? {} : { deepExplanation: null });
   if (LIMIT) query = query.limit(LIMIT);
   const sentences = await query;
-  console.log(`Sentences needing deep explanation: ${sentences.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
+  console.log(
+    `Sentences needing deep explanation: ${sentences.length}${FORCE ? " (forced regeneration)" : ""}${LIMIT ? ` (limited to ${LIMIT})` : ""}`,
+  );
 
   let done = 0;
   let failed = 0;
