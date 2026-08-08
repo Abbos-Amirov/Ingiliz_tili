@@ -107,6 +107,7 @@ const uz = {
     placeholder: "Gap shu yerda tuziladi...",
     wrongHint: "Bu so'z hozircha noto'g'ri joyda. Gap tartibini diqqat bilan o'ylab ko'ring.",
     correct: "To'g'ri! 🎉",
+    replayAudio: "Qayta eshitish",
     nextBtn: "Keyingi gap →",
   },
   recall: {
@@ -342,6 +343,7 @@ const en = {
     placeholder: "The sentence will be built here...",
     wrongHint: "That word doesn't belong there yet. Think carefully about the sentence order.",
     correct: "Correct! 🎉",
+    replayAudio: "Play again",
     nextBtn: "Next sentence →",
   },
   recall: {
@@ -577,6 +579,7 @@ const ko = {
     placeholder: "여기에 문장이 만들어집니다...",
     wrongHint: "아직 여기에 맞는 단어가 아닙니다. 문장 순서를 잘 생각해 보세요.",
     correct: "정답이에요! 🎉",
+    replayAudio: "다시 듣기",
     nextBtn: "다음 문장 →",
   },
   recall: {

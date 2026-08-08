@@ -24,6 +24,7 @@ interface PoolItem {
   key: string;
   text: string;
   role: GrammarRole;
+  audioUrl?: string | null;
 }
 
 export function SentenceBuilder({
@@ -36,7 +37,7 @@ export function SentenceBuilder({
   const t = useT("sentence");
   const pool = useMemo(() => {
     const all = [...sentence.words, ...sentence.distractorWords];
-    return shuffle(all.map((rw, i) => ({ key: `${rw.text}-${i}`, text: rw.text, role: rw.role })));
+    return shuffle(all.map((rw, i) => ({ key: `${rw.text}-${i}`, text: rw.text, role: rw.role, audioUrl: rw.audioUrl })));
   }, [sentence]);
 
   const [remaining, setRemaining] = useState<PoolItem[]>(pool);
@@ -53,6 +54,7 @@ export function SentenceBuilder({
 
   function handlePick(item: PoolItem) {
     if (wrongKey || done) return;
+    playAudio(item.audioUrl, item.text, "en-US");
     const expected = sentence.words[placed.length];
     if (item.text === expected.text) {
       const nextPlaced = [...placed, item];
@@ -158,7 +160,22 @@ export function SentenceBuilder({
           animate={{ opacity: 1, y: 0 }}
           className="mt-8 flex flex-col items-center gap-3"
         >
-          <p className="text-success font-bold text-lg">{t.correct}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-success font-bold text-lg">{t.correct}</p>
+            <button
+              type="button"
+              onClick={() => playAudio(sentence.audioUrl, sentence.words.map((w) => w.text).join(" "), "en-US")}
+              aria-label={t.replayAudio}
+              title={t.replayAudio}
+              className="h-8 w-8 flex items-center justify-center rounded-full bg-success-soft text-success hover:brightness-95 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </button>
+          </div>
           <p className="text-sm text-center max-w-md leading-relaxed">
             {sentence.words.map((rw, i) => (
               <span key={i}>

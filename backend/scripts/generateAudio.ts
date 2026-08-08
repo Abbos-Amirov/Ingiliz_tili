@@ -22,6 +22,7 @@ const execFileAsync = promisify(execFile);
 const FRONTEND_PUBLIC = path.resolve(__dirname, "../../frontend/public");
 const WORDS_DIR = path.join(FRONTEND_PUBLIC, "audio", "words");
 const SENTENCES_DIR = path.join(FRONTEND_PUBLIC, "audio", "sentences");
+const TOKENS_DIR = path.join(FRONTEND_PUBLIC, "audio", "tokens");
 
 const EN_VOICE = "Samantha";
 const KO_VOICE = "Yuna";
@@ -29,6 +30,19 @@ const KO_VOICE = "Yuna";
 // for learners without sounding unnaturally slow.
 const RATE = "160";
 const FORCE = process.env.FORCE_REGENERATE === "1";
+
+function normalize(text: string): string {
+  return text.trim().toLowerCase();
+}
+
+function slug(text: string): string {
+  const s = text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return s || Buffer.from(text).toString("hex").slice(0, 24);
+}
 
 async function synthesize(text: string, voice: string, outPath: string) {
   const tmpAiff = outPath.replace(/\.m4a$/, ".aiff");
@@ -42,10 +56,9 @@ async function main() {
   console.log("Connected to MongoDB for audio generation");
   await mkdir(WORDS_DIR, { recursive: true });
   await mkdir(SENTENCES_DIR, { recursive: true });
+  await mkdir(TOKENS_DIR, { recursive: true });
 
-  const words = await Word.find(
-    FORCE ? {} : { $or: [{ audioUrl: null }, { koreanAudioUrl: null }] },
-  );
+  const words = await Word.find(FORCE ? {} : { $or: [{ audioUrl: null }, { koreanAudioUrl: null }] });
   console.log(`Words needing audio: ${words.length}${FORCE ? " (forced regeneration)" : ""}`);
   let wCount = 0;
   for (const w of words) {
@@ -72,7 +85,7 @@ async function main() {
   console.log();
 
   const sentences = await Sentence.find(FORCE ? {} : { audioUrl: null });
-  console.log(`Sentences needing audio: ${sentences.length}${FORCE ? " (forced regeneration)" : ""}`);
+  console.log(`Sentences needing full-sentence audio: ${sentences.length}${FORCE ? " (forced regeneration)" : ""}`);
   let sCount = 0;
   for (const s of sentences) {
     const id = s._id.toString();
@@ -83,6 +96,49 @@ async function main() {
     await s.save();
     sCount++;
     process.stdout.write(`\r  sentences done: ${sCount}/${sentences.length}`);
+  }
+  console.log();
+
+  // Per-word audio, played when a learner taps a word while building a
+  // sentence. Reuse an existing Word.audioUrl whenever the text matches a
+  // dictionary word exactly (very common — "I", "a", "write", ...), and
+  // reuse newly-generated clips across sentences too, so the same word is
+  // never synthesized twice.
+  const reuseCache = new Map<string, string>();
+  const allWords = await Word.find({ audioUrl: { $ne: null } }, { english: 1, audioUrl: 1 });
+  for (const w of allWords) {
+    if (w.audioUrl) reuseCache.set(normalize(w.english), w.audioUrl);
+  }
+
+  const allSentences = await Sentence.find();
+  let tCount = 0;
+  let reused = 0;
+  for (const s of allSentences) {
+    let changed = false;
+    for (const list of [s.words, s.distractorWords]) {
+      for (const rw of list) {
+        if (!FORCE && rw.audioUrl) continue;
+        const key = normalize(rw.text);
+        let url = reuseCache.get(key);
+        if (!url || FORCE) {
+          const file = path.join(TOKENS_DIR, `${slug(key)}.m4a`);
+          await synthesize(rw.text, EN_VOICE, file);
+          url = `/audio/tokens/${slug(key)}.m4a`;
+          reuseCache.set(key, url);
+          tCount++;
+        } else {
+          reused++;
+        }
+        rw.audioUrl = url;
+        changed = true;
+      }
+    }
+    if (changed) {
+      s.markModified("words");
+      s.markModified("distractorWords");
+      await s.save();
+      process.stdout.write(`\r  per-word audio: ${tCount} generated, ${reused} reused`);
+    }
   }
   console.log();
 

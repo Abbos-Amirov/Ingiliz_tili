@@ -28,6 +28,7 @@ export type GrammarRole =
 export interface RoleWord {
   text: string;
   role: GrammarRole;
+  audioUrl?: string | null;
 }
 
 export interface Word {

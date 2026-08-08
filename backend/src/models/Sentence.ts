@@ -5,6 +5,11 @@ const roleWordSchema = new Schema(
   {
     text: { type: String, required: true },
     role: { type: String, enum: GRAMMAR_ROLES, required: true },
+    // Pre-generated pronunciation clip for this individual word — played
+    // when the learner taps it while building the sentence (see
+    // Word.audioUrl / Sentence.audioUrl for why real clips, not
+    // speechSynthesis, are used).
+    audioUrl: { type: String, default: null },
   },
   { _id: false },
 );
