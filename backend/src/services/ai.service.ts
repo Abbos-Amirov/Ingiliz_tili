@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { AI_API_KEY } from "../config/env";
 import { GRAMMAR_ROLES, GrammarRole, PARTS_OF_SPEECH, PartOfSpeech } from "../config/grammar";
 import { IRREGULAR_VERB_CATEGORIES, IrregularVerbCategory } from "../config/irregularVerbs";
+import { FUNCTION_WORD_CATEGORIES, FunctionWordCategory } from "../config/functionWords";
 
 export interface TranslationSuggestion {
   korean: string;
@@ -271,6 +272,216 @@ export async function generateGrammarTopicContent(
   });
 
   return extractToolInput<GrammarTopicSuggestion>(response);
+}
+
+export interface RoleWordInput {
+  text: string;
+  role: GrammarRole;
+}
+
+export interface SentenceWordExplanation {
+  text: string;
+  role: GrammarRole;
+  simpleExplanation: string;
+  moreExamples: string[];
+  functionWordRef: string | null;
+}
+
+export interface SentenceExplanationSuggestion {
+  wordBreakdown: SentenceWordExplanation[];
+  generalRule: string;
+  practiceExamples: string[];
+}
+
+// Small, closed set — the AI is only asked to flag a word as a "function
+// word" when it recognizes it as one of these (predloglar/artikllar/so'roq
+// so'zlari), so functionWordRef only ever points at glossary entries that
+// are meant to exist (see FunctionWord seed list).
+const KNOWN_FUNCTION_WORDS = [
+  "to", "in", "on", "at", "by", "for", "with", "from", "of", "about",
+  "a", "an", "the",
+  "what", "who", "where", "when", "why", "how", "which",
+];
+const KNOWN_FUNCTION_WORD_SET = new Set(KNOWN_FUNCTION_WORDS);
+
+const SUGGEST_EXPLANATION_TOOL = {
+  name: "suggest_sentence_explanation",
+  description:
+    "Break an English sentence down into a child-friendly, word-by-word explanation for a beginner Uzbek learner studying via Korean.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      wordBreakdown: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            simpleExplanation: {
+              type: "string" as const,
+              description: "1-2 short, simple sentences (in Uzbek) explaining this word's job in THIS sentence, written for a child",
+            },
+            moreExamples: {
+              type: "array" as const,
+              items: { type: "string" as const },
+              description: "0-2 short additional English example sentences using this word in the same role (omit for short function words like articles)",
+            },
+            functionWordRef: {
+              type: "string" as const,
+              enum: [...KNOWN_FUNCTION_WORDS, ""],
+              description: `If this word is one of these common function words: ${KNOWN_FUNCTION_WORDS.join(", ")} — its lowercase form, so the app can link to the shared glossary entry. Otherwise an empty string.`,
+            },
+          },
+          required: ["simpleExplanation", "moreExamples", "functionWordRef"],
+        },
+        description: "Exactly one entry per word, in the exact same order as the sentence's word list given below",
+      },
+      generalRule: {
+        type: "string" as const,
+        description: "One short sentence (Uzbek) stating the general rule this sentence's grammar pattern teaches",
+      },
+      practiceExamples: {
+        type: "array" as const,
+        items: { type: "string" as const },
+        description: "Exactly 3 short independent English practice sentences using the same grammar pattern",
+      },
+    },
+    required: ["wordBreakdown", "generalRule", "practiceExamples"],
+  },
+};
+
+interface RawExplanationSuggestion {
+  wordBreakdown: { simpleExplanation: string; moreExamples: string[]; functionWordRef: string }[];
+  generalRule: string;
+  practiceExamples: string[];
+}
+
+export async function generateSentenceExplanation(
+  koreanSentence: string,
+  words: RoleWordInput[],
+  formula: string,
+): Promise<SentenceExplanationSuggestion> {
+  const client = requireClient();
+
+  const wordList = words.map((w, i) => `${i + 1}. "${w.text}" (role: ${w.role})`).join("\n");
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1500,
+    tools: [SUGGEST_EXPLANATION_TOOL],
+    tool_choice: { type: "tool", name: "suggest_sentence_explanation" },
+    messages: [
+      {
+        role: "user",
+        content: `English sentence: "${words.map((w) => w.text).join(" ")}"\nKorean translation: "${koreanSentence}"\nGrammar formula: "${formula}"\n\nThe sentence's words, in order, each already tagged with its grammatical role:\n${wordList}\n\nFor a young Uzbek beginner learning English via Korean, explain what each word's job is in THIS sentence — simple, warm, 1-2 sentences each, in Uzbek. Then give one short general rule (Uzbek) for the grammar pattern, and 3 practice example sentences. Call the suggest_sentence_explanation tool with your answer.`,
+      },
+    ],
+  });
+
+  const raw = extractToolInput<RawExplanationSuggestion>(response);
+  if (raw.wordBreakdown.length !== words.length) {
+    throw new Error("AI returned a wordBreakdown that doesn't match the sentence's word count");
+  }
+
+  return {
+    wordBreakdown: raw.wordBreakdown.map((item, i) => ({
+      text: words[i].text,
+      role: words[i].role,
+      simpleExplanation: item.simpleExplanation,
+      moreExamples: item.moreExamples ?? [],
+      // Belt-and-suspenders: the tool schema already constrains this to
+      // KNOWN_FUNCTION_WORDS via enum, but models don't always honor enums
+      // strictly — re-validate so a hallucinated ref never becomes a dead
+      // link in the UI (no matching FunctionWord glossary entry to open).
+      functionWordRef:
+        item.functionWordRef && KNOWN_FUNCTION_WORD_SET.has(item.functionWordRef.toLowerCase())
+          ? item.functionWordRef.toLowerCase()
+          : null,
+    })),
+    generalRule: raw.generalRule,
+    practiceExamples: raw.practiceExamples,
+  };
+}
+
+export interface FunctionWordUsageType {
+  meaning: string;
+  example: string;
+  note: string;
+}
+
+export interface FunctionWordMistake {
+  wrong: string;
+  correct: string;
+  explanation: string;
+}
+
+export interface FunctionWordSuggestion {
+  simpleExplanation: string;
+  usageTypes: FunctionWordUsageType[];
+  commonMistakes: FunctionWordMistake[];
+}
+
+const SUGGEST_FUNCTION_WORD_TOOL = {
+  name: "suggest_function_word",
+  description:
+    "Explain an English function word (preposition, article, or question word) for a beginner Uzbek learner studying via Korean.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      simpleExplanation: {
+        type: "string" as const,
+        description: "1-2 simple sentences (Uzbek) giving a general, easy-to-remember sense of the word",
+      },
+      usageTypes: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            meaning: { type: "string" as const, description: "Short Uzbek description of this specific meaning/use" },
+            example: { type: "string" as const, description: "Short English example sentence demonstrating it" },
+            note: { type: "string" as const, description: "Short Uzbek clarifying note" },
+          },
+          required: ["meaning", "example", "note"],
+        },
+        description: "2-4 distinct common uses/meanings of this word",
+      },
+      commonMistakes: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            wrong: { type: "string" as const, description: "An incorrect sentence learners commonly write with this word" },
+            correct: { type: "string" as const, description: "The corrected version" },
+            explanation: { type: "string" as const, description: "Short Uzbek explanation of the mistake" },
+          },
+          required: ["wrong", "correct", "explanation"],
+        },
+        description: "1-2 common learner mistakes with this word",
+      },
+    },
+    required: ["simpleExplanation", "usageTypes", "commonMistakes"],
+  },
+};
+
+export async function generateFunctionWordContent(
+  word: string,
+  category: FunctionWordCategory,
+): Promise<FunctionWordSuggestion> {
+  const client = requireClient();
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1200,
+    tools: [SUGGEST_FUNCTION_WORD_TOOL],
+    tool_choice: { type: "tool", name: "suggest_function_word" },
+    messages: [
+      {
+        role: "user",
+        content: `Explain the English ${category.replace("_", " ")} "${word}" for a beginner Uzbek learner studying English via Korean. Category options for context: ${FUNCTION_WORD_CATEGORIES.join(", ")}. Call the suggest_function_word tool with your answer.`,
+      },
+    ],
+  });
+
+  return extractToolInput<FunctionWordSuggestion>(response);
 }
 
 export interface ChatMessage {

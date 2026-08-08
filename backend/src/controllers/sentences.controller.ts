@@ -2,6 +2,7 @@ import { RequestHandler } from "express";
 import { Sentence } from "../models/Sentence";
 import { parseLessonRange, lessonRangeOverlapFilter } from "../utils/lessonRange";
 import { GRAMMAR_ROLES } from "../config/grammar";
+import { generateSentenceExplanation } from "../services/ai.service";
 
 const ROLE_SET = new Set<string>(GRAMMAR_ROLES);
 
@@ -120,6 +121,20 @@ export const updateSentence: RequestHandler = async (req, res, next) => {
       return;
     }
     res.json({ sentence });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const aiGenerateExplanation: RequestHandler = async (req, res, next) => {
+  try {
+    const { korean, words, formula } = req.body ?? {};
+    if (!korean || !Array.isArray(words) || words.length === 0 || !isValidRoleWordArray(words)) {
+      res.status(400).json({ error: "korean and a non-empty words[] of { text, role } are required" });
+      return;
+    }
+    const suggestion = await generateSentenceExplanation(korean, words, formula ?? "");
+    res.json({ suggestion });
   } catch (err) {
     next(err);
   }

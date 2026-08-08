@@ -47,6 +47,20 @@ export interface Word {
   lessonNumberEnd: number;
 }
 
+export interface SentenceWordExplanation {
+  text: string;
+  role: GrammarRole;
+  simpleExplanation: string;
+  moreExamples: string[];
+  functionWordRef?: string | null;
+}
+
+export interface SentenceDeepExplanation {
+  wordBreakdown: SentenceWordExplanation[];
+  generalRule: string;
+  practiceExamples: string[];
+}
+
 export interface Sentence {
   _id: string;
   korean: string;
@@ -54,6 +68,7 @@ export interface Sentence {
   distractorWords: RoleWord[];
   formula: string;
   audioUrl?: string | null;
+  deepExplanation?: SentenceDeepExplanation | null;
   level: Difficulty;
   lessonNumber: number;
   lessonNumberEnd: number;
@@ -155,4 +170,30 @@ export interface GrammarTopicProgress {
   topicId: string;
   questionsCorrect: number;
   questionsTotal: number;
+}
+
+export type FunctionWordCategory = "preposition" | "article" | "question_word" | "infinitive_marker";
+
+export interface FunctionWordUsageType {
+  meaning: string;
+  example: string;
+  note: string;
+}
+
+export interface FunctionWordMistake {
+  wrong: string;
+  correct: string;
+  explanation: string;
+}
+
+export interface FunctionWord {
+  _id: string;
+  word: string;
+  category: FunctionWordCategory;
+  korean: string;
+  simpleExplanation: string;
+  usageTypes: FunctionWordUsageType[];
+  commonMistakes: FunctionWordMistake[];
+  audioUrl?: string | null;
+  order: number;
 }

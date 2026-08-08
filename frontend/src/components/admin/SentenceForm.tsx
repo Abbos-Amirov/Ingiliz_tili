@@ -1,12 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { Difficulty, Sentence, RoleWord, GrammarRole } from "@/lib/types";
+import type { Difficulty, Sentence, RoleWord, GrammarRole, SentenceDeepExplanation } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { parseLessonRangeText, formatLessonRange } from "@/lib/lessonRange";
 import { ROLE_COLORS, GRAMMAR_ROLES } from "@/lib/roleColors";
 import { useLevelsConfig } from "@/hooks/useLevelsConfig";
+import { AiDeepExplanationAssistButton } from "./AiAssistPanel";
 
 function splitToRoleWords(text: string, defaultRole: GrammarRole): RoleWord[] {
   return text
@@ -84,6 +85,7 @@ export function SentenceForm({
   const [distractorText, setDistractorText] = useState("");
   const [distractorWords, setDistractorWords] = useState<RoleWord[]>(initial?.distractorWords ?? []);
   const [formula, setFormula] = useState(initial?.formula ?? "");
+  const [deepExplanation, setDeepExplanation] = useState<SentenceDeepExplanation | null>(initial?.deepExplanation ?? null);
   const [level, setLevel] = useState<Difficulty>(initial?.level ?? "beginner");
   const [lessonRangeText, setLessonRangeText] = useState(
     initial ? formatLessonRange(initial.lessonNumber, initial.lessonNumberEnd) : "1",
@@ -167,7 +169,7 @@ export function SentenceForm({
     setSaving(true);
     setError(null);
     try {
-      const payload = { korean, words, distractorWords, formula, level, ...lessonRange };
+      const payload = { korean, words, distractorWords, formula, deepExplanation, level, ...lessonRange };
       if (initial) {
         await apiFetch(`/sentences/${initial._id}`, {
           method: "PUT",
@@ -280,6 +282,160 @@ export function SentenceForm({
           )}
         </div>
       </label>
+
+      <div className="rounded-xl border border-border p-4 space-y-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">
+          Chuqur tushuntirish (ixtiyoriy)
+        </p>
+        <AiDeepExplanationAssistButton
+          korean={korean}
+          words={words}
+          formula={formula}
+          onSuggestion={setDeepExplanation}
+        />
+
+        {deepExplanation && (
+          <div className="space-y-3">
+            {deepExplanation.wordBreakdown.map((wb, i) => {
+              const color = ROLE_COLORS[wb.role];
+              return (
+                <div key={i} className="rounded-lg border border-border p-3 space-y-2">
+                  <span
+                    className="inline-block px-2 py-0.5 rounded-md text-xs font-semibold"
+                    style={{ backgroundColor: color.bg, color: color.text }}
+                  >
+                    {wb.text} · {color.label}
+                  </span>
+                  <textarea
+                    value={wb.simpleExplanation}
+                    onChange={(e) =>
+                      setDeepExplanation((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              wordBreakdown: prev.wordBreakdown.map((x, j) =>
+                                j === i ? { ...x, simpleExplanation: e.target.value } : x,
+                              ),
+                            }
+                          : prev,
+                      )
+                    }
+                    placeholder="Oddiy tushuntirish"
+                    className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary min-h-16"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      value={wb.moreExamples.join("; ")}
+                      onChange={(e) =>
+                        setDeepExplanation((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                wordBreakdown: prev.wordBreakdown.map((x, j) =>
+                                  j === i
+                                    ? {
+                                        ...x,
+                                        moreExamples: e.target.value
+                                          .split(";")
+                                          .map((s) => s.trim())
+                                          .filter(Boolean),
+                                      }
+                                    : x,
+                                ),
+                              }
+                            : prev,
+                        )
+                      }
+                      placeholder="Qo'shimcha misollar (; bilan ajrating)"
+                      className="flex-1 rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <input
+                      value={wb.functionWordRef ?? ""}
+                      onChange={(e) =>
+                        setDeepExplanation((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                wordBreakdown: prev.wordBreakdown.map((x, j) =>
+                                  j === i ? { ...x, functionWordRef: e.target.value.trim() || null } : x,
+                                ),
+                              }
+                            : prev,
+                        )
+                      }
+                      placeholder="Kichik so'z havolasi (masalan: to)"
+                      className="w-44 rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+
+            <label className="block">
+              <span className="block text-xs font-medium mb-1">Umumiy qoida</span>
+              <textarea
+                value={deepExplanation.generalRule}
+                onChange={(e) =>
+                  setDeepExplanation((prev) => (prev ? { ...prev, generalRule: e.target.value } : prev))
+                }
+                className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary min-h-14"
+              />
+            </label>
+
+            <div>
+              <span className="block text-xs font-medium mb-1">Mustaqil mashq gaplari</span>
+              <div className="space-y-1.5">
+                {deepExplanation.practiceExamples.map((ex, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={ex}
+                      onChange={(e) =>
+                        setDeepExplanation((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                practiceExamples: prev.practiceExamples.map((x, j) => (j === i ? e.target.value : x)),
+                              }
+                            : prev,
+                        )
+                      }
+                      className="flex-1 rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDeepExplanation((prev) =>
+                          prev ? { ...prev, practiceExamples: prev.practiceExamples.filter((_, j) => j !== i) } : prev,
+                        )
+                      }
+                      className="shrink-0 text-danger text-lg leading-none w-7 h-7 flex items-center justify-center rounded-full hover:bg-danger-soft"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setDeepExplanation((prev) => (prev ? { ...prev, practiceExamples: [...prev.practiceExamples, ""] } : prev))
+                }
+                className="mt-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
+              >
+                + Misol qo&apos;shish
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setDeepExplanation(null)}
+              className="text-xs font-medium text-danger hover:underline"
+            >
+              Tushuntirishni o&apos;chirish
+            </button>
+          </div>
+        )}
+      </div>
 
       <label className="block">
         <span className="block text-sm font-medium mb-1.5">Daraja</span>

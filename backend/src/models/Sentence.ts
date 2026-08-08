@@ -14,6 +14,34 @@ const roleWordSchema = new Schema(
   { _id: false },
 );
 
+// Per-word breakdown shown in the opt-in "Chuqur tushuntirish" (deep
+// explanation) popup after a sentence is completed correctly. text/role are
+// filled in from the sentence's own `words` at generation time (not trusted
+// from the AI response), so they always stay in sync.
+const wordExplanationSchema = new Schema(
+  {
+    text: { type: String, required: true },
+    role: { type: String, enum: GRAMMAR_ROLES, required: true },
+    simpleExplanation: { type: String, default: "" },
+    moreExamples: { type: [String], default: [] },
+    // Matches a FunctionWord.word (e.g. "to", "the") when this token is a
+    // predloglar/artikl/so'roq so'zi worth a deeper, reusable explanation —
+    // the popup links out to the Function Words glossary instead of
+    // repeating that explanation on every sentence.
+    functionWordRef: { type: String, default: null },
+  },
+  { _id: false },
+);
+
+const deepExplanationSchema = new Schema(
+  {
+    wordBreakdown: { type: [wordExplanationSchema], default: [] },
+    generalRule: { type: String, default: "" },
+    practiceExamples: { type: [String], default: [] },
+  },
+  { _id: false },
+);
+
 const sentenceSchema = new Schema({
   korean: { type: String, required: true, trim: true },
   // The correct, ordered sentence — each word tagged with its grammatical role.
@@ -23,6 +51,10 @@ const sentenceSchema = new Schema({
   distractorWords: { type: [roleWordSchema], default: [] },
   // The grammar pattern this sentence teaches, e.g. "S+be+V-ing+O".
   formula: { type: String, default: "" },
+  // Optional, admin-curated (usually AI-drafted) child-friendly breakdown of
+  // how this sentence is built — see FEATURE 1 "Gap tahlili". Null until
+  // generated/saved for a given sentence.
+  deepExplanation: { type: deepExplanationSchema, default: null },
   // Pre-generated pronunciation clip of the full English sentence (see
   // Word.audioUrl for why — the browser speechSynthesis API isn't reliable
   // across in-app browsers like KakaoTalk or Android WebView).

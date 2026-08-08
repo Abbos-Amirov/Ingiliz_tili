@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Sentence, GrammarRole } from "@/lib/types";
 import { WordChip } from "./WordChip";
 import { FormulaBar } from "./FormulaBar";
+import { DeepExplanationModal } from "./DeepExplanationModal";
 import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
 import { playAudio } from "@/lib/tts";
@@ -35,6 +36,7 @@ export function SentenceBuilder({
   onComplete: () => void;
 }) {
   const t = useT("sentence");
+  const td = useT("deepExplanation");
   const pool = useMemo(() => {
     const all = [...sentence.words, ...sentence.distractorWords];
     return shuffle(all.map((rw, i) => ({ key: `${rw.text}-${i}`, text: rw.text, role: rw.role, audioUrl: rw.audioUrl })));
@@ -48,6 +50,7 @@ export function SentenceBuilder({
   const [tempLabelsOn, setTempLabelsOn] = useState(false);
   const [pulseKey, setPulseKey] = useState(0);
   const [motivationSignal, setMotivationSignal] = useState(0);
+  const [explanationOpen, setExplanationOpen] = useState(false);
 
   const showLabels =
     sentence.level === "beginner" ? true : sentence.level === "advanced" ? false : tempLabelsOn;
@@ -189,9 +192,20 @@ export function SentenceBuilder({
               </span>
             ))}
           </p>
+          {sentence.deepExplanation && (
+            <button
+              type="button"
+              onClick={() => setExplanationOpen(true)}
+              className="text-xs font-medium text-foreground/50 hover:text-foreground underline underline-offset-2"
+            >
+              {td.triggerBtn}
+            </button>
+          )}
           <Button onClick={onComplete}>{t.nextBtn}</Button>
         </motion.div>
       )}
+
+      <DeepExplanationModal sentence={sentence} open={explanationOpen} onClose={() => setExplanationOpen(false)} />
     </div>
   );
 }

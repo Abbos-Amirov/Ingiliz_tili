@@ -22,6 +22,7 @@ export function Navbar() {
     { href: "/all-words", label: t.allWords },
     { href: "/irregular-verbs", label: t.irregularVerbs },
     { href: "/grammar", label: t.grammar },
+    { href: "/function-words", label: t.functionWords },
     { href: "/progress", label: t.progress },
   ];
 

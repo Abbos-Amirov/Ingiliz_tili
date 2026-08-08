@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
-import type { Difficulty, GrammarCommonMistake, GrammarExample, GrammarUsageCase, IrregularVerbCategory, PartOfSpeech } from "@/lib/types";
+import type {
+  Difficulty,
+  FunctionWordCategory,
+  FunctionWordMistake,
+  FunctionWordUsageType,
+  GrammarCommonMistake,
+  GrammarExample,
+  GrammarUsageCase,
+  IrregularVerbCategory,
+  PartOfSpeech,
+  RoleWord,
+  SentenceWordExplanation,
+} from "@/lib/types";
 
 interface Suggestion {
   korean: string;
@@ -109,6 +121,116 @@ export function AiGrammarAssistButton({
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
         {loading ? "AI o'ylayapti..." : "✨ AI bilan avtomatik yozish"}
+      </button>
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
+    </div>
+  );
+}
+
+interface SentenceExplanationSuggestion {
+  wordBreakdown: SentenceWordExplanation[];
+  generalRule: string;
+  practiceExamples: string[];
+}
+
+export function AiDeepExplanationAssistButton({
+  korean,
+  words,
+  formula,
+  onSuggestion,
+}: {
+  korean: string;
+  words: RoleWord[];
+  formula: string;
+  onSuggestion: (s: SentenceExplanationSuggestion) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleClick() {
+    if (!korean.trim() || words.length === 0) {
+      setError("Avval koreys gap va so'zlarni kiriting");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch<{ suggestion: SentenceExplanationSuggestion }>("/sentences/ai-generate-explanation", {
+        method: "POST",
+        body: JSON.stringify({ korean: korean.trim(), words, formula }),
+        admin: true,
+      });
+      onSuggestion(res.suggestion);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={loading}
+        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
+      >
+        {loading ? "AI o'ylayapti..." : "✨ AI bilan chuqur tushuntirish yaratish"}
+      </button>
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
+    </div>
+  );
+}
+
+interface FunctionWordSuggestion {
+  simpleExplanation: string;
+  usageTypes: FunctionWordUsageType[];
+  commonMistakes: FunctionWordMistake[];
+}
+
+export function AiFunctionWordAssistButton({
+  word,
+  category,
+  onSuggestion,
+}: {
+  word: string;
+  category: FunctionWordCategory;
+  onSuggestion: (s: FunctionWordSuggestion) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleClick() {
+    if (!word.trim()) {
+      setError("Avval so'zni kiriting");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch<{ suggestion: FunctionWordSuggestion }>("/function-words/ai-generate", {
+        method: "POST",
+        body: JSON.stringify({ word: word.trim(), category }),
+        admin: true,
+      });
+      onSuggestion(res.suggestion);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={loading}
+        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
+      >
+        {loading ? "AI o'ylayapti..." : "✨ AI bilan to'ldirish"}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>

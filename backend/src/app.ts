@@ -12,6 +12,7 @@ import configRoutes from "./routes/config.routes";
 import chatRoutes from "./routes/chat.routes";
 import irregularVerbsRoutes from "./routes/irregularVerbs.routes";
 import grammarTopicsRoutes from "./routes/grammarTopics.routes";
+import functionWordsRoutes from "./routes/functionWords.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -35,6 +36,7 @@ app.use("/api/config", configRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/irregular-verbs", irregularVerbsRoutes);
 app.use("/api/grammar-topics", grammarTopicsRoutes);
+app.use("/api/function-words", functionWordsRoutes);
 
 app.use(errorHandler);
 

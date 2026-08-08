@@ -7,6 +7,7 @@ import path from "path";
 import { env } from "../src/config/env";
 import { Word } from "../src/models/Word";
 import { Sentence } from "../src/models/Sentence";
+import { FunctionWord } from "../src/models/FunctionWord";
 
 // One-time/occasional local generation step (uses macOS's built-in `say` +
 // `afconvert`) — the resulting .m4a files are committed to
@@ -139,6 +140,28 @@ async function main() {
       await s.save();
       process.stdout.write(`\r  per-word audio: ${tCount} generated, ${reused} reused`);
     }
+  }
+  console.log();
+
+  // Function Words glossary pronunciation (see FunctionWordModal's 🔊 button).
+  const functionWords = await FunctionWord.find(FORCE ? {} : { audioUrl: null });
+  console.log(`Function words needing audio: ${functionWords.length}${FORCE ? " (forced regeneration)" : ""}`);
+  let fwCount = 0;
+  for (const fw of functionWords) {
+    const key = normalize(fw.word);
+    let url = reuseCache.get(key);
+    if (!url || FORCE) {
+      const file = path.join(TOKENS_DIR, `${slug(key)}.m4a`);
+      // A few glossary entries combine two forms (e.g. "how much / how
+      // many") — speak that as "or" rather than the literal slash.
+      await synthesize(fw.word.replace(/\s*\/\s*/g, " or "), EN_VOICE, file);
+      url = `/audio/tokens/${slug(key)}.m4a`;
+      reuseCache.set(key, url);
+    }
+    fw.audioUrl = url;
+    await fw.save();
+    fwCount++;
+    process.stdout.write(`\r  function words done: ${fwCount}/${functionWords.length}`);
   }
   console.log();
 
