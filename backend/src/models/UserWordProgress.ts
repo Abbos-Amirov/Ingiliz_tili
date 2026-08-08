@@ -13,6 +13,11 @@ const userWordProgressSchema = new Schema({
   // Number of times this word was only recalled with the "Yordam" hint flow,
   // rather than typed independently. Useful for progress stats.
   helpedCount: { type: Number, default: 0 },
+  // How many times this word's image has been shown in a due/backfill batch
+  // (see srs.controller.ts nextBatch). Drives Active Recall's progressive
+  // image fading — image+word together for the first few times, then
+  // image-only once the learner should be recalling the word unaided.
+  timesShown: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 

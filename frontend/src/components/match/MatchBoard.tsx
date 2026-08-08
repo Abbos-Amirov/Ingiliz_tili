@@ -154,6 +154,8 @@ export function MatchBoard({
                   text={w.english}
                   state={tileState(w._id, "left")}
                   onClick={() => handleLeftClick(w)}
+                  imageUrl={w.imageUrl}
+                  imageAttribution={w.imageAttribution}
                 />
               </motion.div>
             );

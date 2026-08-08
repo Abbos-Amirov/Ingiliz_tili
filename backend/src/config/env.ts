@@ -8,6 +8,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("7d"),
   ANTHROPIC_API_KEY: z.string().optional().default(""),
   ENGLISH_AI_API_KEY: z.string().optional().default(""),
+  UNSPLASH_ACCESS_KEY: z.string().optional().default(""),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
   NODE_ENV: z.string().default("development"),
 });
@@ -24,3 +25,5 @@ export const env = parsed.data;
 // ENGLISH_AI_API_KEY is the primary key going forward; ANTHROPIC_API_KEY is
 // kept as a fallback for backward compatibility with earlier setup.
 export const AI_API_KEY = env.ENGLISH_AI_API_KEY || env.ANTHROPIC_API_KEY;
+
+export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;

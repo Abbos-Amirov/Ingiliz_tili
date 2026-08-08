@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Card } from "@/components/ui/Card";
 import { MotivationToast } from "@/components/ui/MotivationToast";
+import { WordImage } from "@/components/ui/WordImage";
 import { MatchWordTile } from "@/components/match/MatchWordTile";
 import { useSrsActions } from "@/hooks/useSrsSession";
 import { useT } from "@/hooks/useT";
+import { useSessionStore } from "@/store/session";
 
 interface RecallResult {
   wordId: string;
@@ -36,6 +38,7 @@ function shuffle<T>(arr: T[]): T[] {
 export function RecallQuiz({ words, onFinish }: { words: Word[]; onFinish: (results: RecallResult[]) => void }) {
   const t = useT("recall");
   const { submitReview, fetchDistractors } = useSrsActions();
+  const imageHiddenByWordId = useSessionStore((s) => s.imageHiddenByWordId);
 
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -156,6 +159,16 @@ export function RecallQuiz({ words, onFinish }: { words: Word[]; onFinish: (resu
         >
           <Card className="mt-6 p-8 text-center">
             <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50 mb-3">{t.label}</p>
+            {word.imageUrl && !imageHiddenByWordId[word._id] && (
+              <div className="mb-4 flex justify-center">
+                <WordImage
+                  src={word.imageUrl}
+                  attribution={word.imageAttribution}
+                  alt=""
+                  imgClassName="h-28 w-28 object-cover rounded-2xl"
+                />
+              </div>
+            )}
             <p className="text-3xl font-extrabold gradient-text mb-6">{word.korean}</p>
 
             <form

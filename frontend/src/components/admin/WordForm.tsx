@@ -2,10 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Difficulty, IrregularVerb, PartOfSpeech, Word } from "@/lib/types";
+import type { Difficulty, ImageAttribution, IrregularVerb, PartOfSpeech, Word } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { AiAssistButton } from "./AiAssistPanel";
+import { UnsplashImagePicker } from "./UnsplashImagePicker";
 import { parseLessonRangeText, formatLessonRange } from "@/lib/lessonRange";
 import { PARTS_OF_SPEECH, PARTS_OF_SPEECH_LABELS } from "@/lib/partsOfSpeech";
 
@@ -17,6 +18,8 @@ interface WordFormValues {
   category: string;
   difficulty: Difficulty;
   partOfSpeech: PartOfSpeech | "";
+  imageUrl: string | null;
+  imageAttribution: ImageAttribution | null;
 }
 
 const emptyValues: WordFormValues = {
@@ -27,6 +30,8 @@ const emptyValues: WordFormValues = {
   category: "general",
   difficulty: "beginner",
   partOfSpeech: "",
+  imageUrl: null,
+  imageAttribution: null,
 };
 
 export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved: () => void }) {
@@ -41,6 +46,8 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
           category: initial.category,
           difficulty: initial.difficulty,
           partOfSpeech: initial.partOfSpeech ?? "",
+          imageUrl: initial.imageUrl ?? null,
+          imageAttribution: initial.imageAttribution ?? null,
         }
       : emptyValues,
   );
@@ -219,6 +226,13 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
             partOfSpeech: s.partOfSpeech,
           }))
         }
+      />
+
+      <UnsplashImagePicker
+        defaultQuery={values.english}
+        selectedImageUrl={values.imageUrl}
+        onSelect={(imageUrl, imageAttribution) => setValues((prev) => ({ ...prev, imageUrl, imageAttribution }))}
+        onClear={() => setValues((prev) => ({ ...prev, imageUrl: null, imageAttribution: null }))}
       />
 
       <Field label="Misol gap (ingliz)">

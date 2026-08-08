@@ -1,6 +1,17 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
 import { PARTS_OF_SPEECH } from "../config/grammar";
 
+// Unsplash's API terms require crediting the photographer + linking back to
+// Unsplash wherever a photo is displayed — see unsplash.service.ts.
+const imageAttributionSchema = new Schema(
+  {
+    photographerName: { type: String, required: true },
+    photographerUrl: { type: String, required: true },
+    unsplashUrl: { type: String, required: true },
+  },
+  { _id: false },
+);
+
 const wordSchema = new Schema({
   english: { type: String, required: true, trim: true },
   korean: { type: String, required: true, trim: true },
@@ -20,7 +31,10 @@ const wordSchema = new Schema({
   // browsers (KakaoTalk, Instagram, ...) and Android WebView don't support.
   audioUrl: { type: String, default: null },
   koreanAudioUrl: { type: String, default: null },
+  // Picked by an admin from Unsplash search results (see FEATURE 1 "Rasm
+  // orqali yodlash") — not auto-assigned, so photo relevance stays curated.
   imageUrl: { type: String, default: null },
+  imageAttribution: { type: imageAttributionSchema, default: null },
   // A word belongs to a lesson range [lessonNumber, lessonNumberEnd] (inclusive).
   // A single lesson is stored as lessonNumber === lessonNumberEnd; combined
   // teaching days (e.g. lessons 34-37 covered together) set a wider range.

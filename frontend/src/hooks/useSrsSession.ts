@@ -15,7 +15,7 @@ export function useDailyCheckIn() {
 
 export function useSrsActions() {
   const fetchNextBatch = useCallback(async (mode: "match" | "sentence", limit = 8) => {
-    return apiFetch<{ words: Word[]; bonusPractice: boolean }>(
+    return apiFetch<{ words: Word[]; bonusPractice: boolean; imageHiddenByWordId: Record<string, boolean> }>(
       `/srs/next-batch?mode=${mode}&limit=${limit}`,
     );
   }, []);

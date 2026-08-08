@@ -23,6 +23,7 @@ export function Navbar() {
     { href: "/irregular-verbs", label: t.irregularVerbs },
     { href: "/grammar", label: t.grammar },
     { href: "/function-words", label: t.functionWords },
+    { href: "/flashcards", label: t.flashcards },
     { href: "/progress", label: t.progress },
   ];
 

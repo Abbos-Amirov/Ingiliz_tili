@@ -40,6 +40,12 @@ export interface RoleWord {
   audioUrl?: string | null;
 }
 
+export interface ImageAttribution {
+  photographerName: string;
+  photographerUrl: string;
+  unsplashUrl: string;
+}
+
 export interface Word {
   _id: string;
   english: string;
@@ -52,6 +58,7 @@ export interface Word {
   audioUrl?: string | null;
   koreanAudioUrl?: string | null;
   imageUrl?: string | null;
+  imageAttribution?: ImageAttribution | null;
   lessonNumber: number;
   lessonNumberEnd: number;
 }
@@ -193,6 +200,14 @@ export interface FunctionWordMistake {
   wrong: string;
   correct: string;
   explanation: Trilingual;
+}
+
+export interface UnsplashPhoto {
+  imageUrl: string;
+  thumbUrl: string;
+  photographerName: string;
+  photographerUrl: string;
+  unsplashUrl: string;
 }
 
 export interface FunctionWord {

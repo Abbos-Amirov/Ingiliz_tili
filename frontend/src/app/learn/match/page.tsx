@@ -23,6 +23,7 @@ export default function MatchPage() {
   const [words, setWords] = useState<Word[] | null>(null);
   const [bonusPractice, setBonusPractice] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [imageHiddenByWordId, setImageHiddenByWordId] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -34,6 +35,7 @@ export default function MatchPage() {
       const res = await fetchNextBatch("match", 8);
       setWords(res.words);
       setBonusPractice(res.bonusPractice);
+      setImageHiddenByWordId(res.imageHiddenByWordId);
     } finally {
       setLoading(false);
     }
@@ -47,7 +49,7 @@ export default function MatchPage() {
   }, [user, loadRound]);
 
   function handleRoundComplete(roundWords: Word[]) {
-    setLastRoundWords(roundWords);
+    setLastRoundWords(roundWords, imageHiddenByWordId);
     router.push("/learn/recall");
   }
 

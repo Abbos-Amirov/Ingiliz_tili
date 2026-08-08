@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { suggestTranslation, suggestSentenceRoles, suggestIrregularVerb } from "../services/ai.service";
+import { searchUnsplashPhotos } from "../services/unsplash.service";
 
 export const aiAssistTranslate: RequestHandler = async (req, res, next) => {
   try {
@@ -38,6 +39,20 @@ export const aiAssistIrregularVerb: RequestHandler = async (req, res, next) => {
     }
     const suggestion = await suggestIrregularVerb(base.trim());
     res.json({ suggestion });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const unsplashSearch: RequestHandler = async (req, res, next) => {
+  try {
+    const { query } = req.query;
+    if (!query || typeof query !== "string") {
+      res.status(400).json({ error: "query is required" });
+      return;
+    }
+    const photos = await searchUnsplashPhotos(query.trim());
+    res.json({ photos });
   } catch (err) {
     next(err);
   }

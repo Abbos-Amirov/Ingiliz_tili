@@ -48,7 +48,29 @@ export const nextBatch: RequestHandler = async (req, res, next) => {
       }
     }
 
-    res.json({ words, bonusPractice });
+    // Progressive image fading (see FEATURE 1 "Rasm orqali yodlash"): a word
+    // shows image+text together the first few times it's reviewed, then
+    // image-only once the learner should be recalling it unaided. Only
+    // words that already have a progress row are eligible — a word's very
+    // first-ever appearance always shows image+text, which also means this
+    // never creates progress rows early (that stays submitReview's job).
+    const existingProgress = await UserWordProgress.find(
+      { userId, wordId: { $in: words.map((w) => w._id) } },
+      { wordId: 1, timesShown: 1 },
+    );
+    const imageHiddenByWordId: Record<string, boolean> = {};
+    for (const w of words) imageHiddenByWordId[String(w._id)] = false;
+    for (const p of existingProgress) {
+      imageHiddenByWordId[String(p.wordId)] = (p.timesShown ?? 0) >= 3;
+    }
+    if (existingProgress.length > 0) {
+      await UserWordProgress.updateMany(
+        { userId, wordId: { $in: existingProgress.map((p) => p.wordId) } },
+        { $inc: { timesShown: 1 } },
+      );
+    }
+
+    res.json({ words, bonusPractice, imageHiddenByWordId });
   } catch (err) {
     next(err);
   }
