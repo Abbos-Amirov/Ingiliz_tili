@@ -12,6 +12,7 @@ import type {
   GrammarUsageCase,
   IrregularVerbCategory,
   PartOfSpeech,
+  QuestionCategory,
   RoleWord,
   SentenceWordExplanation,
   Trilingual,
@@ -232,6 +233,69 @@ export function AiFunctionWordAssistButton({
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
         {loading ? "AI o'ylayapti..." : "✨ AI bilan to'ldirish"}
+      </button>
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
+    </div>
+  );
+}
+
+interface QuestionAnswerAiSuggestion {
+  question: { words: RoleWord[]; distractorWords: RoleWord[]; formula: string };
+  answer: { words: RoleWord[]; distractorWords: RoleWord[]; formula: string };
+  questionCategory: QuestionCategory | null;
+}
+
+export function AiQuestionAnswerAssistButton({
+  questionEnglish,
+  questionKorean,
+  answerEnglish,
+  answerKorean,
+  onSuggestion,
+}: {
+  questionEnglish: string;
+  questionKorean: string;
+  answerEnglish: string;
+  answerKorean: string;
+  onSuggestion: (s: QuestionAnswerAiSuggestion) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleClick() {
+    if (!questionEnglish.trim() || !questionKorean.trim() || !answerEnglish.trim() || !answerKorean.trim()) {
+      setError("Avval savol va javobning koreys/ingliz matnlarini kiriting");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch<QuestionAnswerAiSuggestion>("/question-answers/ai-suggest", {
+        method: "POST",
+        body: JSON.stringify({
+          questionEnglish: questionEnglish.trim(),
+          questionKorean: questionKorean.trim(),
+          answerEnglish: answerEnglish.trim(),
+          answerKorean: answerKorean.trim(),
+        }),
+        admin: true,
+      });
+      onSuggestion(res);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={loading}
+        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
+      >
+        {loading ? "AI o'ylayapti..." : "✨ AI bilan avtomatik ajratish"}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>

@@ -1,7 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { FunctionWord, FunctionWordCategory, FunctionWordMistake, FunctionWordUsageType, Trilingual } from "@/lib/types";
+import type {
+  FunctionWord,
+  FunctionWordCategory,
+  FunctionWordComparisonExample,
+  FunctionWordMistake,
+  FunctionWordUsageType,
+  Trilingual,
+} from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { AiFunctionWordAssistButton } from "./AiAssistPanel";
@@ -12,6 +19,7 @@ const CATEGORY_LABELS: Record<FunctionWordCategory, string> = {
   article: "Artikl",
   question_word: "So'roq so'zi",
   infinitive_marker: "Infinitive belgisi",
+  question_auxiliary: "Savol yordamchisi",
 };
 
 const emptyTrilingual: Trilingual = { uz: "", en: "", ko: "" };
@@ -23,6 +31,8 @@ interface FormValues {
   simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
+  comparisonNote: Trilingual | null;
+  comparisonExamples: FunctionWordComparisonExample[];
   order: string;
 }
 
@@ -33,6 +43,8 @@ const emptyValues: FormValues = {
   simpleExplanation: emptyTrilingual,
   usageTypes: [],
   commonMistakes: [],
+  comparisonNote: null,
+  comparisonExamples: [],
   order: "0",
 };
 
@@ -44,6 +56,8 @@ function fromWord(w: FunctionWord): FormValues {
     simpleExplanation: w.simpleExplanation,
     usageTypes: w.usageTypes,
     commonMistakes: w.commonMistakes,
+    comparisonNote: w.comparisonNote ?? null,
+    comparisonExamples: w.comparisonExamples ?? [],
     order: String(w.order),
   };
 }
@@ -248,6 +262,72 @@ export function FunctionWordForm({
         >
           + Xato qo&apos;shish
         </button>
+      </div>
+
+      <div className="rounded-xl border border-border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">
+            Taqqoslash kartasi (masalan &quot;Do vs Does&quot;)
+          </p>
+          <label className="flex items-center gap-2 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={values.comparisonNote !== null}
+              onChange={(e) => update("comparisonNote", e.target.checked ? emptyTrilingual : null)}
+            />
+            Yoqish
+          </label>
+        </div>
+
+        {values.comparisonNote !== null && (
+          <>
+            <TrilingualTextarea
+              value={values.comparisonNote}
+              onChange={(v) => update("comparisonNote", v)}
+              placeholder="I/You/We/They + do — He/She/It + does"
+            />
+
+            {values.comparisonExamples.map((ex, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    value={ex.correct}
+                    onChange={(e) =>
+                      update("comparisonExamples", values.comparisonExamples.map((x, j) => (j === i ? { ...x, correct: e.target.value } : x)))
+                    }
+                    placeholder="✓ To'g'ri"
+                    className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <input
+                    value={ex.wrong ?? ""}
+                    onChange={(e) =>
+                      update(
+                        "comparisonExamples",
+                        values.comparisonExamples.map((x, j) => (j === i ? { ...x, wrong: e.target.value || null } : x)),
+                      )
+                    }
+                    placeholder="✗ Noto'g'ri (ixtiyoriy)"
+                    className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => update("comparisonExamples", values.comparisonExamples.filter((_, j) => j !== i))}
+                  className="shrink-0 text-danger text-lg leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-danger-soft"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => update("comparisonExamples", [...values.comparisonExamples, { correct: "", wrong: null }])}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
+            >
+              + Misol qo&apos;shish
+            </button>
+          </>
+        )}
       </div>
 
       <label className="block">

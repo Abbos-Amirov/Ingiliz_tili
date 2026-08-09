@@ -32,7 +32,8 @@ export type GrammarRole =
   | "conjunction"
   | "article"
   | "pronoun"
-  | "interjection";
+  | "interjection"
+  | "question_word";
 
 export interface RoleWord {
   text: string;
@@ -69,6 +70,7 @@ export interface SentenceWordExplanation {
   simpleExplanation: Trilingual;
   moreExamples: string[];
   functionWordRef?: string | null;
+  specialNote?: Trilingual | null;
 }
 
 export interface SentenceDeepExplanation {
@@ -76,6 +78,9 @@ export interface SentenceDeepExplanation {
   generalRule: Trilingual;
   practiceExamples: string[];
 }
+
+export type SentenceType = "statement" | "question" | "answer";
+export type QuestionCategory = "yes_no" | "wh_question";
 
 export interface Sentence {
   _id: string;
@@ -88,6 +93,15 @@ export interface Sentence {
   level: Difficulty;
   lessonNumber: number;
   lessonNumberEnd: number;
+  sentenceType?: SentenceType;
+  pairId?: string | null;
+  questionCategory?: QuestionCategory | null;
+  subLevel?: 1 | 2 | 3;
+}
+
+export interface QuestionAnswerPair {
+  question: Sentence;
+  answer: Sentence;
 }
 
 export interface Lesson {
@@ -188,7 +202,7 @@ export interface GrammarTopicProgress {
   questionsTotal: number;
 }
 
-export type FunctionWordCategory = "preposition" | "article" | "question_word" | "infinitive_marker";
+export type FunctionWordCategory = "preposition" | "article" | "question_word" | "infinitive_marker" | "question_auxiliary";
 
 export interface FunctionWordUsageType {
   meaning: Trilingual;
@@ -210,6 +224,11 @@ export interface UnsplashPhoto {
   unsplashUrl: string;
 }
 
+export interface FunctionWordComparisonExample {
+  correct: string;
+  wrong: string | null;
+}
+
 export interface FunctionWord {
   _id: string;
   word: string;
@@ -218,6 +237,8 @@ export interface FunctionWord {
   simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
+  comparisonNote?: Trilingual | null;
+  comparisonExamples?: FunctionWordComparisonExample[];
   audioUrl?: string | null;
   order: number;
 }

@@ -13,9 +13,16 @@ const CATEGORY_LABELS: Record<FunctionWordCategory, string> = {
   article: "Artikllar",
   question_word: "So'roq so'zlari",
   infinitive_marker: "Infinitive belgisi",
+  question_auxiliary: "Savol yordamchilari",
 };
 
-const CATEGORY_ORDER: FunctionWordCategory[] = ["preposition", "article", "question_word", "infinitive_marker"];
+const CATEGORY_ORDER: FunctionWordCategory[] = [
+  "preposition",
+  "article",
+  "question_word",
+  "question_auxiliary",
+  "infinitive_marker",
+];
 
 function groupByCategory(words: FunctionWord[]): [FunctionWordCategory, FunctionWord[]][] {
   const map = new Map<FunctionWordCategory, FunctionWord[]>();

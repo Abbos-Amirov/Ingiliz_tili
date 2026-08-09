@@ -32,6 +32,11 @@ export const listSentences: RequestHandler = async (req, res, next) => {
       // formula query — keep them out of the regular curriculum listing.
       filter.isGrammarPractice = { $ne: true };
     }
+    // Savol-Javob (question/answer) sentences are a separate module (like
+    // Irregular Verbs) with their own /api/question-answers endpoints —
+    // $nin also matches documents where sentenceType is unset (pre-existing
+    // sentences), so no backfill migration is needed for old content.
+    filter.sentenceType = { $nin: ["question", "answer"] };
     if (lessons) {
       const lessonNumbers = String(lessons)
         .split(",")
@@ -128,12 +133,17 @@ export const updateSentence: RequestHandler = async (req, res, next) => {
 
 export const aiGenerateExplanation: RequestHandler = async (req, res, next) => {
   try {
-    const { korean, words, formula } = req.body ?? {};
+    const { korean, words, formula, sentenceType } = req.body ?? {};
     if (!korean || !Array.isArray(words) || words.length === 0 || !isValidRoleWordArray(words)) {
       res.status(400).json({ error: "korean and a non-empty words[] of { text, role } are required" });
       return;
     }
-    const suggestion = await generateSentenceExplanation(korean, words, formula ?? "");
+    const suggestion = await generateSentenceExplanation(
+      korean,
+      words,
+      formula ?? "",
+      sentenceType === "question" || sentenceType === "answer" ? sentenceType : "statement",
+    );
     res.json({ suggestion });
   } catch (err) {
     next(err);

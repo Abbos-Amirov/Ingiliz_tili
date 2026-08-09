@@ -26,6 +26,11 @@ export const GRAMMAR_ROLES = [
   "article",
   "pronoun",
   "interjection",
+  // Wh- interrogatives (what/where/when/why/how/who/which) — distinct from
+  // "pronoun" so question words get their own color/label in Sentence
+  // Building, Deep Explanation, and the formula bar (see FEATURE 1
+  // "Savol-Javob rejimi").
+  "question_word",
 ] as const;
 export type GrammarRole = (typeof GRAMMAR_ROLES)[number];
 

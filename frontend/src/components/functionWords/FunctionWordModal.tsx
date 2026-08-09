@@ -38,6 +38,25 @@ export function FunctionWordModal({ functionWord, onClose }: { functionWord: Fun
             </button>
           </div>
 
+          {functionWord.comparisonNote && (
+            <div className="rounded-xl bg-accent-soft border border-accent/30 p-4">
+              <p className="text-sm font-bold text-accent mb-2">{t.comparisonTitle}</p>
+              {functionWord.comparisonNote[locale] && (
+                <p className="text-sm whitespace-pre-line mb-3">{functionWord.comparisonNote[locale]}</p>
+              )}
+              {(functionWord.comparisonExamples?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  {functionWord.comparisonExamples!.map((ex, i) => (
+                    <div key={i}>
+                      {ex.wrong && <p className="text-sm text-danger">✗ {ex.wrong}</p>}
+                      <p className="text-sm text-success font-medium">✓ {ex.correct}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {functionWord.usageTypes.length > 0 && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50 mb-2">{t.usageTypesTitle}</p>

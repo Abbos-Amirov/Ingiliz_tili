@@ -11,7 +11,13 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { FunctionWordModal } from "@/components/functionWords/FunctionWordModal";
 
-const CATEGORY_ORDER: FunctionWordCategory[] = ["preposition", "article", "question_word", "infinitive_marker"];
+const CATEGORY_ORDER: FunctionWordCategory[] = [
+  "preposition",
+  "article",
+  "question_word",
+  "question_auxiliary",
+  "infinitive_marker",
+];
 
 export default function FunctionWordsPage() {
   const { user, ready } = useAuth();

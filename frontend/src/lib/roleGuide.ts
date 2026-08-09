@@ -93,4 +93,11 @@ export const ROLE_GUIDE_EXAMPLES: Record<GrammarRole, RoleGuideEntry> = {
     examples: ["Wow", "Oh", "Great", "Ouch", "Hey"],
     sentences: [{ english: "Wow! That's amazing.", korean: "와! 정말 놀라워요.", uzbek: "Voy! Bu ajoyib." }],
   },
+  question_word: {
+    examples: ["what", "who", "where", "when", "why", "how", "which"],
+    sentences: [
+      { english: "Where do you live?", korean: "당신은 어디에 사세요?", uzbek: "Siz qayerda yashaysiz?" },
+      { english: "What is your name?", korean: "이름이 뭐예요?", uzbek: "Ismingiz nima?" },
+    ],
+  },
 };

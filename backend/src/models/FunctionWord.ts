@@ -23,6 +23,17 @@ const mistakeSchema = new Schema(
   { _id: false },
 );
 
+// A single right/wrong example pair for the "Do vs Does"-style comparison
+// card (see FEATURE 3) — `wrong` is null for a purely illustrative correct
+// example that doesn't need a contrasting mistake.
+const comparisonExampleSchema = new Schema(
+  {
+    correct: { type: String, required: true, trim: true },
+    wrong: { type: String, default: null },
+  },
+  { _id: false },
+);
+
 const functionWordSchema = new Schema({
   // Predloglar, artikllar, so'roq so'zlari — repeat in nearly every sentence,
   // so they get one reusable, deep explanation instead of being re-explained
@@ -33,6 +44,11 @@ const functionWordSchema = new Schema({
   simpleExplanation: { type: trilingualSchema, default: () => ({}) },
   usageTypes: { type: [usageTypeSchema], default: [] },
   commonMistakes: { type: [mistakeSchema], default: [] },
+  // Optional special-case comparison card (currently just "do vs does") —
+  // rendered as its own highlighted card on the Function Words page rather
+  // than folded into usageTypes/commonMistakes. Null for ordinary entries.
+  comparisonNote: { type: trilingualSchema, default: null },
+  comparisonExamples: { type: [comparisonExampleSchema], default: [] },
   // Pre-generated pronunciation clip (see Word.audioUrl for why).
   audioUrl: { type: String, default: null },
   order: { type: Number, default: 0 },

@@ -31,6 +31,10 @@ const wordExplanationSchema = new Schema(
     // the popup links out to the Function Words glossary instead of
     // repeating that explanation on every sentence.
     functionWordRef: { type: String, default: null },
+    // Optional extra callout for question-specific quirks — e.g. "the
+    // auxiliary comes BEFORE the subject in a question" (see FEATURE 2,
+    // Savol-Javob deep-explanation extension). Null when not applicable.
+    specialNote: { type: trilingualSchema, default: null },
   },
   { _id: false },
 );
@@ -72,12 +76,28 @@ const sentenceSchema = new Schema({
     default: "beginner",
   },
   // See Word.lessonNumber/lessonNumberEnd — same inclusive-range convention.
+  // Not meaningful for question/answer sentences (see sentenceType below) —
+  // those are an independent module, like Irregular Verbs, not tied to the
+  // Darslar/lesson curriculum.
   lessonNumber: { type: Number, required: true, default: 1 },
   lessonNumberEnd: { type: Number, required: true, default: 1 },
+  // "statement" is the regular Sentence Building curriculum (default, and
+  // the only kind that had ever existed before this field). "question" and
+  // "answer" sentences belong to the Savol-Javob module — each question
+  // links to its answer (and vice versa) via pairId, and both are excluded
+  // from the regular curriculum listing (see sentences.controller.ts).
+  sentenceType: { type: String, enum: ["statement", "question", "answer"], default: "statement" },
+  pairId: { type: Schema.Types.ObjectId, ref: "Sentence", default: null },
+  // Only meaningful when sentenceType === "question".
+  questionCategory: { type: String, enum: ["yes_no", "wh_question", null], default: null },
+  // Progressive sub-stage within a level for the Savol-Javob module: 1 =
+  // plain statements, 2 = Yes/No question-answer pairs, 3 = Wh- pairs.
+  subLevel: { type: Number, enum: [1, 2, 3], default: 1 },
   createdAt: { type: Date, default: Date.now },
 });
 
 sentenceSchema.index({ lessonNumber: 1, lessonNumberEnd: 1 });
+sentenceSchema.index({ sentenceType: 1, level: 1, subLevel: 1 });
 
 export type SentenceDoc = InferSchemaType<typeof sentenceSchema> & { _id: Types.ObjectId };
 

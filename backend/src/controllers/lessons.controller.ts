@@ -21,9 +21,11 @@ const GROUP_BY_RANGE_PIPELINE = [
   { $group: { _id: { start: "$lessonNumber", end: "$lessonNumberEnd" }, count: { $sum: 1 } } },
 ];
 
-// Grammar Hub practice sentences aren't part of the lesson curriculum.
+// Grammar Hub practice sentences and Savol-Javob question/answer pairs
+// aren't part of the lesson curriculum (they default lessonNumber to 1,
+// which would otherwise pollute lesson 1's counts).
 const SENTENCE_GROUP_BY_RANGE_PIPELINE = [
-  { $match: { isGrammarPractice: { $ne: true } } },
+  { $match: { isGrammarPractice: { $ne: true }, sentenceType: { $nin: ["question", "answer"] } } },
   ...GROUP_BY_RANGE_PIPELINE,
 ];
 
@@ -60,7 +62,7 @@ export const nextLessonNumber: RequestHandler = async (_req, res, next) => {
   try {
     const [topWord, topSentence] = await Promise.all([
       Word.findOne().sort({ lessonNumberEnd: -1 }).select("lessonNumberEnd").lean(),
-      Sentence.findOne({ isGrammarPractice: { $ne: true } })
+      Sentence.findOne({ isGrammarPractice: { $ne: true }, sentenceType: { $nin: ["question", "answer"] } })
         .sort({ lessonNumberEnd: -1 })
         .select("lessonNumberEnd")
         .lean(),

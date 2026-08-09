@@ -12,6 +12,7 @@ export const GRAMMAR_ROLES: GrammarRole[] = [
   "article",
   "pronoun",
   "interjection",
+  "question_word",
 ];
 
 // Labels are in Korean (not English) — this app teaches English to Korean
@@ -30,6 +31,7 @@ export const ROLE_COLORS: Record<GrammarRole, { bg: string; text: string; label:
   article: { bg: "#F3F4F6", text: "#4B5563", label: "관사" },
   pronoun: { bg: "#CFFAFE", text: "#155E75", label: "대명사" },
   interjection: { bg: "#FFEDD5", text: "#9A3412", label: "감탄사" },
+  question_word: { bg: "#FAE8FF", text: "#86198F", label: "의문사" },
 };
 
 /** Short abbreviation used inside formula strings, e.g. "S", "V", "O", "Adj". */
@@ -45,4 +47,5 @@ export const ROLE_ABBREVIATIONS: Record<GrammarRole, string> = {
   article: "Art",
   pronoun: "Pron",
   interjection: "Interj",
+  question_word: "Wh-",
 };

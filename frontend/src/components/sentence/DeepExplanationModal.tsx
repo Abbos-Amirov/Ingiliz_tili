@@ -22,6 +22,7 @@ const ROLE_EMOJI: Record<GrammarRole, string> = {
   article: "⬛",
   pronoun: "🩵",
   interjection: "🟡",
+  question_word: "❓",
 };
 
 /** Opt-in, per-sentence "how is this built?" breakdown shown after a
@@ -105,6 +106,12 @@ export function DeepExplanationModal({
                       </span>
                     </div>
                     <p className="text-sm leading-relaxed">{wb.simpleExplanation[locale]}</p>
+                    {wb.specialNote && wb.specialNote[locale] && (
+                      <div className="mt-2 rounded-lg bg-accent-soft px-3 py-2">
+                        <p className="text-xs font-semibold text-accent mb-0.5">{t.specialNoteTitle}</p>
+                        <p className="text-xs text-accent/90">{wb.specialNote[locale]}</p>
+                      </div>
+                    )}
                     {wb.moreExamples.length > 0 && (
                       <ul className="mt-1.5 space-y-0.5">
                         {wb.moreExamples.map((ex, j) => (

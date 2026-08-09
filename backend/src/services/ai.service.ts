@@ -304,6 +304,7 @@ export interface SentenceWordExplanation {
   simpleExplanation: Trilingual;
   moreExamples: string[];
   functionWordRef: string | null;
+  specialNote: Trilingual | null;
 }
 
 export interface SentenceExplanationSuggestion {
@@ -350,8 +351,13 @@ const SUGGEST_EXPLANATION_TOOL = {
               enum: [...KNOWN_FUNCTION_WORDS, ""],
               description: `If this word is one of these common function words: ${KNOWN_FUNCTION_WORDS.join(", ")} — its lowercase form, so the app can link to the shared glossary entry. Otherwise an empty string.`,
             },
+            specialNote: {
+              ...TRILINGUAL_SCHEMA,
+              description:
+                "An important, easy-to-miss callout about this word's placement or behavior in THIS sentence (e.g. in a question, the auxiliary comes BEFORE the subject — unlike a statement). Leave all three languages as empty strings when there's nothing special to flag for this word.",
+            },
           },
-          required: ["simpleExplanation", "moreExamples", "functionWordRef"],
+          required: ["simpleExplanation", "moreExamples", "functionWordRef", "specialNote"],
         },
         description: "Exactly one entry per word, in the exact same order as the sentence's word list given below",
       },
@@ -370,29 +376,45 @@ const SUGGEST_EXPLANATION_TOOL = {
 };
 
 interface RawExplanationSuggestion {
-  wordBreakdown: { simpleExplanation: Trilingual; moreExamples: string[]; functionWordRef: string }[];
+  wordBreakdown: {
+    simpleExplanation: Trilingual;
+    moreExamples: string[];
+    functionWordRef: string;
+    specialNote: Trilingual;
+  }[];
   generalRule: Trilingual;
   practiceExamples: string[];
+}
+
+function isBlankTrilingual(t: Trilingual): boolean {
+  return !t.uz.trim() && !t.en.trim() && !t.ko.trim();
 }
 
 export async function generateSentenceExplanation(
   koreanSentence: string,
   words: RoleWordInput[],
   formula: string,
+  sentenceType: "statement" | "question" | "answer" = "statement",
 ): Promise<SentenceExplanationSuggestion> {
   const client = requireClient();
 
   const wordList = words.map((w, i) => `${i + 1}. "${w.text}" (role: ${w.role})`).join("\n");
+  const questionGuidance =
+    sentenceType === "question"
+      ? `\n\nThis sentence is a QUESTION. Pay special attention to: the auxiliary verb (do/does/did/is/are/can/...) — flag in its specialNote that it comes BEFORE the subject here, unlike in a statement; and the Wh- question word (if any) — explain what it's asking about (place, time, reason, ...) in its simpleExplanation.`
+      : sentenceType === "answer"
+        ? `\n\nThis sentence is the ANSWER to a question — keep explanations focused on this sentence's own structure.`
+        : "";
 
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 4000,
+    max_tokens: 4500,
     tools: [SUGGEST_EXPLANATION_TOOL],
     tool_choice: { type: "tool", name: "suggest_sentence_explanation" },
     messages: [
       {
         role: "user",
-        content: `English sentence: "${words.map((w) => w.text).join(" ")}"\nKorean translation: "${koreanSentence}"\nGrammar formula: "${formula}"\n\nThe sentence's words, in order, each already tagged with its grammatical role:\n${wordList}\n\nFor a young beginner learning English who speaks Uzbek and knows Korean, explain what each word's job is in THIS sentence — simple, warm, 1-2 sentences each. Provide every explanation in THREE languages (Uzbek, English, and Korean) so it can be shown in whichever language the learner's app is set to. Then give one short general rule for the grammar pattern (also in all three languages), and 3 practice example sentences (English only). Call the suggest_sentence_explanation tool with your answer.`,
+        content: `English sentence: "${words.map((w) => w.text).join(" ")}"\nKorean translation: "${koreanSentence}"\nGrammar formula: "${formula}"\n\nThe sentence's words, in order, each already tagged with its grammatical role:\n${wordList}${questionGuidance}\n\nFor a young beginner learning English who speaks Uzbek and knows Korean, explain what each word's job is in THIS sentence — simple, warm, 1-2 sentences each. Provide every explanation in THREE languages (Uzbek, English, and Korean) so it can be shown in whichever language the learner's app is set to. Add a specialNote only for a word whose placement or behavior is easy to miss — leave it blank (empty strings) for ordinary words. Then give one short general rule for the grammar pattern (also in all three languages), and 3 practice example sentences (English only). Call the suggest_sentence_explanation tool with your answer.`,
       },
     ],
   });
@@ -416,6 +438,7 @@ export async function generateSentenceExplanation(
         item.functionWordRef && KNOWN_FUNCTION_WORD_SET.has(item.functionWordRef.toLowerCase())
           ? item.functionWordRef.toLowerCase()
           : null,
+      specialNote: item.specialNote && !isBlankTrilingual(item.specialNote) ? item.specialNote : null,
     })),
     generalRule: raw.generalRule,
     practiceExamples: raw.practiceExamples,

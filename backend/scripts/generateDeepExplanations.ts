@@ -31,10 +31,12 @@ async function main() {
   let failed = 0;
   for (const s of sentences) {
     try {
+      const sentenceType = s.sentenceType === "question" || s.sentenceType === "answer" ? s.sentenceType : "statement";
       const suggestion = await generateSentenceExplanation(
         s.korean,
         s.words.map((w) => ({ text: w.text, role: w.role })),
         s.formula ?? "",
+        sentenceType,
       );
       await Sentence.findByIdAndUpdate(s._id, { deepExplanation: suggestion });
       done++;

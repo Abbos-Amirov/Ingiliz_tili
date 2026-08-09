@@ -18,7 +18,7 @@ function resolveTokenRole(token: string): GrammarRole | null {
   if (/^Art$/i.test(clean)) return "article";
   if (/^Pron$/i.test(clean)) return "pronoun";
   if (/^(and|but|because|if|conj)$/i.test(clean)) return "conjunction";
-  if (/^Wh-?$/i.test(clean)) return "pronoun";
+  if (/^Wh-?$/i.test(clean)) return "question_word";
   return null;
 }
 
