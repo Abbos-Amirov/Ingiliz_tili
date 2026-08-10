@@ -1,5 +1,18 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
 
+// Unsplash's API terms require crediting the photographer + linking back to
+// Unsplash wherever a photo is displayed (mirrors Word.ts's identical
+// sub-schema) — only set when imageUrl came from suggestedPhotos, not from
+// the user's own uploaded photo.
+const imageAttributionSchema = new Schema(
+  {
+    photographerName: { type: String, required: true },
+    photographerUrl: { type: String, required: true },
+    unsplashUrl: { type: String, required: true },
+  },
+  { _id: false },
+);
+
 // A user's personal "Method of Loci" link between a word and a real place/
 // object in their life — a photo (or written description) they associate the
 // word with. Strictly private: every query in memoryAnchors.controller.ts
@@ -9,10 +22,12 @@ import { Schema, model, InferSchemaType, Types } from "mongoose";
 const memoryAnchorSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   wordId: { type: Schema.Types.ObjectId, ref: "Word", required: true },
-  // Base64 data URI of a compressed (~500KB or under) user photo. No external
-  // file storage is configured in this project, so small images are stored
-  // inline rather than adding a new infrastructure dependency.
+  // Either a base64 data URI of a compressed (~500KB or under) user photo
+  // (no external file storage is configured in this project, so small
+  // images are stored inline), or an Unsplash `small` URL picked from
+  // suggestedPhotos — imageAttribution is only set for the latter.
   imageUrl: { type: String, default: null },
+  imageAttribution: { type: imageAttributionSchema, default: null },
   textDescription: { type: String, default: null },
   journeyId: { type: Schema.Types.ObjectId, ref: "MemoryJourney", default: null },
   journeyOrder: { type: Number, default: null },

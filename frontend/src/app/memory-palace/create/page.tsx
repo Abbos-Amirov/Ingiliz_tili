@@ -10,7 +10,8 @@ import { compressImage } from "@/lib/imageCompression";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import type { MemoryJourney, Word } from "@/lib/types";
+import { SuggestedPhotoPicker } from "@/components/memoryPalace/SuggestedPhotoPicker";
+import type { ImageAttribution, MemoryJourney, Word } from "@/lib/types";
 
 const NEW_JOURNEY_VALUE = "__new__";
 const NONE_JOURNEY_VALUE = "";
@@ -29,9 +30,10 @@ function CreateContent() {
   const [search, setSearch] = useState("");
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
 
-  const [mode, setMode] = useState<"image" | "text" | null>(null);
+  const [mode, setMode] = useState<"image" | "suggested" | "text" | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
+  const [suggestedImage, setSuggestedImage] = useState<{ url: string; attribution: ImageAttribution } | null>(null);
   const [textDescription, setTextDescription] = useState("");
 
   const [journeySelection, setJourneySelection] = useState<string>(presetJourneyId || NONE_JOURNEY_VALUE);
@@ -77,13 +79,15 @@ function CreateContent() {
     setSelectedWord(null);
     setMode(null);
     setImageBase64(null);
+    setSuggestedImage(null);
     setTextDescription("");
     setSearch("");
   }
 
   async function handleSave() {
     if (!selectedWord) return;
-    if (!imageBase64 && !textDescription.trim()) {
+    const pickedImageUrl = mode === "suggested" ? suggestedImage?.url : imageBase64;
+    if (!pickedImageUrl && !textDescription.trim()) {
       setError(t.missingContent);
       return;
     }
@@ -109,7 +113,8 @@ function CreateContent() {
 
       await createAnchor({
         wordId: selectedWord._id,
-        imageBase64: imageBase64 ?? undefined,
+        imageUrl: pickedImageUrl ?? undefined,
+        imageAttribution: mode === "suggested" ? suggestedImage?.attribution : undefined,
         textDescription: textDescription.trim() || undefined,
         journeyId,
         journeyOrder,
@@ -199,7 +204,7 @@ function CreateContent() {
               </button>
             </div>
 
-            <div className="flex justify-center gap-2 mb-5">
+            <div className="flex justify-center gap-2 mb-5 flex-wrap">
               <button
                 type="button"
                 onClick={() => setMode("image")}
@@ -208,6 +213,15 @@ function CreateContent() {
                 }`}
               >
                 {t.cameraBtn}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("suggested")}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                  mode === "suggested" ? "gradient-primary text-white" : "bg-surface-muted text-foreground/70"
+                }`}
+              >
+                {t.suggestedBtn}
               </button>
               <button
                 type="button"
@@ -242,6 +256,15 @@ function CreateContent() {
                   </label>
                 )}
               </div>
+            )}
+
+            {mode === "suggested" && (
+              <SuggestedPhotoPicker
+                defaultQuery={selectedWord.english}
+                selectedImageUrl={suggestedImage?.url}
+                onSelect={(imageUrl, attribution) => setSuggestedImage({ url: imageUrl, attribution })}
+                onClear={() => setSuggestedImage(null)}
+              />
             )}
 
             {mode === "text" && (

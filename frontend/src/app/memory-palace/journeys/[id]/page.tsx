@@ -103,7 +103,12 @@ export default function MemoryJourneyDetailPage() {
                     </span>
                     {a.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.imageUrl} alt="" className="h-12 w-12 object-cover rounded-lg" />
+                      <img
+                        src={a.imageUrl}
+                        alt=""
+                        title={a.imageAttribution ? `Photo: ${a.imageAttribution.photographerName} (Unsplash)` : undefined}
+                        className="h-12 w-12 object-cover rounded-lg"
+                      />
                     ) : (
                       <span className="h-12 w-12 rounded-lg bg-surface-muted flex items-center justify-center text-xl">📝</span>
                     )}

@@ -4,6 +4,7 @@ import { MemoryAnchor, MemoryAnchorDoc } from "../models/MemoryAnchor";
 import { UserWordProgress } from "../models/UserWordProgress";
 import { Word, WordDoc } from "../models/Word";
 import { reviewWord } from "../services/srs.service";
+import { searchUnsplashPhotos } from "../services/unsplash.service";
 
 // Base64 data URIs run ~33% larger than the raw bytes they encode, so this
 // caps the encoded string comfortably above the ~500KB post-compression
@@ -76,17 +77,17 @@ export const nextForRecall: RequestHandler = async (req, res, next) => {
 export const createMemoryAnchor: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const { wordId, imageBase64, textDescription, journeyId, journeyOrder } = req.body ?? {};
+    const { wordId, imageUrl, imageAttribution, textDescription, journeyId, journeyOrder } = req.body ?? {};
 
     if (!wordId || !Types.ObjectId.isValid(wordId)) {
       res.status(400).json({ error: "Valid wordId is required" });
       return;
     }
-    if (!imageBase64 && !textDescription) {
-      res.status(400).json({ error: "Either imageBase64 or textDescription is required" });
+    if (!imageUrl && !textDescription) {
+      res.status(400).json({ error: "Either imageUrl or textDescription is required" });
       return;
     }
-    if (imageBase64 && imageBase64.length > MAX_IMAGE_BASE64_LENGTH) {
+    if (imageUrl && imageUrl.length > MAX_IMAGE_BASE64_LENGTH) {
       res.status(400).json({ error: "Image is too large — please compress it further" });
       return;
     }
@@ -103,7 +104,11 @@ export const createMemoryAnchor: RequestHandler = async (req, res, next) => {
       {
         userId,
         wordId,
-        imageUrl: imageBase64 ?? null,
+        imageUrl: imageUrl ?? null,
+        // A suggested Unsplash photo carries attribution; a user's own
+        // uploaded photo never does — always overwrite, never merge stale
+        // attribution onto a freshly uploaded photo.
+        imageAttribution: imageUrl ? (imageAttribution ?? null) : null,
         textDescription: textDescription ?? null,
         journeyId: journeyId && Types.ObjectId.isValid(journeyId) ? journeyId : null,
         journeyOrder: typeof journeyOrder === "number" ? journeyOrder : null,
@@ -121,15 +126,18 @@ export const updateMemoryAnchor: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const { id } = req.params;
-    const { imageBase64, textDescription, journeyId, journeyOrder } = req.body ?? {};
+    const { imageUrl, imageAttribution, textDescription, journeyId, journeyOrder } = req.body ?? {};
 
-    if (imageBase64 && imageBase64.length > MAX_IMAGE_BASE64_LENGTH) {
+    if (imageUrl && imageUrl.length > MAX_IMAGE_BASE64_LENGTH) {
       res.status(400).json({ error: "Image is too large — please compress it further" });
       return;
     }
 
     const update: Record<string, unknown> = {};
-    if (imageBase64 !== undefined) update.imageUrl = imageBase64;
+    if (imageUrl !== undefined) {
+      update.imageUrl = imageUrl;
+      update.imageAttribution = imageUrl ? (imageAttribution ?? null) : null;
+    }
     if (textDescription !== undefined) update.textDescription = textDescription;
     if (journeyId !== undefined) update.journeyId = journeyId && Types.ObjectId.isValid(journeyId) ? journeyId : null;
     if (journeyOrder !== undefined) update.journeyOrder = journeyOrder;
@@ -140,6 +148,20 @@ export const updateMemoryAnchor: RequestHandler = async (req, res, next) => {
       return;
     }
     res.json({ anchor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const suggestedPhotos: RequestHandler = async (req, res, next) => {
+  try {
+    const { query } = req.query;
+    if (!query || typeof query !== "string") {
+      res.status(400).json({ error: "query is required" });
+      return;
+    }
+    const photos = await searchUnsplashPhotos(query.trim());
+    res.json({ photos });
   } catch (err) {
     next(err);
   }

@@ -257,6 +257,7 @@ export interface MemoryAnchor {
   userId: string;
   wordId: Word;
   imageUrl: string | null;
+  imageAttribution: ImageAttribution | null;
   textDescription: string | null;
   journeyId: string | null;
   journeyOrder: number | null;

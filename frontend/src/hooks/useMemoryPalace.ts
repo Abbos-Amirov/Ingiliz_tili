@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { apiFetch } from "@/lib/api";
-import type { MemoryAnchor, MemoryJourney, Word } from "@/lib/types";
+import type { ImageAttribution, MemoryAnchor, MemoryJourney, UnsplashPhoto, Word } from "@/lib/types";
 
 export function useMemoryPalace() {
   const fetchAnchors = useCallback(async (journeyId?: string) => {
@@ -19,7 +19,14 @@ export function useMemoryPalace() {
   }, []);
 
   const createAnchor = useCallback(
-    async (data: { wordId: string; imageBase64?: string; textDescription?: string; journeyId?: string; journeyOrder?: number }) => {
+    async (data: {
+      wordId: string;
+      imageUrl?: string;
+      imageAttribution?: ImageAttribution;
+      textDescription?: string;
+      journeyId?: string;
+      journeyOrder?: number;
+    }) => {
       return apiFetch<{ anchor: MemoryAnchor }>("/memory-anchors", {
         method: "POST",
         body: JSON.stringify(data),
@@ -30,6 +37,10 @@ export function useMemoryPalace() {
 
   const deleteAnchor = useCallback(async (id: string) => {
     return apiFetch<{ success: true }>(`/memory-anchors/${id}`, { method: "DELETE" });
+  }, []);
+
+  const fetchSuggestedPhotos = useCallback(async (query: string) => {
+    return apiFetch<{ photos: UnsplashPhoto[] }>(`/memory-anchors/suggested-photos?query=${encodeURIComponent(query)}`);
   }, []);
 
   const submitRecallResult = useCallback(async (id: string, result: "correct" | "wrong") => {
@@ -64,6 +75,7 @@ export function useMemoryPalace() {
     fetchNextForRecall,
     createAnchor,
     deleteAnchor,
+    fetchSuggestedPhotos,
     submitRecallResult,
     fetchJourneys,
     createJourney,

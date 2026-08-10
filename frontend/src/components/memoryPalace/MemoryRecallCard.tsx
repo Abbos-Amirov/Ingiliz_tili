@@ -6,6 +6,7 @@ import type { MemoryAnchor, Word } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { WordImage } from "@/components/ui/WordImage";
 import { MatchWordTile } from "@/components/match/MatchWordTile";
 import { useSrsActions } from "@/hooks/useSrsSession";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
@@ -124,11 +125,11 @@ export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; o
     <Card className="p-6 sm:p-8 text-center">
       {anchor.imageUrl ? (
         <div className="mb-5 flex justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <WordImage
             src={anchor.imageUrl}
+            attribution={anchor.imageAttribution}
             alt=""
-            className="h-48 w-48 sm:h-56 sm:w-56 object-cover rounded-2xl border border-border"
+            imgClassName="h-48 w-48 sm:h-56 sm:w-56 object-cover rounded-2xl border border-border"
           />
         </div>
       ) : (
@@ -152,6 +153,19 @@ export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; o
               className="text-sm font-semibold text-primary"
             >
               {t.writeInstruction}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {stage === "write" && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-lg font-semibold text-foreground/25 select-none -mb-1"
+            >
+              {word.english}
             </motion.p>
           )}
         </AnimatePresence>
