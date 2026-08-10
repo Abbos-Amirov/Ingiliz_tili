@@ -25,6 +25,7 @@ export function Navbar() {
     { href: "/function-words", label: t.functionWords },
     { href: "/questions-answers", label: t.questionAnswers },
     { href: "/flashcards", label: t.flashcards },
+    { href: "/memory-palace", label: t.memoryPalace },
     { href: "/progress", label: t.progress },
   ];
 

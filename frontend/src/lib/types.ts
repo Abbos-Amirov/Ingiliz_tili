@@ -242,3 +242,31 @@ export interface FunctionWord {
   audioUrl?: string | null;
   order: number;
 }
+
+export interface MemoryJourney {
+  _id: string;
+  userId: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  stopCount?: number;
+}
+
+export interface MemoryAnchor {
+  _id: string;
+  userId: string;
+  wordId: Word;
+  imageUrl: string | null;
+  textDescription: string | null;
+  journeyId: string | null;
+  journeyOrder: number | null;
+  createdAt: string;
+  lastRecalledAt: string | null;
+  easeFactor: number;
+  recallSrsInterval: number;
+  repetitions: number;
+  lapses: number;
+  dueDate: string;
+  recallCorrectCount: number;
+  recallIncorrectCount: number;
+}
