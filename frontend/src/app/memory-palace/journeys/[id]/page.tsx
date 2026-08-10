@@ -20,7 +20,7 @@ export default function MemoryJourneyDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const t = useT("memoryPalace");
-  const { fetchJourney } = useMemoryPalace();
+  const { fetchJourney, deleteAnchor } = useMemoryPalace();
 
   const [journey, setJourney] = useState<MemoryJourney | null>(null);
   const [anchors, setAnchors] = useState<MemoryAnchor[] | null>(null);
@@ -40,6 +40,12 @@ export default function MemoryJourneyDetailPage() {
   useEffect(() => {
     if (ready && !user) router.replace("/login");
   }, [ready, user, router]);
+
+  async function handleDeleteStop(id: string) {
+    if (!confirm(t.deleteAnchorConfirm)) return;
+    await deleteAnchor(id);
+    setAnchors((prev) => (prev ? prev.filter((a) => a._id !== id) : prev));
+  }
 
   function startRecall() {
     setIndex(0);
@@ -112,10 +118,18 @@ export default function MemoryJourneyDetailPage() {
                     ) : (
                       <span className="h-12 w-12 rounded-lg bg-surface-muted flex items-center justify-center text-xl">📝</span>
                     )}
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold truncate">{a.wordId.english}</p>
                       <p className="text-xs text-foreground/50 truncate">{a.wordId.korean}</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteStop(a._id)}
+                      aria-label="delete"
+                      className="text-foreground/30 hover:text-danger text-lg leading-none p-2 shrink-0"
+                    >
+                      🗑
+                    </button>
                   </Card>
                 ))}
               </div>

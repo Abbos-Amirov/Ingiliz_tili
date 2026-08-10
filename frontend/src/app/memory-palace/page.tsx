@@ -95,6 +95,16 @@ export default function MemoryPalacePage() {
               </div>
             </Card>
           </Link>
+
+          <Link href="/memory-palace/words">
+            <Card className="p-6 flex items-center gap-4 hover:border-primary/50 transition-colors cursor-pointer">
+              <span className="text-3xl">📋</span>
+              <div>
+                <p className="font-bold text-lg">{t.myWordsBtn}</p>
+                {totalAnchors !== null && <p className="text-sm text-foreground/50">{totalAnchors}</p>}
+              </div>
+            </Card>
+          </Link>
         </motion.div>
       </div>
     </div>
