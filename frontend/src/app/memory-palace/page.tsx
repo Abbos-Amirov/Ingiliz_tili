@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
@@ -19,6 +19,7 @@ export default function MemoryPalacePage() {
   const [unplacedCount, setUnplacedCount] = useState<number | null>(null);
   const [totalAnchors, setTotalAnchors] = useState<number | null>(null);
   const [dueCount, setDueCount] = useState<number | null>(null);
+  const [factsExpanded, setFactsExpanded] = useState(false);
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -40,6 +41,36 @@ export default function MemoryPalacePage() {
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
         <PageHeader title={t.title} subtitle={t.subtitle} />
+
+        <Card className="p-4 mb-8 bg-primary/5 border-primary/20">
+          <p className="text-sm font-semibold mb-1.5">{t.didYouKnowTitle}</p>
+          <p className="text-sm text-foreground/70">{t.didYouKnowFacts[0]}</p>
+          <AnimatePresence>
+            {factsExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-2 space-y-2">
+                  {t.didYouKnowFacts.slice(1).map((fact) => (
+                    <p key={fact} className="text-sm text-foreground/70">
+                      {fact}
+                    </p>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <button
+            type="button"
+            onClick={() => setFactsExpanded((v) => !v)}
+            className="mt-2 text-xs font-semibold text-primary hover:underline"
+          >
+            {factsExpanded ? t.didYouKnowLess : t.didYouKnowMore}
+          </button>
+        </Card>
 
         <div className="grid grid-cols-3 gap-3 mb-8">
           <Card className="p-4 text-center">
