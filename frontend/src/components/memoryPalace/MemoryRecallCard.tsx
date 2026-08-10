@@ -123,8 +123,8 @@ export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; o
 
   return (
     <Card className="p-6 sm:p-8 text-center">
-      {anchor.imageUrl ? (
-        <div className="mb-5 flex justify-center">
+      {anchor.imageUrl && (
+        <div className={anchor.textDescription ? "mb-3 flex justify-center" : "mb-5 flex justify-center"}>
           <WordImage
             src={anchor.imageUrl}
             attribution={anchor.imageAttribution}
@@ -132,8 +132,13 @@ export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; o
             imgClassName="h-48 w-48 sm:h-56 sm:w-56 object-cover rounded-2xl border border-border"
           />
         </div>
-      ) : (
-        <div className="mb-5 rounded-2xl bg-surface-muted border border-border/60 px-5 py-8">
+      )}
+      {anchor.textDescription && (
+        <div
+          className={`mb-5 rounded-2xl bg-surface-muted border border-border/60 px-5 ${
+            anchor.imageUrl ? "py-4" : "py-8"
+          }`}
+        >
           <p className="text-lg font-medium italic text-foreground/70">&ldquo;{anchor.textDescription}&rdquo;</p>
         </div>
       )}

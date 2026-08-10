@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
@@ -30,7 +31,7 @@ function CreateContent() {
   const [search, setSearch] = useState("");
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
 
-  const [mode, setMode] = useState<"image" | "suggested" | "text" | null>(null);
+  const [mode, setMode] = useState<"image" | "suggested" | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
   const [suggestedImage, setSuggestedImage] = useState<{ url: string; attribution: ImageAttribution } | null>(null);
@@ -136,6 +137,9 @@ function CreateContent() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-xl">
+        <Link href="/memory-palace" className="inline-block mb-4 text-sm font-medium text-foreground/50 hover:text-primary">
+          {t.backToHub}
+        </Link>
         <PageHeader title={t.createPageTitle} subtitle={t.createPageSubtitle} />
 
         <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
@@ -223,15 +227,6 @@ function CreateContent() {
               >
                 {t.suggestedBtn}
               </button>
-              <button
-                type="button"
-                onClick={() => setMode("text")}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                  mode === "text" ? "gradient-primary text-white" : "bg-surface-muted text-foreground/70"
-                }`}
-              >
-                {t.descriptionBtn}
-              </button>
             </div>
 
             {mode === "image" && (
@@ -267,22 +262,26 @@ function CreateContent() {
               />
             )}
 
-            {mode === "text" && (
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-foreground/50 mb-2">{t.descriptionLabel}</p>
               <textarea
                 value={textDescription}
                 onChange={(e) => setTextDescription(e.target.value)}
                 placeholder={t.descriptionPlaceholder}
-                rows={3}
-                className="w-full rounded-xl border-2 border-border bg-surface-muted px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary mb-5 resize-none"
+                rows={2}
+                className="w-full rounded-xl border-2 border-border bg-surface-muted px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
               />
-            )}
+            </div>
 
             {journeys !== null && (
               <div className="mb-6">
                 <p className="text-xs font-semibold text-foreground/50 mb-2">{t.journeyLabel}</p>
                 <select
                   value={journeySelection}
-                  onChange={(e) => setJourneySelection(e.target.value)}
+                  onChange={(e) => {
+                    setJourneySelection(e.target.value);
+                    if (e.target.value !== NEW_JOURNEY_VALUE) setNewJourneyTitle("");
+                  }}
                   className="w-full rounded-xl border-2 border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value={NONE_JOURNEY_VALUE}>{t.journeyNone}</option>
@@ -294,12 +293,25 @@ function CreateContent() {
                   <option value={NEW_JOURNEY_VALUE}>{t.newJourneyOption}</option>
                 </select>
                 {journeySelection === NEW_JOURNEY_VALUE && (
-                  <input
-                    value={newJourneyTitle}
-                    onChange={(e) => setNewJourneyTitle(e.target.value)}
-                    placeholder={t.newJourneyPlaceholder}
-                    className="mt-2 w-full rounded-xl border-2 border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
-                  />
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-foreground/50 mb-2">{t.newJourneyThemesLabel}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {t.journeyThemeSuggestions.map((theme) => (
+                        <button
+                          key={theme}
+                          type="button"
+                          onClick={() => setNewJourneyTitle(theme)}
+                          className={`px-3 py-2 rounded-xl border-2 text-sm font-medium text-left transition-colors ${
+                            newJourneyTitle === theme
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-surface text-foreground/70 hover:border-primary/40"
+                          }`}
+                        >
+                          {theme}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -307,7 +319,7 @@ function CreateContent() {
             {error && <p className="text-danger text-sm text-center mb-4">{error}</p>}
 
             <div className="flex justify-center">
-              <Button size="lg" onClick={handleSave} disabled={saving || !mode || compressing}>
+              <Button size="lg" onClick={handleSave} disabled={saving || compressing}>
                 {saving ? "…" : t.saveBtn}
               </Button>
             </div>
