@@ -14,35 +14,33 @@ interface AuthState {
   hydrate: () => void;
   login: (email: string, password: string) => Promise<AuthUser>;
   register: (email: string, password: string, displayName: string) => Promise<AuthUser>;
+  loginWithGoogle: (credential: string) => Promise<AuthUser>;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  ready: false,
-  hydrate: () => set({ user: getUser(), ready: true }),
-  login: async (email, password) => {
-    const res = await apiFetch<AuthResponse>("/auth/login", {
+export const useAuthStore = create<AuthState>((set) => {
+  async function completeAuth(path: string, body: Record<string, string>): Promise<AuthUser> {
+    const res = await apiFetch<AuthResponse>(path, {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
       skipAuth: true,
     });
     setSession(res.token, res.user);
     set({ user: res.user });
     return res.user;
-  },
-  register: async (email, password, displayName) => {
-    const res = await apiFetch<AuthResponse>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password, displayName }),
-      skipAuth: true,
-    });
-    setSession(res.token, res.user);
-    set({ user: res.user });
-    return res.user;
-  },
-  logout: () => {
-    clearSession();
-    set({ user: null });
-  },
-}));
+  }
+
+  return {
+    user: null,
+    ready: false,
+    hydrate: () => set({ user: getUser(), ready: true }),
+    login: (email, password) => completeAuth("/auth/login", { email, password }),
+    register: (email, password, displayName) =>
+      completeAuth("/auth/register", { email, password, displayName }),
+    loginWithGoogle: (credential) => completeAuth("/auth/google", { credential }),
+    logout: () => {
+      clearSession();
+      set({ user: null });
+    },
+  };
+});

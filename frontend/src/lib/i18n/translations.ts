@@ -92,6 +92,7 @@ const uz = {
     loginLink: "Kiring",
     showPassword: "Parolni ko'rsatish",
     hidePassword: "Parolni yashirish",
+    orDivider: "yoki",
   },
   match: {
     title: "So'z moslashtirish",
@@ -517,6 +518,7 @@ const en = {
     loginLink: "Log in",
     showPassword: "Show password",
     hidePassword: "Hide password",
+    orDivider: "or",
   },
   match: {
     title: "Word Matching",
@@ -942,6 +944,7 @@ const ko = {
     loginLink: "로그인",
     showPassword: "비밀번호 표시",
     hidePassword: "비밀번호 숨기기",
+    orDivider: "또는",
   },
   match: {
     title: "단어 매칭",

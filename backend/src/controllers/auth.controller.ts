@@ -2,6 +2,7 @@ import { RequestHandler } from "express";
 import { User } from "../models/User";
 import { hashPassword, comparePassword } from "../utils/password";
 import { signToken } from "../utils/jwt";
+import { verifyGoogleIdToken } from "../services/googleAuth.service";
 
 export const register: RequestHandler = async (req, res, next) => {
   try {
@@ -39,10 +40,46 @@ export const login: RequestHandler = async (req, res, next) => {
       return;
     }
     const user = await User.findOne({ email: String(email).toLowerCase() });
-    if (!user || !(await comparePassword(password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await comparePassword(password, user.passwordHash))) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
+    const token = signToken({ id: String(user._id), role: user.role as "user" | "admin" });
+    res.json({
+      token,
+      user: { id: user._id, email: user.email, displayName: user.displayName, role: user.role },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const googleLogin: RequestHandler = async (req, res, next) => {
+  try {
+    const { credential } = req.body ?? {};
+    if (!credential) {
+      res.status(400).json({ error: "credential is required" });
+      return;
+    }
+    const profile = await verifyGoogleIdToken(credential);
+
+    let user = await User.findOne({ googleId: profile.googleId });
+    if (!user) {
+      // Link to an existing password-based account with the same email
+      // instead of creating a duplicate user.
+      user = await User.findOne({ email: profile.email });
+      if (user) {
+        user.googleId = profile.googleId;
+        await user.save();
+      } else {
+        user = await User.create({
+          email: profile.email,
+          googleId: profile.googleId,
+          displayName: profile.displayName,
+        });
+      }
+    }
+
     const token = signToken({ id: String(user._id), role: user.role as "user" | "admin" });
     res.json({
       token,
@@ -61,7 +98,7 @@ export const adminLogin: RequestHandler = async (req, res, next) => {
       return;
     }
     const user = await User.findOne({ email: String(email).toLowerCase() });
-    if (!user || user.role !== "admin" || !(await comparePassword(password, user.passwordHash))) {
+    if (!user || user.role !== "admin" || !user.passwordHash || !(await comparePassword(password, user.passwordHash))) {
       res.status(401).json({ error: "Invalid admin credentials" });
       return;
     }

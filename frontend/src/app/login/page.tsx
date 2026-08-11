@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { ApiError } from "@/lib/api";
@@ -73,6 +74,18 @@ export default function LoginPage() {
               {loading ? t.loggingIn : t.loginButton}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-foreground/40 uppercase">{t.orDivider}</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          <GoogleSignInButton
+            onSuccess={() => router.push("/learn/match")}
+            onError={(err) => setError(err instanceof ApiError ? err.message : t.loginTitle)}
+          />
+
           <p className="text-sm text-foreground/60 mt-5 text-center">
             {t.noAccount}{" "}
             <Link href="/register" className="text-primary font-semibold">

@@ -9,6 +9,7 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional().default(""),
   ENGLISH_AI_API_KEY: z.string().optional().default(""),
   UNSPLASH_ACCESS_KEY: z.string().optional().default(""),
+  GOOGLE_CLIENT_ID: z.string().optional().default(""),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
   NODE_ENV: z.string().default("development"),
 });
@@ -27,3 +28,9 @@ export const env = parsed.data;
 export const AI_API_KEY = env.ENGLISH_AI_API_KEY || env.ANTHROPIC_API_KEY;
 
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
+
+// Only the client ID is needed — Google Identity Services issues a signed ID
+// token client-side that we verify server-side (see googleAuth.service.ts),
+// which never requires GOOGLE_CLIENT_SECRET (that's only for the
+// authorization-code flow, which this app doesn't use).
+export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
