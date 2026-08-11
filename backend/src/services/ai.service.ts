@@ -3,6 +3,7 @@ import { AI_API_KEY } from "../config/env";
 import { GRAMMAR_ROLES, GrammarRole, PARTS_OF_SPEECH, PartOfSpeech } from "../config/grammar";
 import { IRREGULAR_VERB_CATEGORIES, IrregularVerbCategory } from "../config/irregularVerbs";
 import { FUNCTION_WORD_CATEGORIES, FunctionWordCategory } from "../config/functionWords";
+import { PALACE_ROOM_KEYS, PalaceRoomKey } from "../config/palaceRooms";
 
 export interface TranslationSuggestion {
   korean: string;
@@ -525,6 +526,65 @@ export async function generateFunctionWordContent(
   });
 
   return extractToolInput<FunctionWordSuggestion>(response);
+}
+
+// English-only prompt context for the AI — never shown to the user (the UI
+// renders the room's name/description from translations.ts in whichever
+// locale the learner has selected). Keeping this in sync with
+// PALACE_ROOM_KEYS' order isn't required — the model matches by key name.
+const ROOM_DESCRIPTIONS_FOR_AI: Record<PalaceRoomKey, string> = {
+  princess_room: "Princess Chamber — everyday, personal words (family, clothes, feelings)",
+  knights_hall: "Knights' Hall — strength, courage, action verbs",
+  wise_tower: "Tower of Wisdom — knowledge, thought, learning words",
+  feast_hall: "Feast Hall — food and drink words",
+  mask_gallery: "Gallery of Masks — emotions and character traits",
+  treasure_room: "Secret Treasure Room — rare, tricky, easily-forgotten words",
+  dragon_cave: "Dragon's Cave — powerful, fierce, dramatic words",
+  unicorn_valley: "Unicorn Valley — nature, animals, pure/gentle words",
+  mermaid_lake: "Mermaid's Lake — feelings, calm, deep-meaning words",
+  mystic_forest: "Mystic Forest — abstract, uncertain concepts",
+  thunder_mountain: "Thunder Mountain — strong verbs, action, speed",
+  wizard_tower: "Wizard's Tower — unusual, rarely-used words",
+  starry_sky: "Starry Sky — dreams, hope, future-tense words",
+  forgotten_island: "Forgotten Island — old, archaic, rarely-heard words",
+  time_gate: "Time Gate — words tied to grammatical tense",
+};
+
+const SUGGEST_ROOM_TOOL = {
+  name: "suggest_palace_room",
+  description: "Pick the single best-fitting fairy-tale memory-palace room for an English word.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      roomKey: {
+        type: "string" as const,
+        enum: PALACE_ROOM_KEYS as unknown as string[],
+        description: "The key of the single best-fitting room",
+      },
+    },
+    required: ["roomKey"],
+  },
+};
+
+export async function suggestPalaceRoom(english: string, korean: string, partOfSpeech?: string | null): Promise<PalaceRoomKey> {
+  const client = requireClient();
+
+  const roomList = PALACE_ROOM_KEYS.map((key) => `- ${key}: ${ROOM_DESCRIPTIONS_FOR_AI[key]}`).join("\n");
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 200,
+    tools: [SUGGEST_ROOM_TOOL],
+    tool_choice: { type: "tool", name: "suggest_palace_room" },
+    messages: [
+      {
+        role: "user",
+        content: `A language learner is placing the English word "${english}" (Korean: "${korean}"${partOfSpeech ? `, part of speech: ${partOfSpeech}` : ""}) into a "Memory Palace" — a fairy-tale castle divided into themed rooms. Pick the single best-fitting room from this list:\n${roomList}\n\nCall the suggest_palace_room tool with your answer.`,
+      },
+    ],
+  });
+
+  return extractToolInput<{ roomKey: PalaceRoomKey }>(response).roomKey;
 }
 
 export interface ChatMessage {

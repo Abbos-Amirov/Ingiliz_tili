@@ -1,34 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import type { MemoryAnchor, MemoryJourney } from "@/lib/types";
+import { PALACE_ROOMS } from "@/lib/palaceRooms";
+import type { MemoryAnchor, PalaceRoomKey } from "@/lib/types";
 
-export default function MemoryPalaceWordsPage() {
+export default function MemoryPalaceRoomDetailPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
+  const params = useParams<{ roomKey: string }>();
   const t = useT("memoryPalace");
-  const { fetchAnchors, fetchJourneys, deleteAnchor } = useMemoryPalace();
+  const rooms = useT("palaceRooms");
+  const { fetchAnchors, deleteAnchor } = useMemoryPalace();
+
+  const room = PALACE_ROOMS.find((r) => r.key === params.roomKey);
+  const roomKey = room?.key as PalaceRoomKey | undefined;
 
   const [anchors, setAnchors] = useState<MemoryAnchor[] | null>(null);
-  const [journeys, setJourneys] = useState<MemoryJourney[] | null>(null);
 
   useEffect(() => {
-    if (!ready || !user) return;
-    fetchAnchors().then((res) => setAnchors(res.anchors));
-    fetchJourneys().then((res) => setJourneys(res.journeys));
-  }, [ready, user, fetchAnchors, fetchJourneys]);
+    if (!ready || !user || !roomKey) return;
+    fetchAnchors({ roomKey }).then((res) => setAnchors(res.anchors));
+  }, [ready, user, roomKey, fetchAnchors]);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
   }, [ready, user, router]);
+
+  useEffect(() => {
+    if (!room) router.replace("/memory-palace/rooms");
+  }, [room, router]);
 
   async function handleDelete(id: string) {
     if (!confirm(t.deleteAnchorConfirm)) return;
@@ -37,30 +44,39 @@ export default function MemoryPalaceWordsPage() {
   }
 
   if (!ready || !user) return null;
+  if (!room || !roomKey) return null;
 
-  const journeyTitleById = new Map((journeys ?? []).map((j) => [j._id, j.title]));
+  const content = rooms[roomKey];
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <Link href="/memory-palace" className="inline-block mb-4 text-sm font-medium text-foreground/50 hover:text-primary">
-          {t.backToHub}
+        <Link href="/memory-palace/rooms" className="inline-block mb-4 text-sm font-medium text-foreground/50 hover:text-primary">
+          {t.roomBackLink}
         </Link>
-        <PageHeader title={t.myWordsPageTitle} subtitle={t.myWordsPageSubtitle} />
+
+        <div className="rounded-2xl p-6 mb-6 text-center" style={{ backgroundColor: room.bg }}>
+          <span className="text-5xl">{room.emoji}</span>
+          <h1 className="text-2xl font-extrabold mt-2" style={{ color: room.text }}>
+            {content.name}
+          </h1>
+          <p className="text-sm mt-2 max-w-md mx-auto" style={{ color: room.text }}>
+            {content.introStory}
+          </p>
+        </div>
+
+        <div className="flex justify-center mb-6">
+          <Link href={`/memory-palace/create?roomKey=${roomKey}`}>
+            <Button>{t.roomAddWordBtn}</Button>
+          </Link>
+        </div>
 
         {anchors === null ? (
           <div className="flex justify-center py-16">
             <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           </div>
         ) : anchors.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-4xl mb-3">📋</p>
-            <p className="font-bold text-lg mb-2">{t.myWordsEmptyTitle}</p>
-            <p className="text-sm text-foreground/50 max-w-sm mx-auto mb-5">{t.myWordsEmptyDesc}</p>
-            <Link href="/memory-palace/create">
-              <Button>{t.placeWordsBtn}</Button>
-            </Link>
-          </Card>
+          <Card className="p-8 text-center text-sm text-foreground/50">{t.roomDetailEmpty}</Card>
         ) : (
           <div className="grid gap-3">
             {anchors.map((a) => (
@@ -74,16 +90,11 @@ export default function MemoryPalaceWordsPage() {
                     className="h-14 w-14 object-cover rounded-lg shrink-0"
                   />
                 ) : (
-                  <span className="h-14 w-14 rounded-lg bg-surface-muted flex items-center justify-center text-2xl shrink-0">
-                    📝
-                  </span>
+                  <span className="h-14 w-14 rounded-lg bg-surface-muted flex items-center justify-center text-2xl shrink-0">📝</span>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold truncate">{a.wordId.english}</p>
                   <p className="text-xs text-foreground/50 truncate">{a.wordId.korean}</p>
-                  {a.journeyId && journeyTitleById.get(a.journeyId) && (
-                    <p className="text-xs text-primary mt-1 truncate">🗺️ {journeyTitleById.get(a.journeyId)}</p>
-                  )}
                 </div>
                 <button
                   type="button"

@@ -10,7 +10,8 @@ import type { ImageAttribution, UnsplashPhoto } from "@/lib/types";
 // here so a regular user can pick a stock photo for a word instead of (or
 // alongside) taking their own. Auto-searches once for the selected word so
 // suggestions appear without the user having to type anything first, but
-// still lets them refine the search term.
+// still lets them refine the search term. Horizontal scroll + "load more"
+// (rather than a fixed 6-photo grid) gives a lot more variety to browse.
 export function SuggestedPhotoPicker({
   defaultQuery,
   selectedImageUrl,
@@ -27,7 +28,10 @@ export function SuggestedPhotoPicker({
 
   const [query, setQuery] = useState(defaultQuery);
   const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
 
@@ -36,13 +40,30 @@ export function SuggestedPhotoPicker({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchSuggestedPhotos(q.trim());
+      const res = await fetchSuggestedPhotos(q.trim(), 1);
       setPhotos(res.photos);
+      setHasMore(res.hasMore);
+      setPage(1);
       setSearched(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.suggestedError);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadMore() {
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetchSuggestedPhotos(query.trim(), nextPage);
+      setPhotos((prev) => [...prev, ...res.photos]);
+      setHasMore(res.hasMore);
+      setPage(nextPage);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -95,28 +116,44 @@ export function SuggestedPhotoPicker({
       )}
 
       {photos.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {photos.map((photo) => (
+        <>
+          <div
+            className="flex gap-2.5 overflow-x-auto pb-1"
+            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
+          >
+            {photos.map((photo, i) => (
+              <button
+                key={`${photo.thumbUrl}-${i}`}
+                type="button"
+                onClick={() =>
+                  onSelect(photo.imageUrl, {
+                    photographerName: photo.photographerName,
+                    photographerUrl: photo.photographerUrl,
+                    unsplashUrl: photo.unsplashUrl,
+                  })
+                }
+                title={`Photo by ${photo.photographerName} on Unsplash`}
+                style={{ scrollSnapAlign: "start" }}
+                className={`shrink-0 h-24 w-24 rounded-xl overflow-hidden border-2 transition-colors ${
+                  selectedImageUrl === photo.imageUrl ? "border-primary" : "border-transparent hover:border-primary/50"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.thumbUrl} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+          {hasMore && (
             <button
-              key={photo.thumbUrl}
               type="button"
-              onClick={() =>
-                onSelect(photo.imageUrl, {
-                  photographerName: photo.photographerName,
-                  photographerUrl: photo.photographerUrl,
-                  unsplashUrl: photo.unsplashUrl,
-                })
-              }
-              title={`Photo by ${photo.photographerName} on Unsplash`}
-              className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                selectedImageUrl === photo.imageUrl ? "border-primary" : "border-transparent hover:border-primary/50"
-              }`}
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mt-2 text-xs font-semibold text-primary hover:underline disabled:opacity-60"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.thumbUrl} alt="" className="w-full h-full object-cover" />
+              {loadingMore ? t.suggestedLoadingMore : t.suggestedLoadMoreBtn}
             </button>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

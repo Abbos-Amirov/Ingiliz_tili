@@ -16,17 +16,27 @@ interface UnsplashApiPhoto {
 
 interface UnsplashSearchResponse {
   results: UnsplashApiPhoto[];
+  total_pages: number;
+}
+
+export interface UnsplashSearchResult {
+  photos: UnsplashPhoto[];
+  hasMore: boolean;
 }
 
 // Admin-only, called once per word when it's being added/edited (see
 // FEATURE 1 "Rasm orqali yodlash") — never at runtime for regular users, so
 // this stays well under Unsplash's demo-app rate limit (50 req/hr).
-export async function searchUnsplashPhotos(query: string): Promise<UnsplashPhoto[]> {
+//
+// Also reused by memory-anchors' suggested-photos endpoint (regular users,
+// Memory Palace word placement) with a higher per_page + pagination so that
+// flow's horizontal photo gallery has enough variety to scroll through.
+export async function searchUnsplashPhotos(query: string, page = 1, perPage = 20): Promise<UnsplashSearchResult> {
   if (!UNSPLASH_ACCESS_KEY) {
     throw Object.assign(new Error("UNSPLASH_ACCESS_KEY is not configured"), { status: 503 });
   }
 
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=6`;
+  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}`;
   const response = await fetch(url, {
     headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
   });
@@ -38,11 +48,14 @@ export async function searchUnsplashPhotos(query: string): Promise<UnsplashPhoto
 
   const data = (await response.json()) as UnsplashSearchResponse;
 
-  return (data.results ?? []).map((photo) => ({
-    imageUrl: photo.urls.small,
-    thumbUrl: photo.urls.thumb,
-    photographerName: photo.user.name,
-    photographerUrl: photo.user.links.html,
-    unsplashUrl: photo.links.html,
-  }));
+  return {
+    photos: (data.results ?? []).map((photo) => ({
+      imageUrl: photo.urls.small,
+      thumbUrl: photo.urls.thumb,
+      photographerName: photo.user.name,
+      photographerUrl: photo.user.links.html,
+      unsplashUrl: photo.links.html,
+    })),
+    hasMore: page < (data.total_pages ?? page),
+  };
 }

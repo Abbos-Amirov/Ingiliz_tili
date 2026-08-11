@@ -1,4 +1,5 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
+import { PALACE_ROOM_KEYS, ROOM_ASSIGNED_BY } from "../config/palaceRooms";
 
 // Unsplash's API terms require crediting the photographer + linking back to
 // Unsplash wherever a photo is displayed (mirrors Word.ts's identical
@@ -31,6 +32,12 @@ const memoryAnchorSchema = new Schema({
   textDescription: { type: String, default: null },
   journeyId: { type: Schema.Types.ObjectId, ref: "MemoryJourney", default: null },
   journeyOrder: { type: Number, default: null },
+  // Which "fairy tale room" this word lives in — optional, a word can be
+  // saved without one (see PALACE_ROOM_KEYS). roomAssignedBy records whether
+  // the AI suggestion was accepted as-is or the user picked a different room,
+  // purely informational (not used in any query).
+  roomKey: { type: String, enum: PALACE_ROOM_KEYS, default: null },
+  roomAssignedBy: { type: String, enum: ROOM_ASSIGNED_BY, default: null },
   createdAt: { type: Date, default: Date.now },
   lastRecalledAt: { type: Date, default: null },
   easeFactor: { type: Number, default: 2.5 },
@@ -45,6 +52,7 @@ const memoryAnchorSchema = new Schema({
 memoryAnchorSchema.index({ userId: 1, wordId: 1 }, { unique: true });
 memoryAnchorSchema.index({ userId: 1, dueDate: 1 });
 memoryAnchorSchema.index({ userId: 1, journeyId: 1, journeyOrder: 1 });
+memoryAnchorSchema.index({ userId: 1, roomKey: 1 });
 
 export type MemoryAnchorDoc = InferSchemaType<typeof memoryAnchorSchema> & {
   _id: Types.ObjectId;

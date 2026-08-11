@@ -2,20 +2,32 @@
 
 import { useCallback } from "react";
 import { apiFetch } from "@/lib/api";
-import type { ImageAttribution, MemoryAnchor, MemoryJourney, UnsplashPhoto, Word } from "@/lib/types";
+import type { ImageAttribution, MemoryAnchor, MemoryJourney, PalaceRoomKey, RoomAssignedBy, UnsplashPhoto, Word } from "@/lib/types";
 
 export function useMemoryPalace() {
-  const fetchAnchors = useCallback(async (journeyId?: string) => {
-    const qs = journeyId ? `?journeyId=${journeyId}` : "";
-    return apiFetch<{ anchors: MemoryAnchor[] }>(`/memory-anchors${qs}`);
+  const fetchAnchors = useCallback(async (opts?: { journeyId?: string; roomKey?: PalaceRoomKey }) => {
+    const params = new URLSearchParams();
+    if (opts?.journeyId) params.set("journeyId", opts.journeyId);
+    if (opts?.roomKey) params.set("roomKey", opts.roomKey);
+    const qs = params.toString();
+    return apiFetch<{ anchors: MemoryAnchor[] }>(`/memory-anchors${qs ? `?${qs}` : ""}`);
   }, []);
 
   const fetchUnplacedWords = useCallback(async () => {
     return apiFetch<{ words: Word[] }>("/memory-anchors/unplaced-words");
   }, []);
 
-  const fetchNextForRecall = useCallback(async () => {
-    return apiFetch<{ anchor: MemoryAnchor | null }>("/memory-anchors/next-for-recall");
+  const fetchNextForRecall = useCallback(async (roomKey?: PalaceRoomKey) => {
+    const qs = roomKey ? `?roomKey=${roomKey}` : "";
+    return apiFetch<{ anchor: MemoryAnchor | null }>(`/memory-anchors/next-for-recall${qs}`);
+  }, []);
+
+  const fetchRoomCounts = useCallback(async () => {
+    return apiFetch<{ countByRoomKey: Partial<Record<PalaceRoomKey, number>> }>("/memory-anchors/room-counts");
+  }, []);
+
+  const suggestRoom = useCallback(async (wordId: string) => {
+    return apiFetch<{ roomKey: PalaceRoomKey }>(`/memory-anchors/suggest-room?wordId=${wordId}`);
   }, []);
 
   const createAnchor = useCallback(
@@ -26,6 +38,8 @@ export function useMemoryPalace() {
       textDescription?: string;
       journeyId?: string;
       journeyOrder?: number;
+      roomKey?: PalaceRoomKey;
+      roomAssignedBy?: RoomAssignedBy;
     }) => {
       return apiFetch<{ anchor: MemoryAnchor }>("/memory-anchors", {
         method: "POST",
@@ -39,8 +53,10 @@ export function useMemoryPalace() {
     return apiFetch<{ success: true }>(`/memory-anchors/${id}`, { method: "DELETE" });
   }, []);
 
-  const fetchSuggestedPhotos = useCallback(async (query: string) => {
-    return apiFetch<{ photos: UnsplashPhoto[] }>(`/memory-anchors/suggested-photos?query=${encodeURIComponent(query)}`);
+  const fetchSuggestedPhotos = useCallback(async (query: string, page = 1) => {
+    return apiFetch<{ photos: UnsplashPhoto[]; hasMore: boolean }>(
+      `/memory-anchors/suggested-photos?query=${encodeURIComponent(query)}&page=${page}`,
+    );
   }, []);
 
   const submitRecallResult = useCallback(async (id: string, result: "correct" | "wrong") => {
@@ -73,6 +89,8 @@ export function useMemoryPalace() {
     fetchAnchors,
     fetchUnplacedWords,
     fetchNextForRecall,
+    fetchRoomCounts,
+    suggestRoom,
     createAnchor,
     deleteAnchor,
     fetchSuggestedPhotos,

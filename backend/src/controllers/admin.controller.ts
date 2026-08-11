@@ -51,7 +51,7 @@ export const unsplashSearch: RequestHandler = async (req, res, next) => {
       res.status(400).json({ error: "query is required" });
       return;
     }
-    const photos = await searchUnsplashPhotos(query.trim());
+    const { photos } = await searchUnsplashPhotos(query.trim());
     res.json({ photos });
   } catch (err) {
     next(err);

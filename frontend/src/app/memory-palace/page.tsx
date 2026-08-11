@@ -14,11 +14,12 @@ export default function MemoryPalacePage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("memoryPalace");
-  const { fetchUnplacedWords, fetchAnchors } = useMemoryPalace();
+  const { fetchUnplacedWords, fetchAnchors, fetchRoomCounts } = useMemoryPalace();
 
   const [unplacedCount, setUnplacedCount] = useState<number | null>(null);
   const [totalAnchors, setTotalAnchors] = useState<number | null>(null);
   const [dueCount, setDueCount] = useState<number | null>(null);
+  const [roomsFilled, setRoomsFilled] = useState<number | null>(null);
   const [factsExpanded, setFactsExpanded] = useState(false);
 
   useEffect(() => {
@@ -29,7 +30,8 @@ export default function MemoryPalacePage() {
       const now = Date.now();
       setDueCount(res.anchors.filter((a) => new Date(a.dueDate).getTime() <= now).length);
     });
-  }, [ready, user, fetchUnplacedWords, fetchAnchors]);
+    fetchRoomCounts().then((res) => setRoomsFilled(Object.keys(res.countByRoomKey).length));
+  }, [ready, user, fetchUnplacedWords, fetchAnchors, fetchRoomCounts]);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -93,26 +95,34 @@ export default function MemoryPalacePage() {
               <span className="text-3xl">📍</span>
               <div>
                 <p className="font-bold text-lg">{t.placeWordsBtn}</p>
+                <p className="text-sm text-foreground/50">{t.placeWordsCardDesc}</p>
                 {unplacedCount !== null && (
-                  <p className="text-sm text-foreground/50">
-                    {unplacedCount > 0
-                      ? `${unplacedCount} ${t.unplacedCountSuffix}`
-                      : t.unplacedEmpty}
+                  <p className="text-xs text-primary mt-1 font-medium">
+                    {unplacedCount > 0 ? `${unplacedCount} ${t.unplacedCountSuffix}` : t.unplacedEmpty}
                   </p>
                 )}
               </div>
             </Card>
           </Link>
 
-          <Link href="/memory-palace/recall">
-            <Card className="p-6 flex items-center gap-4 hover:border-primary/50 transition-colors cursor-pointer">
+          <Link href={totalAnchors === 0 ? "#" : "/memory-palace/recall"} aria-disabled={totalAnchors === 0}>
+            <Card
+              className={`p-6 flex items-center gap-4 transition-colors ${
+                totalAnchors === 0 ? "opacity-60 cursor-not-allowed" : "hover:border-primary/50 cursor-pointer"
+              }`}
+            >
               <span className="text-3xl">🧠</span>
               <div>
                 <p className="font-bold text-lg">{t.recallBtn}</p>
-                {dueCount !== null && totalAnchors !== null && (
-                  <p className="text-sm text-foreground/50">
-                    {totalAnchors > 0 ? `${dueCount} / ${totalAnchors}` : t.noAnchorsTitle}
-                  </p>
+                <p className="text-sm text-foreground/50">{t.recallCardDesc}</p>
+                {totalAnchors === 0 ? (
+                  <p className="text-xs text-accent mt-1 font-medium">⚠️ {t.recallCardEmptyHint}</p>
+                ) : (
+                  dueCount !== null && (
+                    <p className="text-xs text-primary mt-1 font-medium">
+                      {dueCount} / {totalAnchors}
+                    </p>
+                  )
                 )}
               </div>
             </Card>
@@ -123,16 +133,42 @@ export default function MemoryPalacePage() {
               <span className="text-3xl">🗺️</span>
               <div>
                 <p className="font-bold text-lg">{t.journeysBtn}</p>
+                <p className="text-sm text-foreground/50">{t.journeysCardDesc}</p>
+                {totalAnchors === 0 && <p className="text-xs text-accent mt-1 font-medium">💡 {t.journeysCardEmptyHint}</p>}
               </div>
             </Card>
           </Link>
 
-          <Link href="/memory-palace/words">
+          <Link href="/memory-palace/rooms">
             <Card className="p-6 flex items-center gap-4 hover:border-primary/50 transition-colors cursor-pointer">
+              <span className="text-3xl">🏰</span>
+              <div>
+                <p className="font-bold text-lg">{t.roomsCardTitle}</p>
+                <p className="text-sm text-foreground/50">{t.roomsCardDesc}</p>
+                {roomsFilled !== null && (
+                  <p className="text-xs text-primary mt-1 font-medium">
+                    {roomsFilled} / 15 {t.roomsCardCountSuffix}
+                  </p>
+                )}
+              </div>
+            </Card>
+          </Link>
+
+          <Link href={totalAnchors === 0 ? "#" : "/memory-palace/words"} aria-disabled={totalAnchors === 0}>
+            <Card
+              className={`p-6 flex items-center gap-4 transition-colors ${
+                totalAnchors === 0 ? "opacity-60 cursor-not-allowed" : "hover:border-primary/50 cursor-pointer"
+              }`}
+            >
               <span className="text-3xl">📋</span>
               <div>
                 <p className="font-bold text-lg">{t.myWordsBtn}</p>
-                {totalAnchors !== null && <p className="text-sm text-foreground/50">{totalAnchors}</p>}
+                <p className="text-sm text-foreground/50">{t.myWordsCardDesc}</p>
+                {totalAnchors === 0 ? (
+                  <p className="text-xs text-accent mt-1 font-medium">⚠️ {t.myWordsCardEmptyHint}</p>
+                ) : (
+                  <p className="text-xs text-primary mt-1 font-medium">{totalAnchors}</p>
+                )}
               </div>
             </Card>
           </Link>

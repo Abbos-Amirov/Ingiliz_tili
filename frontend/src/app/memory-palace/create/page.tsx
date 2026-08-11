@@ -12,7 +12,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SuggestedPhotoPicker } from "@/components/memoryPalace/SuggestedPhotoPicker";
-import type { ImageAttribution, MemoryJourney, Word } from "@/lib/types";
+import { RoomScroller } from "@/components/memoryPalace/RoomScroller";
+import { PALACE_ROOM_BY_KEY, PALACE_ROOMS } from "@/lib/palaceRooms";
+import type { ImageAttribution, MemoryJourney, PalaceRoomKey, RoomAssignedBy, Word } from "@/lib/types";
 
 const NEW_JOURNEY_VALUE = "__new__";
 const NONE_JOURNEY_VALUE = "";
@@ -22,9 +24,12 @@ function CreateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT("memoryPalace");
-  const { fetchUnplacedWords, fetchJourneys, createJourney, createAnchor } = useMemoryPalace();
+  const { fetchUnplacedWords, fetchJourneys, createJourney, createAnchor, suggestRoom } = useMemoryPalace();
+  const rooms = useT("palaceRooms");
 
   const presetJourneyId = searchParams.get("journeyId") ?? "";
+  const presetRoomParam = searchParams.get("roomKey");
+  const presetRoomKey = PALACE_ROOMS.some((r) => r.key === presetRoomParam) ? (presetRoomParam as PalaceRoomKey) : null;
 
   const [words, setWords] = useState<Word[] | null>(null);
   const [journeys, setJourneys] = useState<MemoryJourney[] | null>(null);
@@ -40,6 +45,11 @@ function CreateContent() {
   const [journeySelection, setJourneySelection] = useState<string>(presetJourneyId || NONE_JOURNEY_VALUE);
   const [newJourneyTitle, setNewJourneyTitle] = useState("");
 
+  const [aiSuggestedRoom, setAiSuggestedRoom] = useState<PalaceRoomKey | null>(null);
+  const [suggestingRoom, setSuggestingRoom] = useState(false);
+  const [roomKey, setRoomKey] = useState<PalaceRoomKey | null>(presetRoomKey);
+  const [roomAssignedBy, setRoomAssignedBy] = useState<RoomAssignedBy | null>(presetRoomKey ? "user" : null);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedSignal, setSavedSignal] = useState(0);
@@ -53,6 +63,18 @@ function CreateContent() {
   useEffect(() => {
     if (ready && !user) router.replace("/login");
   }, [ready, user, router]);
+
+  useEffect(() => {
+    if (!selectedWord) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSuggestingRoom(true);
+    setAiSuggestedRoom(null);
+    suggestRoom(selectedWord._id)
+      .then((res) => setAiSuggestedRoom(res.roomKey))
+      .catch(() => setAiSuggestedRoom(null))
+      .finally(() => setSuggestingRoom(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWord]);
 
   const filteredWords = useMemo(() => {
     if (!words) return [];
@@ -83,6 +105,12 @@ function CreateContent() {
     setSuggestedImage(null);
     setTextDescription("");
     setSearch("");
+    setAiSuggestedRoom(null);
+    // Keep the room preset from ?roomKey= (e.g. arriving via a room's "add
+    // word" button) across consecutive saves, so placing several words into
+    // the same room doesn't require re-picking it each time.
+    setRoomKey(presetRoomKey);
+    setRoomAssignedBy(presetRoomKey ? "user" : null);
   }
 
   async function handleSave() {
@@ -119,6 +147,8 @@ function CreateContent() {
         textDescription: textDescription.trim() || undefined,
         journeyId,
         journeyOrder,
+        roomKey: roomKey ?? undefined,
+        roomAssignedBy: roomKey ? (roomAssignedBy ?? undefined) : undefined,
       });
 
       setSavedSignal((s) => s + 1);
@@ -315,6 +345,46 @@ function CreateContent() {
                 )}
               </div>
             )}
+
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-foreground/50 mb-2">{t.chooseRoomLabel}</p>
+
+              {suggestingRoom && <p className="text-xs text-foreground/40 mb-2">{t.aiSuggestingRoom}</p>}
+
+              {aiSuggestedRoom && roomKey !== aiSuggestedRoom && (
+                <div
+                  className="flex items-center gap-3 rounded-xl border-2 p-3 mb-3"
+                  style={{ borderColor: PALACE_ROOM_BY_KEY[aiSuggestedRoom].text, backgroundColor: PALACE_ROOM_BY_KEY[aiSuggestedRoom].bg }}
+                >
+                  <span className="text-2xl">{PALACE_ROOM_BY_KEY[aiSuggestedRoom].emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold" style={{ color: PALACE_ROOM_BY_KEY[aiSuggestedRoom].text }}>
+                      {t.aiSuggestedRoomPrefix} {rooms[aiSuggestedRoom].name} {t.aiSuggestedRoomFits}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoomKey(aiSuggestedRoom);
+                      setRoomAssignedBy("ai");
+                    }}
+                    className="shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors"
+                    style={{ color: PALACE_ROOM_BY_KEY[aiSuggestedRoom].text }}
+                  >
+                    {t.acceptRoomSuggestionBtn}
+                  </button>
+                </div>
+              )}
+
+              <RoomScroller
+                selectedKey={roomKey}
+                onSelect={(key) => {
+                  setRoomKey(key);
+                  setRoomAssignedBy(key ? "user" : null);
+                }}
+                noneLabel={t.noRoomBtn}
+              />
+            </div>
 
             {error && <p className="text-danger text-sm text-center mb-4">{error}</p>}
 

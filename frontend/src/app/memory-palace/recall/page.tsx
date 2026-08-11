@@ -12,40 +12,51 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
 import { MemoryRecallCard } from "@/components/memoryPalace/MemoryRecallCard";
-import type { MemoryAnchor } from "@/lib/types";
+import { RoomScroller } from "@/components/memoryPalace/RoomScroller";
+import type { MemoryAnchor, PalaceRoomKey } from "@/lib/types";
 
-type Phase = "loading" | "playing" | "empty" | "summary";
+type Phase = "select-room" | "loading" | "playing" | "empty" | "summary";
 
 export default function MemoryPalaceRecallPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("memoryPalace");
-  const { fetchNextForRecall } = useMemoryPalace();
+  const { fetchNextForRecall, fetchRoomCounts } = useMemoryPalace();
 
-  const [phase, setPhase] = useState<Phase>("loading");
+  const [phase, setPhase] = useState<Phase>("select-room");
   const [anchor, setAnchor] = useState<MemoryAnchor | null>(null);
   const [roundKey, setRoundKey] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [motivationSignal, setMotivationSignal] = useState(0);
+  const [roomFilter, setRoomFilter] = useState<PalaceRoomKey | null>(null);
+  const [countByRoomKey, setCountByRoomKey] = useState<Partial<Record<PalaceRoomKey, number>>>({});
 
-  const loadNext = useCallback(async () => {
-    const res = await fetchNextForRecall();
-    if (!res.anchor) {
-      setPhase("empty");
-      return;
-    }
-    setAnchor(res.anchor);
-    setRoundKey((k) => k + 1);
-    setPhase("playing");
-  }, [fetchNextForRecall]);
+  const loadNext = useCallback(
+    async (roomKey?: PalaceRoomKey | null) => {
+      const res = await fetchNextForRecall(roomKey ?? undefined);
+      if (!res.anchor) {
+        setPhase("empty");
+        return;
+      }
+      setAnchor(res.anchor);
+      setRoundKey((k) => k + 1);
+      setPhase("playing");
+    },
+    [fetchNextForRecall],
+  );
 
   useEffect(() => {
     if (!ready || !user) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadNext();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, user]);
+    fetchRoomCounts().then((res) => setCountByRoomKey(res.countByRoomKey));
+  }, [ready, user, fetchRoomCounts]);
+
+  function startSession() {
+    setPhase("loading");
+    setCorrectCount(0);
+    setIncorrectCount(0);
+    loadNext(roomFilter);
+  }
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -58,7 +69,7 @@ export default function MemoryPalaceRecallPage() {
     } else {
       setIncorrectCount((c) => c + 1);
     }
-    loadNext();
+    loadNext(roomFilter);
   }
 
   if (!ready || !user) return null;
@@ -72,6 +83,16 @@ export default function MemoryPalaceRecallPage() {
         </Link>
         <PageHeader title={t.recallPageTitle} />
 
+        {phase === "select-room" && (
+          <Card className="p-6">
+            <p className="text-sm font-semibold mb-3">{t.recallRoomFilterTitle}</p>
+            <RoomScroller selectedKey={roomFilter} onSelect={setRoomFilter} noneLabel={t.recallAllRoomsOption} countByRoomKey={countByRoomKey} />
+            <div className="flex justify-center mt-6">
+              <Button onClick={startSession}>{t.recallStartBtn}</Button>
+            </div>
+          </Card>
+        )}
+
         {phase === "loading" && (
           <div className="flex justify-center py-16">
             <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
@@ -80,6 +101,7 @@ export default function MemoryPalaceRecallPage() {
 
         {phase === "empty" && (
           <Card className="p-8 text-center">
+            <p className="text-4xl mb-3">🧠</p>
             <p className="font-bold text-lg mb-2">{t.noAnchorsTitle}</p>
             <p className="text-sm text-foreground/50 mb-6">{t.noAnchorsSubtitle}</p>
             <Link href="/memory-palace/create">
@@ -117,16 +139,7 @@ export default function MemoryPalaceRecallPage() {
               {t.sessionCorrectLabel}: {correctCount} · {t.sessionIncorrectLabel}: {incorrectCount}
             </p>
             <div className="flex justify-center gap-3">
-              <Button
-                onClick={() => {
-                  setCorrectCount(0);
-                  setIncorrectCount(0);
-                  setPhase("loading");
-                  loadNext();
-                }}
-              >
-                {t.continueBtn}
-              </Button>
+              <Button onClick={startSession}>{t.continueBtn}</Button>
               <Button variant="ghost" onClick={() => router.push("/memory-palace")}>
                 {t.exitBtn}
               </Button>

@@ -252,6 +252,25 @@ export interface MemoryJourney {
   stopCount?: number;
 }
 
+export type PalaceRoomKey =
+  | "princess_room"
+  | "knights_hall"
+  | "wise_tower"
+  | "feast_hall"
+  | "mask_gallery"
+  | "treasure_room"
+  | "dragon_cave"
+  | "unicorn_valley"
+  | "mermaid_lake"
+  | "mystic_forest"
+  | "thunder_mountain"
+  | "wizard_tower"
+  | "starry_sky"
+  | "forgotten_island"
+  | "time_gate";
+
+export type RoomAssignedBy = "ai" | "user";
+
 export interface MemoryAnchor {
   _id: string;
   userId: string;
@@ -261,6 +280,8 @@ export interface MemoryAnchor {
   textDescription: string | null;
   journeyId: string | null;
   journeyOrder: number | null;
+  roomKey: PalaceRoomKey | null;
+  roomAssignedBy: RoomAssignedBy | null;
   createdAt: string;
   lastRecalledAt: string | null;
   easeFactor: number;

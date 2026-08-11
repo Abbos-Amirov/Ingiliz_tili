@@ -72,7 +72,12 @@ export default function MemoryJourneysPage() {
             <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           </div>
         ) : journeys.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-foreground/50">{t.journeysEmpty}</Card>
+          <Card className="p-8 text-center">
+            <p className="text-4xl mb-3">🗺️</p>
+            <p className="font-bold text-lg mb-2">{t.journeysEmptyTitle}</p>
+            <p className="text-sm text-foreground/50 max-w-sm mx-auto mb-5">{t.journeysEmptyDesc}</p>
+            <Button onClick={() => setModalOpen(true)}>{t.newJourneyBtn}</Button>
+          </Card>
         ) : (
           <div className="grid gap-3">
             {journeys.map((j) => (
