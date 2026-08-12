@@ -58,10 +58,10 @@ export default function MemoryJourneysPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <Link href="/memory-palace" className="inline-block mb-4 text-sm font-medium text-foreground/50 hover:text-primary">
+        <Link href="/memory-palace" className="inline-block mb-2 text-sm font-medium text-foreground/50 hover:text-primary">
           {t.backToHub}
         </Link>
-        <PageHeader title={t.journeysPageTitle} subtitle={t.journeysPageSubtitle} />
+        <PageHeader title={t.journeysPageTitle} subtitle={t.journeysPageSubtitle} compact />
 
         <div className="flex justify-center mb-6">
           <Button onClick={() => setModalOpen(true)}>{t.newJourneyBtn}</Button>

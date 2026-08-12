@@ -85,10 +85,10 @@ export default function MemoryJourneyDetailPage() {
             <Link href="/memory-palace/journeys" className="text-sm font-medium text-foreground/50 hover:text-primary">
               {t.journeyDetailBackLink}
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mt-3 mb-1">{journey.title}</h1>
-            {journey.description && <p className="text-foreground/60 mb-6">{journey.description}</p>}
+            <h1 className="text-lg sm:text-xl font-extrabold mt-2 mb-0.5">{journey.title}</h1>
+            {journey.description && <p className="text-sm text-foreground/60 mb-3">{journey.description}</p>}
 
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-3 mb-4">
               <Button onClick={startRecall} disabled={anchors.length === 0}>
                 {t.startJourneyRecallBtn}
               </Button>

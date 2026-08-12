@@ -42,11 +42,11 @@ export default function MemoryPalacePage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <PageHeader title={t.title} subtitle={t.subtitle} />
+        <PageHeader title={t.title} subtitle={t.subtitle} compact />
 
-        <Card className="p-4 mb-8 bg-primary/5 border-primary/20">
-          <p className="text-sm font-semibold mb-1.5">{t.didYouKnowTitle}</p>
-          <p className="text-sm text-foreground/70">{t.didYouKnowFacts[0]}</p>
+        <Card className="p-2.5 mb-4 bg-primary/5 border-primary/20">
+          <p className="text-xs font-semibold mb-1">{t.didYouKnowTitle}</p>
+          <p className="text-xs text-foreground/70">{t.didYouKnowFacts[0]}</p>
           <AnimatePresence>
             {factsExpanded && (
               <motion.div
@@ -74,18 +74,18 @@ export default function MemoryPalacePage() {
           </button>
         </Card>
 
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-extrabold text-primary">{totalAnchors ?? "…"}</p>
-            <p className="text-xs text-foreground/50 mt-1">{t.totalAnchorsLabel}</p>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <Card className="p-2.5 text-center">
+            <p className="text-lg font-extrabold text-primary">{totalAnchors ?? "…"}</p>
+            <p className="text-[10px] text-foreground/50 mt-0.5 leading-tight">{t.totalAnchorsLabel}</p>
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-extrabold text-success">{dueCount ?? "…"}</p>
-            <p className="text-xs text-foreground/50 mt-1">{t.dueForRecallLabel}</p>
+          <Card className="p-2.5 text-center">
+            <p className="text-lg font-extrabold text-success">{dueCount ?? "…"}</p>
+            <p className="text-[10px] text-foreground/50 mt-0.5 leading-tight">{t.dueForRecallLabel}</p>
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-extrabold text-primary">{unplacedCount ?? "…"}</p>
-            <p className="text-xs text-foreground/50 mt-1">{t.unplacedTitle}</p>
+          <Card className="p-2.5 text-center">
+            <p className="text-lg font-extrabold text-primary">{unplacedCount ?? "…"}</p>
+            <p className="text-[10px] text-foreground/50 mt-0.5 leading-tight">{t.unplacedTitle}</p>
           </Card>
         </div>
 

@@ -51,21 +51,21 @@ export default function MemoryPalaceRoomDetailPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
-        <Link href="/memory-palace/rooms" className="inline-block mb-4 text-sm font-medium text-foreground/50 hover:text-primary">
+        <Link href="/memory-palace/rooms" className="inline-block mb-2 text-sm font-medium text-foreground/50 hover:text-primary">
           {t.roomBackLink}
         </Link>
 
-        <div className="rounded-2xl p-6 mb-6 text-center" style={{ backgroundColor: room.bg }}>
-          <span className="text-5xl">{room.emoji}</span>
-          <h1 className="text-2xl font-extrabold mt-2" style={{ color: room.text }}>
+        <div className="rounded-2xl p-3.5 mb-4 text-center" style={{ backgroundColor: room.bg }}>
+          <span className="text-3xl">{room.emoji}</span>
+          <h1 className="text-lg font-extrabold mt-1" style={{ color: room.text }}>
             {content.name}
           </h1>
-          <p className="text-sm mt-2 max-w-md mx-auto" style={{ color: room.text }}>
+          <p className="text-xs mt-1 max-w-md mx-auto" style={{ color: room.text }}>
             {content.introStory}
           </p>
         </div>
 
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <Link href={`/memory-palace/create?roomKey=${roomKey}`}>
             <Button>{t.roomAddWordBtn}</Button>
           </Link>

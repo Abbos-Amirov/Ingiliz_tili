@@ -190,13 +190,13 @@ function CreateContent() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-xl">
-        <Link href="/memory-palace" className="inline-block mb-4 text-sm font-medium text-foreground/50 hover:text-primary">
+        <Link href="/memory-palace" className="inline-block mb-2 text-sm font-medium text-foreground/50 hover:text-primary">
           {t.backToHub}
         </Link>
-        <PageHeader title={t.createPageTitle} subtitle={t.createPageSubtitle} />
+        <PageHeader title={t.createPageTitle} subtitle={t.createPageSubtitle} compact />
 
-        <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
-          <p className="text-sm text-foreground/70">{t.tipText}</p>
+        <Card className="p-2.5 mb-4 bg-primary/5 border-primary/20">
+          <p className="text-xs text-foreground/70">{t.tipText}</p>
         </Card>
 
         <AnimatePresence>
