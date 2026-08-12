@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
+import { apiFetch } from "@/lib/api";
 import { compressImage } from "@/lib/imageCompression";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -18,13 +19,14 @@ import type { ImageAttribution, MemoryJourney, PalaceRoomKey, RoomAssignedBy, Wo
 
 const NEW_JOURNEY_VALUE = "__new__";
 const NONE_JOURNEY_VALUE = "";
+const WORDS_PER_PAGE = 15;
 
 function CreateContent() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT("memoryPalace");
-  const { fetchUnplacedWords, fetchJourneys, createJourney, createAnchor, suggestRoom } = useMemoryPalace();
+  const { fetchAnchors, fetchJourneys, createJourney, createAnchor, suggestRoom } = useMemoryPalace();
   const rooms = useT("palaceRooms");
 
   const presetJourneyId = searchParams.get("journeyId") ?? "";
@@ -32,8 +34,10 @@ function CreateContent() {
   const presetRoomKey = PALACE_ROOMS.some((r) => r.key === presetRoomParam) ? (presetRoomParam as PalaceRoomKey) : null;
 
   const [words, setWords] = useState<Word[] | null>(null);
+  const [anchoredWordIds, setAnchoredWordIds] = useState<Set<string>>(new Set());
   const [journeys, setJourneys] = useState<MemoryJourney[] | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
 
   const [mode, setMode] = useState<"image" | "suggested" | null>(null);
@@ -56,9 +60,13 @@ function CreateContent() {
 
   useEffect(() => {
     if (!ready || !user) return;
-    fetchUnplacedWords().then((res) => setWords(res.words));
+    // The whole project's word list (same /words endpoint the "Umumiy
+    // so'zlar" page uses), not just words the SRS has already surfaced —
+    // so every word in the app is placeable here, not only "learned" ones.
+    apiFetch<{ words: Word[] }>("/words?limit=500").then((res) => setWords(res.words));
+    fetchAnchors().then((res) => setAnchoredWordIds(new Set(res.anchors.map((a) => a.wordId._id))));
     fetchJourneys().then((res) => setJourneys(res.journeys));
-  }, [ready, user, fetchUnplacedWords, fetchJourneys]);
+  }, [ready, user, fetchAnchors, fetchJourneys]);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -83,6 +91,17 @@ function CreateContent() {
     return words.filter((w) => w.english.toLowerCase().includes(q) || w.korean.includes(q));
   }, [words, search]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredWords.length / WORDS_PER_PAGE));
+  const pagedWords = useMemo(
+    () => filteredWords.slice((page - 1) * WORDS_PER_PAGE, page * WORDS_PER_PAGE),
+    [filteredWords, page],
+  );
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+  }, [search]);
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -105,6 +124,7 @@ function CreateContent() {
     setSuggestedImage(null);
     setTextDescription("");
     setSearch("");
+    setPage(1);
     setAiSuggestedRoom(null);
     // Keep the room preset from ?roomKey= (e.g. arriving via a room's "add
     // word" button) across consecutive saves, so placing several words into
@@ -152,7 +172,10 @@ function CreateContent() {
       });
 
       setSavedSignal((s) => s + 1);
-      setWords((prev) => (prev ? prev.filter((w) => w._id !== selectedWord._id) : prev));
+      // The word stays in the (now full project-wide) list — just flag it
+      // as placed so its card shows the "already placed" badge instead of
+      // disappearing, since re-placing a word is a supported edit, not an error.
+      setAnchoredWordIds((prev) => new Set(prev).add(selectedWord._id));
       resetForm();
       setNewJourneyTitle("");
     } catch {
@@ -206,19 +229,64 @@ function CreateContent() {
                   placeholder={t.selectWordPlaceholder}
                   className="w-full rounded-xl border-2 border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary mb-3"
                 />
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-80 overflow-y-auto">
-                  {filteredWords.map((w) => (
-                    <button
-                      key={w._id}
-                      type="button"
-                      onClick={() => setSelectedWord(w)}
-                      className="px-3 py-2.5 rounded-xl border-2 border-border bg-surface text-left hover:border-primary/40 transition-colors"
-                    >
-                      <p className="font-semibold text-sm">{w.english}</p>
-                      <p className="text-xs text-foreground/50">{w.korean}</p>
-                    </button>
-                  ))}
-                </div>
+
+                {filteredWords.length === 0 ? (
+                  <p className="text-sm text-foreground/50 text-center py-6">{t.noWordResults}</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      {pagedWords.map((w) => (
+                        <button
+                          key={w._id}
+                          type="button"
+                          onClick={() => setSelectedWord(w)}
+                          className="relative px-3 py-2.5 rounded-xl border-2 border-border bg-surface text-left hover:border-primary/40 transition-colors"
+                        >
+                          {anchoredWordIds.has(w._id) && (
+                            <span className="absolute top-1.5 right-1.5 text-success text-xs" title={t.alreadyPlacedHint}>
+                              ✓
+                            </span>
+                          )}
+                          <p className="font-semibold text-sm pr-4">{w.english}</p>
+                          <p className="text-xs text-foreground/50">{w.korean}</p>
+                        </button>
+                      ))}
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-1.5 mt-4 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          className="h-8 w-8 rounded-lg text-sm font-semibold text-foreground/60 hover:bg-surface-muted disabled:opacity-30"
+                        >
+                          ←
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setPage(p)}
+                            className={`h-8 w-8 rounded-lg text-sm font-semibold transition-colors ${
+                              p === page ? "gradient-primary text-white" : "text-foreground/60 hover:bg-surface-muted"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={page === totalPages}
+                          className="h-8 w-8 rounded-lg text-sm font-semibold text-foreground/60 hover:bg-surface-muted disabled:opacity-30"
+                        >
+                          →
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </>
             )}
           </Card>
