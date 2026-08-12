@@ -15,19 +15,20 @@ export function Navbar() {
   const t = useT("nav");
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Grouped into 3 topic hubs (each hub page links onward to its own
+  // sub-pages) plus 2 standalone features, so the mobile menu shows 5 items
+  // instead of the 11 individual pages they used to fill the screen with.
   const links = [
-    { href: "/learn/match", label: t.match },
-    { href: "/learn/sentence", label: t.sentence },
-    { href: "/lessons", label: t.lessons },
-    { href: "/all-words", label: t.allWords },
-    { href: "/irregular-verbs", label: t.irregularVerbs },
-    { href: "/grammar", label: t.grammar },
-    { href: "/function-words", label: t.functionWords },
-    { href: "/questions-answers", label: t.questionAnswers },
-    { href: "/flashcards", label: t.flashcards },
-    { href: "/memory-palace", label: t.memoryPalace },
-    { href: "/progress", label: t.progress },
+    { href: "/learn", label: t.wordBank, activeMatch: ["/learn", "/all-words"] },
+    { href: "/rules", label: t.rules, activeMatch: ["/rules", "/grammar", "/function-words", "/irregular-verbs"] },
+    { href: "/practice", label: t.practice, activeMatch: ["/practice", "/questions-answers", "/flashcards"] },
+    { href: "/memory-palace", label: t.memoryPalace, activeMatch: ["/memory-palace"] },
+    { href: "/progress", label: t.progress, activeMatch: ["/progress"] },
   ];
+
+  function isActive(activeMatch: string[]) {
+    return activeMatch.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  }
 
   useEffect(() => {
     // Close the mobile menu on navigation; Navbar persists across route
@@ -52,7 +53,7 @@ export function Navbar() {
                 key={l.href}
                 href={l.href}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  pathname === l.href
+                  isActive(l.activeMatch)
                     ? "bg-surface-muted text-primary"
                     : "text-foreground/70 hover:text-foreground hover:bg-surface-muted"
                 }`}
@@ -125,7 +126,7 @@ export function Navbar() {
                   key={l.href}
                   href={l.href}
                   className={`px-4 py-3 rounded-lg text-sm font-medium ${
-                    pathname === l.href ? "bg-surface-muted text-primary" : "text-foreground/70"
+                    isActive(l.activeMatch) ? "bg-surface-muted text-primary" : "text-foreground/70"
                   }`}
                 >
                   {l.label}
