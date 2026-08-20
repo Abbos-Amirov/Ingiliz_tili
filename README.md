@@ -37,6 +37,24 @@ Agar frontend haqiqiy (localhost bo'lmagan) backend manziliga ulanishi kerak bo'
 NEXT_PUBLIC_API_BASE_URL=https://api.sizning-domeningiz.com/api docker compose up -d --build
 ```
 
+### Android ilova (APK)
+
+Frontend `Capacitor` bilan Android ilova sifatida ham o'raladi (`frontend/android/`) — ilova ichida haqiqiy sahifalar emas, joriy production sayti (`capacitor.config.ts`dagi `server.url`) WebView'da ochiladi, shuning uchun sayt yangilanishi bilan ilova ham avtomatik yangilanadi (APK'ni qayta build qilish shart emas).
+
+```bash
+cd frontend
+npx cap sync android
+cd android
+JAVA_HOME="$(brew --prefix openjdk@21)" ./gradlew assembleDebug
+```
+
+APK: `frontend/android/app/build/outputs/apk/debug/app-debug.apk`. Bu debug-imzoli APK — telefonga to'g'ridan-to'g'ri o'rnatish (sideload) uchun yaroqli, lekin Google Play'ga yuklash uchun emas.
+
+**Play Store'ga chiqarish uchun qo'shimcha qadamlar kerak:**
+1. Domen + HTTPS sozlash, so'ng `capacitor.config.ts`dagi `server.url`ni `https://...`ga o'zgartirish va `network_security_config.xml`ni olib tashlash (hozir domen yo'qligi uchun serverning IP-manziliga oddiy HTTP orqali ulanadi).
+2. O'z release-keystore'ingizni yaratib (`keytool -genkeypair ...`), `assembleRelease` bilan imzolangan `.aab` fayl chiqarish (Play Console faqat App Bundle qabul qiladi, oddiy APK emas).
+3. Google Play Developer akkaunt ($25, bir martalik).
+
 ### Admin kirish
 
 Seed skripti quyidagi admin hisobni yaratadi:

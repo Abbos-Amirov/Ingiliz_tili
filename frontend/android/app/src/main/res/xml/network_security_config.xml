@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Allows plain HTTP only to the production server's bare IP, since there's
+  no domain/TLS certificate yet (see capacitor.config.ts). Everything else
+  still requires HTTPS. Once a domain is set up, switch capacitor.config.ts's
+  server.url to https:// and delete this file + the manifest's
+  networkSecurityConfig attribute.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">38.247.134.248</domain>
+    </domain-config>
+</network-security-config>

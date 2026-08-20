@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android (Capacitor) — native project source is committed, build
+# output/machine-specific files and the built APK are not.
+/android/local.properties
+/android/.gradle
+/android/build
+/android/app/build
+/android/captures
+/*.apk
