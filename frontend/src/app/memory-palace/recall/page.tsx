@@ -28,13 +28,14 @@ export default function MemoryPalaceRecallPage() {
   const [roundKey, setRoundKey] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
+  const [knownCount, setKnownCount] = useState(0);
   const [motivationSignal, setMotivationSignal] = useState(0);
   const [roomFilter, setRoomFilter] = useState<PalaceRoomKey | null>(null);
   const [countByRoomKey, setCountByRoomKey] = useState<Partial<Record<PalaceRoomKey, number>>>({});
 
   const loadNext = useCallback(
     async (roomKey?: PalaceRoomKey | null) => {
-      const res = await fetchNextForRecall(roomKey ?? undefined);
+      const res = await fetchNextForRecall({ roomKey: roomKey ?? undefined });
       if (!res.anchor) {
         setPhase("empty");
         return;
@@ -55,6 +56,7 @@ export default function MemoryPalaceRecallPage() {
     setPhase("loading");
     setCorrectCount(0);
     setIncorrectCount(0);
+    setKnownCount(0);
     loadNext(roomFilter);
   }
 
@@ -69,6 +71,11 @@ export default function MemoryPalaceRecallPage() {
     } else {
       setIncorrectCount((c) => c + 1);
     }
+    loadNext(roomFilter);
+  }
+
+  function handleKnown() {
+    setKnownCount((c) => c + 1);
     loadNext(roomFilter);
   }
 
@@ -119,10 +126,15 @@ export default function MemoryPalaceRecallPage() {
               <span className="text-danger">
                 {t.sessionIncorrectLabel}: {incorrectCount}
               </span>
+              {knownCount > 0 && (
+                <span className="text-primary">
+                  {t.sessionKnownLabel}: {knownCount}
+                </span>
+              )}
             </div>
 
             <motion.div key={roundKey} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25 }}>
-              <MemoryRecallCard anchor={anchor} onResult={handleResult} />
+              <MemoryRecallCard anchor={anchor} onResult={handleResult} onKnown={handleKnown} />
             </motion.div>
 
             <div className="mt-6 flex justify-center">
@@ -137,6 +149,7 @@ export default function MemoryPalaceRecallPage() {
           <Card className="p-8 text-center">
             <p className="font-bold text-xl mb-6">
               {t.sessionCorrectLabel}: {correctCount} · {t.sessionIncorrectLabel}: {incorrectCount}
+              {knownCount > 0 && ` · ${t.sessionKnownLabel}: ${knownCount}`}
             </p>
             <div className="flex justify-center gap-3">
               <Button onClick={startSession}>{t.continueBtn}</Button>

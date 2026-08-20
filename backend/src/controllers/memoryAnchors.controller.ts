@@ -26,13 +26,15 @@ const MAX_IMAGE_BASE64_LENGTH = 900_000;
 export const listMemoryAnchors: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const { journeyId } = req.query;
+    const { journeyId, known } = req.query;
     const filter: Record<string, unknown> = { userId };
     if (journeyId && typeof journeyId === "string" && Types.ObjectId.isValid(journeyId)) {
       filter.journeyId = journeyId;
     }
     const roomKey = parseRoomKey(req.query.roomKey);
     if (roomKey) filter.roomKey = roomKey;
+    if (known === "true") filter.knownAt = { $ne: null };
+    else if (known === "false") filter.knownAt = null;
     const anchors = await MemoryAnchor.find(filter)
       .sort({ journeyOrder: 1, createdAt: -1 })
       .populate<{ wordId: WordDoc }>("wordId");
@@ -96,12 +98,16 @@ export const nextForRecall: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const roomKey = parseRoomKey(req.query.roomKey);
-    const roomFilter = roomKey ? { roomKey } : {};
+    // Default pool is "active" (not yet marked known) — the main Recall
+    // session. ?pool=known drives the Known Words page's own practice mode,
+    // cycling only through words the learner has already marked known.
+    const knownFilter = req.query.pool === "known" ? { knownAt: { $ne: null } } : { knownAt: null };
+    const matchFilter = { ...(roomKey ? { roomKey } : {}), ...knownFilter };
 
     const due = await MemoryAnchor.findOne({
       userId,
       dueDate: { $lte: new Date() },
-      ...roomFilter,
+      ...matchFilter,
     })
       .sort({ dueDate: 1 })
       .populate<{ wordId: WordDoc }>("wordId");
@@ -109,7 +115,7 @@ export const nextForRecall: RequestHandler = async (req, res, next) => {
     let anchor = due;
     if (!anchor) {
       const [sampled] = await MemoryAnchor.aggregate<MemoryAnchorDoc>([
-        { $match: { userId: new Types.ObjectId(userId), ...roomFilter } },
+        { $match: { userId: new Types.ObjectId(userId), ...matchFilter } },
         { $sample: { size: 1 } },
       ]);
       if (sampled) {
@@ -117,6 +123,48 @@ export const nextForRecall: RequestHandler = async (req, res, next) => {
       }
     }
 
+    res.json({ anchor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Word count of anchors marked "known", used by the dashboard card and the
+// Known Words page header.
+export const knownCount: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const count = await MemoryAnchor.countDocuments({ userId, knownAt: { $ne: null } });
+    res.json({ count });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const markKnown: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const { id } = req.params;
+    const anchor = await MemoryAnchor.findOneAndUpdate({ _id: id, userId }, { knownAt: new Date() }, { new: true });
+    if (!anchor) {
+      res.status(404).json({ error: "Memory anchor not found" });
+      return;
+    }
+    res.json({ anchor });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const unmarkKnown: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const { id } = req.params;
+    const anchor = await MemoryAnchor.findOneAndUpdate({ _id: id, userId }, { knownAt: null }, { new: true });
+    if (!anchor) {
+      res.status(404).json({ error: "Memory anchor not found" });
+      return;
+    }
     res.json({ anchor });
   } catch (err) {
     next(err);

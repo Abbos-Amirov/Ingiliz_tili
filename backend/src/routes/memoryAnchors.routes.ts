@@ -10,6 +10,9 @@ import {
   suggestedPhotos,
   roomCounts,
   suggestRoomForWord,
+  knownCount,
+  markKnown,
+  unmarkKnown,
 } from "../controllers/memoryAnchors.controller";
 import { authMiddleware } from "../middleware/auth";
 
@@ -22,10 +25,13 @@ router.get("/next-for-recall", nextForRecall);
 // admin-gated) — regular users pick their own memory-anchor photo suggestions.
 router.get("/suggested-photos", suggestedPhotos);
 router.get("/room-counts", roomCounts);
+router.get("/known-count", knownCount);
 router.get("/suggest-room", suggestRoomForWord);
 router.get("/", listMemoryAnchors);
 router.post("/", createMemoryAnchor);
 router.put("/:id/recall-result", submitRecallResult);
+router.put("/:id/know", markKnown);
+router.put("/:id/unknow", unmarkKnown);
 router.put("/:id", updateMemoryAnchor);
 router.delete("/:id", deleteMemoryAnchor);
 

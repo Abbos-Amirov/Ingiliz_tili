@@ -291,4 +291,5 @@ export interface MemoryAnchor {
   dueDate: string;
   recallCorrectCount: number;
   recallIncorrectCount: number;
+  knownAt: string | null;
 }

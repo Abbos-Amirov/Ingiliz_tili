@@ -47,12 +47,18 @@ const memoryAnchorSchema = new Schema({
   dueDate: { type: Date, default: Date.now },
   recallCorrectCount: { type: Number, default: 0 },
   recallIncorrectCount: { type: Number, default: 0 },
+  // Set when the learner explicitly marks this word "known" from the Recall
+  // card — pulls it out of the main /next-for-recall pool (see
+  // memoryAnchors.controller.ts) without touching its SRS fields, so
+  // un-marking it later resumes scheduling from wherever it left off.
+  knownAt: { type: Date, default: null },
 });
 
 memoryAnchorSchema.index({ userId: 1, wordId: 1 }, { unique: true });
 memoryAnchorSchema.index({ userId: 1, dueDate: 1 });
 memoryAnchorSchema.index({ userId: 1, journeyId: 1, journeyOrder: 1 });
 memoryAnchorSchema.index({ userId: 1, roomKey: 1 });
+memoryAnchorSchema.index({ userId: 1, knownAt: 1 });
 
 export type MemoryAnchorDoc = InferSchemaType<typeof memoryAnchorSchema> & {
   _id: Types.ObjectId;

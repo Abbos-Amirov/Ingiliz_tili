@@ -35,16 +35,28 @@ function shuffle<T>(arr: T[]): T[] {
 // English spelling), but records the result against this MemoryAnchor's own
 // SRS state (recallSrsInterval etc.) rather than the word's UserWordProgress
 // — the two tracks are intentionally independent.
-export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; onResult: (correct: boolean) => void }) {
+export function MemoryRecallCard({
+  anchor,
+  onResult,
+  onKnown,
+}: {
+  anchor: MemoryAnchor;
+  onResult: (correct: boolean) => void;
+  // Only passed by the main Recall session — lets the learner pull a word
+  // out of that pool for good (see Known Words). Journey walkthroughs and
+  // the Known Words page's own practice mode don't pass this.
+  onKnown?: () => void;
+}) {
   const t = useT("memoryPalace");
   const { fetchDistractors } = useSrsActions();
-  const { submitRecallResult } = useMemoryPalace();
+  const { submitRecallResult, markKnown } = useMemoryPalace();
 
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<{ correct: boolean; correctAnswer: string; helped?: boolean } | null>(
     null,
   );
   const [checking, setChecking] = useState(false);
+  const [markingKnown, setMarkingKnown] = useState(false);
 
   const [stage, setStage] = useState<HelpStage>("idle");
   const [helpLoading, setHelpLoading] = useState(false);
@@ -69,6 +81,17 @@ export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; o
       window.setTimeout(() => onResult(res.correct), 1300);
     } finally {
       setChecking(false);
+    }
+  }
+
+  async function handleKnown() {
+    if (markingKnown || checking || feedback) return;
+    setMarkingKnown(true);
+    try {
+      await markKnown(anchor._id);
+      onKnown?.();
+    } finally {
+      setMarkingKnown(false);
     }
   }
 
@@ -122,7 +145,17 @@ export function MemoryRecallCard({ anchor, onResult }: { anchor: MemoryAnchor; o
   const inputDisabled = stage === "choices" || Boolean(feedback) || checking;
 
   return (
-    <Card className="p-6 sm:p-8 text-center">
+    <Card className="relative p-6 sm:p-8 text-center">
+      {onKnown && stage === "idle" && !feedback && (
+        <button
+          type="button"
+          onClick={handleKnown}
+          disabled={markingKnown}
+          className="absolute top-4 right-4 text-xs font-semibold px-3 py-1.5 rounded-full bg-success-soft text-success hover:brightness-95 transition-all disabled:opacity-60"
+        >
+          {markingKnown ? "…" : t.knownBtn}
+        </button>
+      )}
       {anchor.imageUrl && (
         <div className={anchor.textDescription ? "mb-3 flex justify-center" : "mb-5 flex justify-center"}>
           <WordImage

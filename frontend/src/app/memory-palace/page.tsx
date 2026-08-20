@@ -14,12 +14,13 @@ export default function MemoryPalacePage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("memoryPalace");
-  const { fetchUnplacedWords, fetchAnchors, fetchRoomCounts } = useMemoryPalace();
+  const { fetchUnplacedWords, fetchAnchors, fetchRoomCounts, fetchKnownCount } = useMemoryPalace();
 
   const [unplacedCount, setUnplacedCount] = useState<number | null>(null);
   const [totalAnchors, setTotalAnchors] = useState<number | null>(null);
   const [dueCount, setDueCount] = useState<number | null>(null);
   const [roomsFilled, setRoomsFilled] = useState<number | null>(null);
+  const [knownCount, setKnownCount] = useState<number | null>(null);
   const [factsExpanded, setFactsExpanded] = useState(false);
 
   useEffect(() => {
@@ -28,10 +29,13 @@ export default function MemoryPalacePage() {
     fetchAnchors().then((res) => {
       setTotalAnchors(res.anchors.length);
       const now = Date.now();
-      setDueCount(res.anchors.filter((a) => new Date(a.dueDate).getTime() <= now).length);
+      // Known words never surface in Recall (see /next-for-recall), so they
+      // shouldn't inflate the "ready for recall" count either.
+      setDueCount(res.anchors.filter((a) => !a.knownAt && new Date(a.dueDate).getTime() <= now).length);
     });
     fetchRoomCounts().then((res) => setRoomsFilled(Object.keys(res.countByRoomKey).length));
-  }, [ready, user, fetchUnplacedWords, fetchAnchors, fetchRoomCounts]);
+    fetchKnownCount().then((res) => setKnownCount(res.count));
+  }, [ready, user, fetchUnplacedWords, fetchAnchors, fetchRoomCounts, fetchKnownCount]);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -124,6 +128,21 @@ export default function MemoryPalacePage() {
                     </p>
                   )
                 )}
+              </div>
+            </Card>
+          </Link>
+
+          <Link href={knownCount === 0 ? "#" : "/memory-palace/known-words"} aria-disabled={knownCount === 0}>
+            <Card
+              className={`p-6 flex items-center gap-4 transition-colors ${
+                knownCount === 0 ? "opacity-60 cursor-not-allowed" : "hover:border-primary/50 cursor-pointer"
+              }`}
+            >
+              <span className="text-3xl">🏆</span>
+              <div>
+                <p className="font-bold text-lg">{t.knownCardTitle}</p>
+                <p className="text-sm text-foreground/50">{t.knownCardDesc}</p>
+                {knownCount !== null && knownCount > 0 && <p className="text-xs text-primary mt-1 font-medium">{knownCount}</p>}
               </div>
             </Card>
           </Link>
