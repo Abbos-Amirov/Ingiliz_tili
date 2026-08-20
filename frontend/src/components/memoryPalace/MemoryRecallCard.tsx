@@ -146,16 +146,6 @@ export function MemoryRecallCard({
 
   return (
     <Card className="relative p-6 sm:p-8 text-center">
-      {onKnown && stage === "idle" && !feedback && (
-        <button
-          type="button"
-          onClick={handleKnown}
-          disabled={markingKnown}
-          className="absolute top-4 right-4 text-xs font-semibold px-3 py-1.5 rounded-full bg-success-soft text-success hover:brightness-95 transition-all disabled:opacity-60"
-        >
-          {markingKnown ? "…" : t.knownBtn}
-        </button>
-      )}
       {anchor.imageUrl && (
         <div className={anchor.textDescription ? "mb-3 flex justify-center" : "mb-5 flex justify-center"}>
           <WordImage
@@ -176,7 +166,21 @@ export function MemoryRecallCard({
         </div>
       )}
 
-      <p className="text-sm font-semibold text-primary mb-5">{t.recallQuestion}</p>
+      <p className="text-sm font-semibold text-primary mb-4">{t.recallQuestion}</p>
+
+      {onKnown && stage === "idle" && !feedback && (
+        <div className="flex justify-center mb-5">
+          <button
+            type="button"
+            onClick={handleKnown}
+            disabled={markingKnown}
+            className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-full border-2 border-success bg-success-soft text-success hover:brightness-95 active:scale-95 transition-all disabled:opacity-60"
+          >
+            <span className="text-base">✓</span>
+            {markingKnown ? "…" : t.knownBtn}
+          </button>
+        </div>
+      )}
 
       <form
         onSubmit={stage === "write" ? handleWriteSubmit : handleSubmit}
