@@ -87,14 +87,15 @@ export default function LessonsPage() {
                         )}
                       </p>
                     </Link>
-                    {lesson.sentenceCount > 0 && (
-                      <Link
-                        href={`/lessons/practice?lessons=${lessonsParam}&mode=sentence`}
-                        className="mt-3 pt-3 border-t border-border text-xs font-semibold text-primary hover:underline"
-                      >
-                        {tSentence.title} →
-                      </Link>
-                    )}
+                    {/* Curated Sentence-collection entries (role-tagged, richer) take
+                        priority where they exist; otherwise every word already carries
+                        its own example sentence, so this link is never dead. */}
+                    <Link
+                      href={`/lessons/practice?lessons=${lessonsParam}&mode=${lesson.sentenceCount > 0 ? "sentence" : "word-sentences"}`}
+                      className="mt-3 pt-3 border-t border-border text-xs font-semibold text-primary hover:underline"
+                    >
+                      {tSentence.title} →
+                    </Link>
                   </Card>
                 </motion.div>
               );

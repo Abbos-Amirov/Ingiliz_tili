@@ -11,6 +11,15 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { AiChatWidget } from "@/components/chat/AiChatWidget";
 import { useT } from "@/hooks/useT";
 
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export default function SentencePage() {
   const { user, ready } = useAuth();
   const router = useRouter();
@@ -37,8 +46,11 @@ export default function SentencePage() {
     setLoading(true);
     try {
       const res = await apiFetch<{ sentences: Sentence[] }>(`/sentences?level=${lvl}&limit=50`);
-      setPool(res.sentences);
-      setCurrent(res.sentences.length > 0 ? res.sentences[0] : null);
+      // Shuffle so every visit (and every level switch) starts on a
+      // different sentence instead of always the same first-inserted one.
+      const shuffled = shuffle(res.sentences);
+      setPool(shuffled);
+      setCurrent(shuffled.length > 0 ? shuffled[0] : null);
     } finally {
       setLoading(false);
     }

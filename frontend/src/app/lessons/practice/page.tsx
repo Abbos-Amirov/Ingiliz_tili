@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/api";
 import type { Word, Sentence } from "@/lib/types";
 import { MatchBoard } from "@/components/match/MatchBoard";
 import { SentenceBuilder } from "@/components/sentence/SentenceBuilder";
+import { WordSentenceBuilder } from "@/components/lessons/WordSentenceBuilder";
 import { RecallQuiz } from "@/components/recall/RecallQuiz";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -23,6 +24,15 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 function PracticeContent() {
   const { user, ready } = useAuth();
   const router = useRouter();
@@ -33,7 +43,8 @@ function PracticeContent() {
 
   const isAll = searchParams.get("all") === "true";
   const lessonsParam = searchParams.get("lessons") ?? "";
-  const mode = searchParams.get("mode") === "sentence" ? "sentence" : "match";
+  const modeParam = searchParams.get("mode");
+  const mode = modeParam === "sentence" ? "sentence" : modeParam === "word-sentences" ? "word-sentences" : "match";
 
   const [loading, setLoading] = useState(true);
   const [wordChunks, setWordChunks] = useState<Word[][]>([]);
@@ -41,6 +52,8 @@ function PracticeContent() {
   const [matchPhase, setMatchPhase] = useState<"match" | "recall">("match");
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [sentenceIndex, setSentenceIndex] = useState(0);
+  const [exampleWords, setExampleWords] = useState<Word[]>([]);
+  const [exampleIndex, setExampleIndex] = useState(0);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -55,10 +68,16 @@ function PracticeContent() {
         setWordChunks(chunk(res.words, CHUNK_SIZE));
         setChunkIndex(0);
         setMatchPhase("match");
-      } else {
+      } else if (mode === "sentence") {
         const res = await apiFetch<{ sentences: Sentence[] }>(`/sentences?${query}limit=500`);
-        setSentences(res.sentences);
+        // Shuffle so every visit starts on a different sentence instead of
+        // always the same first-inserted one.
+        setSentences(shuffle(res.sentences));
         setSentenceIndex(0);
+      } else {
+        const res = await apiFetch<{ words: Word[] }>(`/words?${query}limit=500`);
+        setExampleWords(shuffle(res.words.filter((w) => w.exampleSentenceEn.trim())));
+        setExampleIndex(0);
       }
     } finally {
       setLoading(false);
@@ -92,7 +111,9 @@ function PracticeContent() {
               ? undefined
               : mode === "match"
                 ? wordChunks.reduce((sum, c) => sum + c.length, 0)
-                : sentences.length
+                : mode === "sentence"
+                  ? sentences.length
+                  : exampleWords.length
           }
           countLabel={mode === "match" ? t.wordsSuffix : t.sentencesSuffix}
         />
@@ -154,7 +175,31 @@ function PracticeContent() {
                 )}
               </motion.div>
             )
-          ) : sentences.length === 0 ? (
+          ) : mode === "sentence" ? (
+            sentences.length === 0 ? (
+              <motion.p
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-20 text-foreground/60"
+              >
+                {tSentence.empty}
+              </motion.p>
+            ) : (
+              <motion.div
+                key={sentences[sentenceIndex]._id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.25 }}
+              >
+                <SentenceBuilder
+                  sentence={sentences[sentenceIndex]}
+                  onComplete={() => setSentenceIndex((i) => (i + 1) % sentences.length)}
+                />
+              </motion.div>
+            )
+          ) : exampleWords.length === 0 ? (
             <motion.p
               key="empty"
               initial={{ opacity: 0 }}
@@ -165,15 +210,15 @@ function PracticeContent() {
             </motion.p>
           ) : (
             <motion.div
-              key={sentences[sentenceIndex]._id}
+              key={exampleWords[exampleIndex]._id}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.25 }}
             >
-              <SentenceBuilder
-                sentence={sentences[sentenceIndex]}
-                onComplete={() => setSentenceIndex((i) => (i + 1) % sentences.length)}
+              <WordSentenceBuilder
+                word={exampleWords[exampleIndex]}
+                onComplete={() => setExampleIndex((i) => (i + 1) % exampleWords.length)}
               />
             </motion.div>
           )}

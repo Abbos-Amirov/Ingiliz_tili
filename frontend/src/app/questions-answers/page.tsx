@@ -10,6 +10,15 @@ import type { Difficulty, QuestionAnswerPair } from "@/lib/types";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { QuestionAnswerBuilder } from "@/components/questionAnswers/QuestionAnswerBuilder";
 
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 const LEVELS: Difficulty[] = ["beginner", "intermediate", "advanced"];
 const CATEGORY_FILTERS = ["all", "yes_no", "wh_question"] as const;
 type CategoryFilter = (typeof CATEGORY_FILTERS)[number];
@@ -42,7 +51,9 @@ export default function QuestionAnswersPage() {
     if (category !== "all") query.set("questionCategory", category);
     apiFetch<{ pairs: QuestionAnswerPair[] }>(`/question-answers?${query.toString()}`)
       .then((res) => {
-        setPairs(res.pairs);
+        // Shuffle so every visit (and every filter change) starts on a
+        // different pair instead of always the same first-inserted one.
+        setPairs(shuffle(res.pairs));
         setIndex(0);
       })
       .finally(() => setLoading(false));
