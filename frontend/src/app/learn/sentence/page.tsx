@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api";
 import type { Sentence, Difficulty } from "@/lib/types";
 import { SentenceBuilder } from "@/components/sentence/SentenceBuilder";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { AiChatWidget } from "@/components/chat/AiChatWidget";
+import { useAiChatContextStore } from "@/store/aiChatContext";
 import { useT } from "@/hooks/useT";
 
 function shuffle<T>(arr: T[]): T[] {
@@ -69,6 +69,12 @@ export default function SentencePage() {
     setCurrent(pool[idx]);
   }
 
+  const setChatContext = useAiChatContextStore((s) => s.setContext);
+  useEffect(() => {
+    setChatContext(current ? { korean: current.korean, englishWords: current.words.map((w) => w.text), formula: current.formula } : null);
+    return () => setChatContext(null);
+  }, [current, setChatContext]);
+
   if (!ready || !user) return null;
 
   return (
@@ -128,13 +134,6 @@ export default function SentencePage() {
           )}
         </AnimatePresence>
       </div>
-
-      {current && (
-        <AiChatWidget
-          key={current._id}
-          context={{ korean: current.korean, englishWords: current.words.map((w) => w.text), formula: current.formula }}
-        />
-      )}
     </div>
   );
 }

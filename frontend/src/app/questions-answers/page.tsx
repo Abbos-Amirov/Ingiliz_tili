@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api";
 import type { Difficulty, QuestionAnswerPair } from "@/lib/types";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { QuestionAnswerBuilder } from "@/components/questionAnswers/QuestionAnswerBuilder";
+import { useAiChatContextStore } from "@/store/aiChatContext";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -59,9 +60,19 @@ export default function QuestionAnswersPage() {
       .finally(() => setLoading(false));
   }, [user, level, category]);
 
-  if (!ready || !user) return null;
-
   const current = pairs[index];
+  const targetSentence = current ? (mode === "A" ? current.answer : current.question) : null;
+  const setChatContext = useAiChatContextStore((s) => s.setContext);
+  useEffect(() => {
+    setChatContext(
+      targetSentence
+        ? { korean: targetSentence.korean, englishWords: targetSentence.words.map((w) => w.text), formula: targetSentence.formula }
+        : null,
+    );
+    return () => setChatContext(null);
+  }, [targetSentence, setChatContext]);
+
+  if (!ready || !user) return null;
 
   const categoryLabel: Record<CategoryFilter, string> = {
     all: t.categoryAll,

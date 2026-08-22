@@ -21,15 +21,14 @@ export const sentenceChat: RequestHandler = async (req, res, next) => {
       res.status(400).json({ error: "message is required" });
       return;
     }
-    if (typeof korean !== "string" || !Array.isArray(englishWords)) {
-      res.status(400).json({ error: "korean and englishWords are required for context" });
-      return;
-    }
+    // context is optional — the widget is available site-wide now, and only
+    // pages with an active sentence exercise (Sentence Building, Q&A) set it.
+    const hasContext = typeof korean === "string" && Array.isArray(englishWords);
     const safeHistory = isValidHistory(history) ? history.slice(-10) : [];
 
     const reply = await chatAboutSentence(
       message.trim(),
-      { korean, englishWords, formula: typeof formula === "string" ? formula : "" },
+      hasContext ? { korean, englishWords, formula: typeof formula === "string" ? formula : "" } : null,
       safeHistory,
       typeof locale === "string" ? locale : "uz",
     );

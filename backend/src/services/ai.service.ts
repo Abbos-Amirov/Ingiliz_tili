@@ -602,20 +602,28 @@ const LOCALE_NAMES: Record<string, string> = { uz: "Uzbek", en: "English", ko: "
 
 export async function chatAboutSentence(
   message: string,
-  context: SentenceChatContext,
+  context: SentenceChatContext | null,
   history: ChatMessage[],
   locale: string,
 ): Promise<string> {
   const client = requireClient();
   const localeName = LOCALE_NAMES[locale] ?? "Uzbek";
 
-  const systemPrompt = `You are a friendly, encouraging English grammar tutor inside a language-learning app. The student is an Uzbek speaker learning English via Korean. They are currently working on this sentence-building exercise:
+  // The widget is available site-wide (see AiChatWidget) — context is only
+  // set while the learner has a specific sentence exercise in view (Sentence
+  // Building / Q&A), so anywhere else this falls back to a general tutor
+  // prompt with no exercise to reference.
+  const systemPrompt = context
+    ? `You are a friendly, encouraging English grammar tutor inside a language-learning app. The student is an Uzbek speaker learning English via Korean. They are currently working on this sentence-building exercise:
 
 Korean sentence: "${context.korean}"
 Correct English sentence: "${context.englishWords.join(" ")}"
 Grammar formula: "${context.formula}"
 
-Answer the student's questions about this sentence, English grammar in general, or vocabulary. Keep answers SHORT (2-4 sentences), clear, warm, and encouraging — this is a chat widget, not an essay. Respond in ${localeName} unless the student writes in a different language, in which case follow their language. Do not give away answers to unrelated exercises; focus on explaining grammar and vocabulary concepts. Write in PLAIN TEXT only — no markdown formatting (no **bold**, no _italics_, no bullet lists, no headings). You may use a single emoji occasionally if it fits naturally.`;
+Answer the student's questions about this sentence, English grammar in general, or vocabulary. Keep answers SHORT (2-4 sentences), clear, warm, and encouraging — this is a chat widget, not an essay. Respond in ${localeName} unless the student writes in a different language, in which case follow their language. Do not give away answers to unrelated exercises; focus on explaining grammar and vocabulary concepts. Write in PLAIN TEXT only — no markdown formatting (no **bold**, no _italics_, no bullet lists, no headings). You may use a single emoji occasionally if it fits naturally.`
+    : `You are a friendly, encouraging English tutor inside a language-learning app. The student is an Uzbek speaker learning English via Korean. No specific exercise is currently in focus — they may ask about English vocabulary, grammar, pronunciation, or how to use the app.
+
+Keep answers SHORT (2-4 sentences), clear, warm, and encouraging — this is a chat widget, not an essay. Respond in ${localeName} unless the student writes in a different language, in which case follow their language. Write in PLAIN TEXT only — no markdown formatting (no **bold**, no _italics_, no bullet lists, no headings). You may use a single emoji occasionally if it fits naturally.`;
 
   const response = await client.messages.create({
     model: MODEL,

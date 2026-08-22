@@ -14,7 +14,7 @@ import { WordSentenceBuilder } from "@/components/lessons/WordSentenceBuilder";
 import { RecallQuiz } from "@/components/recall/RecallQuiz";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { AiChatWidget } from "@/components/chat/AiChatWidget";
+import { useAiChatContextStore } from "@/store/aiChatContext";
 
 const CHUNK_SIZE = 8;
 
@@ -89,6 +89,13 @@ function PracticeContent() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user) load();
   }, [user, load]);
+
+  const current = mode === "sentence" ? sentences[sentenceIndex] : undefined;
+  const setChatContext = useAiChatContextStore((s) => s.setContext);
+  useEffect(() => {
+    setChatContext(current ? { korean: current.korean, englishWords: current.words.map((w) => w.text), formula: current.formula } : null);
+    return () => setChatContext(null);
+  }, [current, setChatContext]);
 
   if (!ready || !user) return null;
 
@@ -224,17 +231,6 @@ function PracticeContent() {
           )}
         </AnimatePresence>
       </div>
-
-      {mode === "sentence" && sentences.length > 0 && sentences[sentenceIndex] && (
-        <AiChatWidget
-          key={sentences[sentenceIndex]._id}
-          context={{
-            korean: sentences[sentenceIndex].korean,
-            englishWords: sentences[sentenceIndex].words.map((w) => w.text),
-            formula: sentences[sentenceIndex].formula,
-          }}
-        />
-      )}
     </div>
   );
 }
