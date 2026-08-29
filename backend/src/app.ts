@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { env } from "./config/env";
 import authRoutes from "./routes/auth.routes";
 import wordsRoutes from "./routes/words.routes";
@@ -26,6 +27,14 @@ app.use(cors({ origin: allowedOrigins }));
 // (see FEATURE "Xotira Saroyi" — images are stored inline, no file storage
 // service is configured in this project).
 app.use(express.json({ limit: "3mb" }));
+
+// Serves auto-generated pronunciation clips (see tts.service.ts) — this
+// backend is where they're synthesized, so this is where they're served
+// from too, at the absolute URL stored in Word.audioUrl/koreanAudioUrl.
+// process.cwd() (not __dirname) so this resolves the same way under both
+// `tsx watch` in dev and the compiled dist/ build in Docker — see
+// tts.service.ts's AUDIO_DIR comment for why.
+app.use("/audio", express.static(path.resolve(process.cwd(), "public/audio")));
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

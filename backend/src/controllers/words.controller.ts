@@ -1,7 +1,23 @@
 import { RequestHandler } from "express";
 import { Word } from "../models/Word";
 import { bulkUploadWordsFromCsv } from "../services/csv.service";
+import { generateWordAudio } from "../services/tts.service";
 import { parseLessonRange, lessonRangeOverlapFilter } from "../utils/lessonRange";
+
+// Best-effort: a TTS failure (missing key, rate limit, network) must never
+// block word creation/editing — playback falls back to speechSynthesis
+// without a clip, and scripts/generateAudio.ts's idempotent backfill can
+// fill it in later.
+async function attachAudio(word: InstanceType<typeof Word>): Promise<void> {
+  try {
+    const { audioUrl, koreanAudioUrl } = await generateWordAudio(word._id.toString(), word.english, word.korean);
+    word.audioUrl = audioUrl;
+    word.koreanAudioUrl = koreanAudioUrl;
+    await word.save();
+  } catch (err) {
+    console.error(`Auto audio generation failed for word ${word._id}:`, err);
+  }
+}
 
 export const listWords: RequestHandler = async (req, res, next) => {
   try {
@@ -71,6 +87,7 @@ export const createWord: RequestHandler = async (req, res, next) => {
       }
     }
     const word = await Word.create({ ...req.body, ...lessonRange });
+    await attachAudio(word);
     res.status(201).json({ word });
   } catch (err) {
     next(err);
@@ -88,6 +105,16 @@ export const updateWord: RequestHandler = async (req, res, next) => {
       }
       Object.assign(body, lessonRange);
     }
+
+    const existing = await Word.findById(req.params.id, { english: 1, korean: 1 });
+    if (!existing) {
+      res.status(404).json({ error: "Word not found" });
+      return;
+    }
+    const textChanged =
+      (typeof body.english === "string" && body.english.trim() !== existing.english) ||
+      (typeof body.korean === "string" && body.korean.trim() !== existing.korean);
+
     const word = await Word.findByIdAndUpdate(req.params.id, body, {
       new: true,
       runValidators: true,
@@ -96,6 +123,10 @@ export const updateWord: RequestHandler = async (req, res, next) => {
       res.status(404).json({ error: "Word not found" });
       return;
     }
+    // Only regenerate when the pronounced text actually changed — an edit to
+    // an unrelated field (lesson range, category, ...) shouldn't re-spend an
+    // OpenAI call.
+    if (textChanged) await attachAudio(word);
     res.json({ word });
   } catch (err) {
     next(err);

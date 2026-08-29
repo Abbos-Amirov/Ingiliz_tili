@@ -7,6 +7,11 @@ services:
       - "5051:5051"
     env_file:
       - ./backend/.env
+    volumes:
+      # Persists auto-generated audio (see tts.service.ts) across
+      # `docker compose up --build` rebuilds — otherwise it'd be baked into
+      # the old image layer and lost on every redeploy.
+      - ./backend/public/audio:/app/public/audio
     restart: unless-stopped
 
   frontend:

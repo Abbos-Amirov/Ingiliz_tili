@@ -9,8 +9,15 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional().default(""),
   ENGLISH_AI_API_KEY: z.string().optional().default(""),
   UNSPLASH_ACCESS_KEY: z.string().optional().default(""),
+  OPENAI_API_KEY: z.string().optional().default(""),
   GOOGLE_CLIENT_ID: z.string().optional().default(""),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  // This server's own publicly-reachable origin — used to build absolute
+  // audioUrl values for auto-generated pronunciation clips (see
+  // tts.service.ts), since those are served by this backend itself rather
+  // than bundled into the frontend's static assets like the older,
+  // manually-run scripts/generateAudio.ts clips are.
+  PUBLIC_BASE_URL: z.string().default("http://localhost:5051"),
   NODE_ENV: z.string().default("development"),
 });
 
@@ -28,6 +35,10 @@ export const env = parsed.data;
 export const AI_API_KEY = env.ENGLISH_AI_API_KEY || env.ANTHROPIC_API_KEY;
 
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
+
+export const OPENAI_API_KEY = env.OPENAI_API_KEY;
+
+export const PUBLIC_BASE_URL = env.PUBLIC_BASE_URL;
 
 // Only the client ID is needed — Google Identity Services issues a signed ID
 // token client-side that we verify server-side (see googleAuth.service.ts),
