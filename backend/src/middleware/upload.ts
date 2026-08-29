@@ -15,3 +15,12 @@ export const csvUpload = multer({
     cb(null, true);
   },
 });
+
+// Voice-chat recordings (see chat.controller.ts's voiceChat) — no
+// fileFilter, since browsers' MediaRecorder produces different container
+// formats (audio/webm, audio/mp4, audio/ogg) depending on platform, and
+// OpenAI's transcription endpoint accepts all of them.
+export const voiceUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});

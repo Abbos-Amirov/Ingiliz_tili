@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue } from "framer-motion";
 import { apiFetch } from "@/lib/api";
@@ -34,10 +34,23 @@ export function AiChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [voiceState, setVoiceState] = useState<"idle" | "recording" | "processing">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const constraintsRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+
+  // getUserMedia is only available in secure contexts (https, or localhost
+  // in dev) — this deployment currently serves plain http over a bare IP
+  // (no domain/TLS yet), so most real browsers simply won't expose it there.
+  // Feature-detect and hide the mic button rather than offering a button
+  // that silently fails.
+  const voiceSupported = useMemo(
+    () => typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof window.MediaRecorder !== "undefined",
+    [],
+  );
 
   useEffect(() => {
     // Restore the bubble's last dragged position, defaulting to the
@@ -94,6 +107,59 @@ export function AiChatWidget() {
     }
   }
 
+  async function startRecording() {
+    if (voiceState !== "idle") return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        void sendVoiceMessage(blob);
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setVoiceState("recording");
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: t.micError, isError: true }]);
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+  }
+
+  async function sendVoiceMessage(blob: Blob) {
+    setVoiceState("processing");
+    const history = messages.filter((m) => !m.isError).map((m) => ({ role: m.role, content: m.content }));
+    const form = new FormData();
+    form.append("audio", blob, "voice.webm");
+    form.append("locale", locale);
+    form.append("history", JSON.stringify(history));
+    if (context) form.append("context", JSON.stringify(context));
+    try {
+      const res = await apiFetch<{ transcript: string; reply: string; audioBase64: string }>("/chat/voice", {
+        method: "POST",
+        body: form,
+      });
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: res.transcript },
+        { role: "assistant", content: res.reply },
+      ]);
+      new Audio(`data:audio/mpeg;base64,${res.audioBase64}`).play().catch(() => {});
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: t.error, isError: true }]);
+    } finally {
+      setVoiceState("idle");
+    }
+  }
+
   // Chat requires auth (see chat.routes.ts), and the admin panel is a
   // separate, non-learner surface — Navbar hides itself there the same way.
   if (!ready || !user || pathname.startsWith("/admin")) return null;
@@ -131,7 +197,7 @@ export function AiChatWidget() {
               {messages.map((m, i) => (
                 <ChatBubble key={i} role={m.role} content={m.content} isError={m.isError} />
               ))}
-              {sending && (
+              {(sending || voiceState === "processing") && (
                 <div className="flex items-center gap-2 text-xs text-foreground/40 pl-1">
                   <span className="flex gap-1">
                     <motion.span
@@ -150,22 +216,37 @@ export function AiChatWidget() {
                       transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
                     />
                   </span>
-                  {t.thinking}
+                  {voiceState === "processing" ? t.processingVoice : t.thinking}
                 </div>
               )}
             </div>
 
             <form onSubmit={handleSend} className="p-3 border-t border-border bg-surface flex items-center gap-2 shrink-0">
+              {voiceSupported && (
+                <button
+                  type="button"
+                  onClick={voiceState === "recording" ? stopRecording : startRecording}
+                  disabled={sending || voiceState === "processing"}
+                  aria-label={voiceState === "recording" ? t.stopLabel : t.micLabel}
+                  className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center transition disabled:opacity-40 disabled:pointer-events-none ${
+                    voiceState === "recording"
+                      ? "bg-danger text-white animate-pulse"
+                      : "bg-surface-muted text-foreground/60 hover:text-primary"
+                  }`}
+                >
+                  {voiceState === "recording" ? <StopIcon /> : <MicIcon />}
+                </button>
+              )}
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={t.placeholder}
-                disabled={sending}
+                placeholder={voiceState === "recording" ? t.recording : voiceState === "processing" ? t.processingVoice : t.placeholder}
+                disabled={sending || voiceState !== "idle"}
                 className="flex-1 rounded-full border border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
               />
               <button
                 type="submit"
-                disabled={sending || !input.trim()}
+                disabled={sending || voiceState !== "idle" || !input.trim()}
                 aria-label={t.send}
                 className="h-10 w-10 shrink-0 rounded-full gradient-primary text-white flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none hover:brightness-105 transition"
               >
@@ -241,6 +322,35 @@ function SendIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M4 12L20 4L14 20L11 13L4 12Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19 11a7 7 0 0 1-14 0M12 18v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StopIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" />
     </svg>
   );
 }

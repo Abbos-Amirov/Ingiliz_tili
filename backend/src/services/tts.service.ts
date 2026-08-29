@@ -22,7 +22,10 @@ const AUDIO_DIR = path.resolve(process.cwd(), "public/audio/words");
 const MODEL = "gpt-4o-mini-tts";
 const VOICE = "alloy";
 
-async function synthesizeToFile(text: string, fileName: string): Promise<string> {
+// Shared low-level call, also used by voiceChat.service.ts for spoken chat
+// replies (which are played once and returned inline, never written to
+// disk here).
+export async function synthesizeSpeechBuffer(text: string): Promise<Buffer> {
   if (!OPENAI_API_KEY) {
     throw Object.assign(new Error("OPENAI_API_KEY is not configured"), { status: 503 });
   }
@@ -40,8 +43,12 @@ async function synthesizeToFile(text: string, fileName: string): Promise<string>
     throw Object.assign(new Error(`OpenAI TTS failed (${response.status})`), { status: 502 });
   }
 
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function synthesizeToFile(text: string, fileName: string): Promise<string> {
+  const buffer = await synthesizeSpeechBuffer(text);
   await mkdir(AUDIO_DIR, { recursive: true });
-  const buffer = Buffer.from(await response.arrayBuffer());
   await writeFile(path.join(AUDIO_DIR, fileName), buffer);
   return `${PUBLIC_BASE_URL}/audio/words/${fileName}`;
 }
