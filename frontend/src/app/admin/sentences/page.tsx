@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Sentence } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +32,7 @@ export default function AdminSentencesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Sentence | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +50,17 @@ export default function AdminSentencesPage() {
     load();
   }, [load]);
 
+  const query = search.trim().toLowerCase();
+  const searchResults = useMemo(
+    () =>
+      query
+        ? sentences.filter(
+            (s) => s.korean.toLowerCase().includes(query) || s.words.some((w) => w.text.toLowerCase().includes(query)),
+          )
+        : [],
+    [sentences, query],
+  );
+
   async function handleDelete(sentence: Sentence) {
     if (!confirm("Bu gapni o'chirishni tasdiqlaysizmi?")) return;
     setError(null);
@@ -58,6 +70,56 @@ export default function AdminSentencesPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
     }
+  }
+
+  function renderCard(s: Sentence, showLessonBadge: boolean) {
+    return (
+      <Card key={s._id} className="p-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="font-semibold mb-1.5">{s.korean}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {s.words.map((w, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded-md text-xs font-semibold"
+                style={{ backgroundColor: ROLE_COLORS[w.role].bg, color: ROLE_COLORS[w.role].text }}
+                title={ROLE_COLORS[w.role].label}
+              >
+                {w.text}
+              </span>
+            ))}
+          </div>
+          {s.distractorWords.length > 0 && (
+            <p className="text-xs text-foreground/40 mt-1.5">
+              Chalg&apos;ituvchi: {s.distractorWords.map((w) => w.text).join(", ")}
+            </p>
+          )}
+          {s.formula && <p className="text-xs text-foreground/40 mt-1 font-mono">{s.formula}</p>}
+          <div className="flex gap-2 mt-2">
+            <span className="inline-block px-2 py-0.5 rounded-full bg-surface-muted text-xs font-medium">{s.level}</span>
+            {showLessonBadge && (
+              <span className="inline-block px-2 py-0.5 rounded-full bg-surface-muted text-xs font-medium">
+                {formatLessonRange(s.lessonNumber, s.lessonNumberEnd)}-dars
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 text-sm shrink-0">
+          <button
+            onClick={() => {
+              setEditing(s);
+              setModalOpen(true);
+            }}
+            className="text-primary font-medium hover:underline"
+          >
+            Tahrirlash
+          </button>
+          <button onClick={() => handleDelete(s)} className="text-danger font-medium hover:underline">
+            O&apos;chirish
+          </button>
+        </div>
+      </Card>
+    );
   }
 
   return (
@@ -77,12 +139,25 @@ export default function AdminSentencesPage() {
         </Button>
       </div>
 
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Gap qidirish (koreys yoki ingliz so'z)..."
+        className="w-full rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary mb-6"
+      />
+
       {error && <p className="text-danger text-sm mb-4">{error}</p>}
 
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
         </div>
+      ) : query ? (
+        searchResults.length === 0 ? (
+          <p className="text-center py-16 text-foreground/60">Hech narsa topilmadi.</p>
+        ) : (
+          <div className="space-y-3">{searchResults.map((s) => renderCard(s, true))}</div>
+        )
       ) : (
         <div className="space-y-6">
           {groupByLesson(sentences).map(([lessonLabel, lessonSentences]) => (
@@ -92,52 +167,7 @@ export default function AdminSentencesPage() {
               count={lessonSentences.length}
               previewLabel={lessonSentences[0]?.korean}
             >
-              <div className="space-y-3">
-                {lessonSentences.map((s) => (
-                  <Card key={s._id} className="p-4 flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold mb-1.5">{s.korean}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {s.words.map((w, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 rounded-md text-xs font-semibold"
-                            style={{ backgroundColor: ROLE_COLORS[w.role].bg, color: ROLE_COLORS[w.role].text }}
-                            title={ROLE_COLORS[w.role].label}
-                          >
-                            {w.text}
-                          </span>
-                        ))}
-                      </div>
-                      {s.distractorWords.length > 0 && (
-                        <p className="text-xs text-foreground/40 mt-1.5">
-                          Chalg&apos;ituvchi: {s.distractorWords.map((w) => w.text).join(", ")}
-                        </p>
-                      )}
-                      {s.formula && (
-                        <p className="text-xs text-foreground/40 mt-1 font-mono">{s.formula}</p>
-                      )}
-                      <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-surface-muted text-xs font-medium">
-                        {s.level}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1 text-sm shrink-0">
-                      <button
-                        onClick={() => {
-                          setEditing(s);
-                          setModalOpen(true);
-                        }}
-                        className="text-primary font-medium hover:underline"
-                      >
-                        Tahrirlash
-                      </button>
-                      <button onClick={() => handleDelete(s)} className="text-danger font-medium hover:underline">
-                        O&apos;chirish
-                      </button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+              <div className="space-y-3">{lessonSentences.map((s) => renderCard(s, false))}</div>
             </LessonGroup>
           ))}
         </div>

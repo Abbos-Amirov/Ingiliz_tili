@@ -14,9 +14,12 @@ interface LessonGroupProps {
 // filled in, making the admin page one long scroll across many lessons —
 // collapsing to just the lesson number + a preview of what's inside lets an
 // admin scan the whole list and only expand the lesson they're editing.
-// Defaults open so nothing changes visually until an admin collapses one.
+// Defaults closed — with dozens of lessons, an all-open page is the thing
+// this exists to avoid; the search box above the list (see admin/words and
+// admin/sentences pages) is the fast path when you know what you're
+// looking for instead of opening lessons one by one.
 export function LessonGroup({ label, count, previewLabel, children }: LessonGroupProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   return (
     <div>
