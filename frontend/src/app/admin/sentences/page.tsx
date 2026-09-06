@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { SentenceForm } from "@/components/admin/SentenceForm";
+import { LessonGroup } from "@/components/admin/LessonGroup";
 import { formatLessonRange } from "@/lib/lessonRange";
 import { ROLE_COLORS } from "@/lib/roleColors";
 
@@ -85,10 +86,12 @@ export default function AdminSentencesPage() {
       ) : (
         <div className="space-y-6">
           {groupByLesson(sentences).map(([lessonLabel, lessonSentences]) => (
-            <div key={lessonLabel}>
-              <h2 className="font-bold text-sm text-foreground/60 mb-2 uppercase tracking-wide">
-                {lessonLabel}-dars ({lessonSentences.length})
-              </h2>
+            <LessonGroup
+              key={lessonLabel}
+              label={lessonLabel}
+              count={lessonSentences.length}
+              previewLabel={lessonSentences[0]?.korean}
+            >
               <div className="space-y-3">
                 {lessonSentences.map((s) => (
                   <Card key={s._id} className="p-4 flex items-start justify-between gap-4">
@@ -135,7 +138,7 @@ export default function AdminSentencesPage() {
                   </Card>
                 ))}
               </div>
-            </div>
+            </LessonGroup>
           ))}
         </div>
       )}

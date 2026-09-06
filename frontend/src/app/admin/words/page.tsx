@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { WordForm } from "@/components/admin/WordForm";
+import { LessonGroup } from "@/components/admin/LessonGroup";
 import { formatLessonRange } from "@/lib/lessonRange";
 
 function groupByLesson(words: Word[]): [string, Word[]][] {
@@ -87,10 +88,7 @@ export default function AdminWordsPage() {
       ) : (
         <div className="space-y-6">
           {groupByLesson(words).map(([lessonLabel, lessonWords]) => (
-            <div key={lessonLabel}>
-              <h2 className="font-bold text-sm text-foreground/60 mb-2 uppercase tracking-wide">
-                {lessonLabel}-dars ({lessonWords.length})
-              </h2>
+            <LessonGroup key={lessonLabel} label={lessonLabel} count={lessonWords.length} previewLabel={lessonWords[0]?.english}>
               <Card className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -129,7 +127,7 @@ export default function AdminWordsPage() {
                   </tbody>
                 </table>
               </Card>
-            </div>
+            </LessonGroup>
           ))}
         </div>
       )}
