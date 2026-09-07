@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { AiChatWidget } from "@/components/chat/AiChatWidget";
+import { PushNotificationsInit } from "@/components/push/PushNotificationsInit";
 import "./globals.css";
 
 const display = Plus_Jakarta_Sans({
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="uz" className={`${display.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
+        <PushNotificationsInit />
         <Navbar />
         <main className="flex-1 flex flex-col">{children}</main>
         <AiChatWidget />

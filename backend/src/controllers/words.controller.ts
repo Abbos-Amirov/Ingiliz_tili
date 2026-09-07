@@ -2,6 +2,7 @@ import { RequestHandler } from "express";
 import { Word } from "../models/Word";
 import { bulkUploadWordsFromCsv } from "../services/csv.service";
 import { generateWordAudio } from "../services/tts.service";
+import { notifyNewWords } from "../services/push.service";
 import { parseLessonRange, lessonRangeOverlapFilter } from "../utils/lessonRange";
 
 // Best-effort: a TTS failure (missing key, rate limit, network) must never
@@ -88,6 +89,7 @@ export const createWord: RequestHandler = async (req, res, next) => {
     }
     const word = await Word.create({ ...req.body, ...lessonRange });
     await attachAudio(word);
+    notifyNewWords(1, word.english).catch((err) => console.error("Push notification failed:", err));
     res.status(201).json({ word });
   } catch (err) {
     next(err);
@@ -158,6 +160,7 @@ export const bulkUploadWords: RequestHandler = async (req, res, next) => {
       return;
     }
     const result = await bulkUploadWordsFromCsv(req.file.buffer, defaultLessonRange);
+    notifyNewWords(result.inserted).catch((err) => console.error("Push notification failed:", err));
     res.json(result);
   } catch (err) {
     next(err);

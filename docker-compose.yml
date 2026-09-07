@@ -12,6 +12,10 @@ services:
       # `docker compose up --build` rebuilds — otherwise it'd be baked into
       # the old image layer and lost on every redeploy.
       - ./backend/public/audio:/app/public/audio
+      # Firebase service account key (see config/firebase.ts) — mounted
+      # rather than copied into the image so it never ends up baked into a
+      # Docker layer; deployed to the host directory manually, same as .env.
+      - ./backend/secrets:/app/secrets:ro
     restart: unless-stopped
 
   frontend:

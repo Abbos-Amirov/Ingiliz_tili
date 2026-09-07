@@ -17,6 +17,7 @@ import functionWordsRoutes from "./routes/functionWords.routes";
 import questionAnswersRoutes from "./routes/questionAnswers.routes";
 import memoryAnchorsRoutes from "./routes/memoryAnchors.routes";
 import memoryJourneysRoutes from "./routes/memoryJourneys.routes";
+import pushRoutes from "./routes/push.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -55,6 +56,7 @@ app.use("/api/function-words", functionWordsRoutes);
 app.use("/api/question-answers", questionAnswersRoutes);
 app.use("/api/memory-anchors", memoryAnchorsRoutes);
 app.use("/api/memory-journeys", memoryJourneysRoutes);
+app.use("/api/push", pushRoutes);
 
 app.use(errorHandler);
 
