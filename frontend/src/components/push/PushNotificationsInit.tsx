@@ -7,6 +7,18 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
+// TEMPORARY: reports each step to the backend (visible via `docker logs`)
+// since a real device gave zero visible errors and never showed a
+// permission dialog — the only way to see what's actually happening
+// without USB/adb access. Remove once registration is confirmed working.
+function debugLog(event: string, detail?: unknown) {
+  apiFetch("/push/debug", {
+    method: "POST",
+    body: JSON.stringify({ event, detail }),
+    skipAuth: true,
+  }).catch(() => {});
+}
+
 // Registers this device for new-word push notifications (see
 // push.controller.ts / push.service.ts) — meaningful only inside the
 // installed Android app, which is why everything here is gated on
@@ -26,7 +38,9 @@ export function PushNotificationsInit() {
   const loggedIn = !!user || !!adminUser;
 
   useEffect(() => {
-    if (!loggedIn || !Capacitor.isNativePlatform()) return;
+    const isNative = Capacitor.isNativePlatform();
+    debugLog("effect-run", { loggedIn, asAdmin, isNative, platform: Capacitor.getPlatform() });
+    if (!loggedIn || !isNative) return;
 
     let cleanup: (() => void) | null = null;
     let cancelled = false;
@@ -34,40 +48,43 @@ export function PushNotificationsInit() {
     (async () => {
       try {
         const current = await PushNotifications.checkPermissions();
+        debugLog("checkPermissions", current);
         let granted = current.receive === "granted";
         if (!granted && current.receive !== "denied") {
           const requested = await PushNotifications.requestPermissions();
+          debugLog("requestPermissions", requested);
           granted = requested.receive === "granted";
         }
         if (!granted) {
-          console.warn("Push notifications: permission not granted:", current, granted);
+          debugLog("not-granted", { current });
           return;
         }
         if (cancelled) return;
 
         const registrationListener = await PushNotifications.addListener("registration", (token) => {
+          debugLog("registration-token-received", { tokenPreview: token.value.slice(0, 12) });
           apiFetch("/push/register", {
             method: "POST",
             body: JSON.stringify({ token: token.value, platform: "android" }),
             admin: asAdmin,
-          }).catch((err) => {
-            // Best-effort — a failed registration just means this device
-            // misses notifications until the next successful app launch.
-            console.warn("Push token registration with backend failed:", err);
-          });
+          })
+            .then(() => debugLog("backend-register-ok"))
+            .catch((err) => debugLog("backend-register-failed", String(err)));
         });
         const errorListener = await PushNotifications.addListener("registrationError", (err) => {
-          console.warn("Push registration failed:", err);
+          debugLog("registrationError", err);
         });
 
+        debugLog("calling-register");
         await PushNotifications.register();
+        debugLog("register-call-returned");
 
         cleanup = () => {
           registrationListener.remove();
           errorListener.remove();
         };
       } catch (err) {
-        console.warn("Push notifications init failed:", err);
+        debugLog("init-exception", String(err));
       }
     })();
 
