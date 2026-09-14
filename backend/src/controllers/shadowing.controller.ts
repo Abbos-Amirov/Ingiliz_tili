@@ -3,6 +3,8 @@ import { unlink } from "fs/promises";
 import { RequestHandler } from "express";
 import { ShadowingVideo } from "../models/ShadowingVideo";
 import { transcribeVideoWordTimestamps } from "../services/transcription.service";
+import { translateShadowingSentence } from "../services/ai.service";
+import { segmentTranscriptIntoSentences } from "../utils/sentenceSegmentation";
 import { PUBLIC_BASE_URL } from "../config/env";
 
 const VIDEOS_DIR = path.resolve(process.cwd(), "public/videos");
@@ -38,7 +40,7 @@ export const listShadowingVideos: RequestHandler = async (req, res, next) => {
     const { level } = req.query;
     const filter: Record<string, unknown> = {};
     if (level) filter.level = level;
-    const videos = await ShadowingVideo.find(filter, { transcript: 0 }).sort({ createdAt: -1 });
+    const videos = await ShadowingVideo.find(filter, { transcript: 0, sentences: 0 }).sort({ createdAt: -1 });
     res.json({ videos });
   } catch (err) {
     next(err);
@@ -88,6 +90,40 @@ export const updateShadowingVideo: RequestHandler = async (req, res, next) => {
       res.status(404).json({ error: "Video not found" });
       return;
     }
+    res.json({ video });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Segments the saved word-level transcript into sentences and translates
+// each into Uzbek + Korean (see ai.service.ts), storing the result on the
+// video so the learner-facing player only ever reads a saved translation —
+// never calls the AI live. Re-running replaces any previous sentences.
+export const translateShadowingSentences: RequestHandler = async (req, res, next) => {
+  try {
+    const video = await ShadowingVideo.findById(req.params.id);
+    if (!video) {
+      res.status(404).json({ error: "Video not found" });
+      return;
+    }
+    if (video.transcript.length === 0) {
+      res.status(400).json({ error: "This video has no word transcript yet" });
+      return;
+    }
+
+    const segments = segmentTranscriptIntoSentences(video.transcript);
+    const sentences = await Promise.all(
+      segments.map(async (seg) => ({
+        text: seg.text,
+        startTime: seg.startTime,
+        endTime: seg.endTime,
+        translation: await translateShadowingSentence(seg.text),
+      })),
+    );
+
+    video.set("sentences", sentences);
+    await video.save();
     res.json({ video });
   } catch (err) {
     next(err);

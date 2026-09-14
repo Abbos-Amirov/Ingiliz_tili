@@ -139,6 +139,8 @@ const uz = {
     translationNotFound: "Tarjima topilmadi",
     backToList: "← Ro'yxatga qaytish",
     videosSuffix: "video",
+    showTranslation: "Tarjimasini ko'rish",
+    hideTranslation: "Tarjimani yashirish",
   },
   recall: {
     title: "Active Recall",
@@ -719,6 +721,8 @@ const en = {
     translationNotFound: "Translation not found",
     backToList: "← Back to list",
     videosSuffix: "videos",
+    showTranslation: "Show translation",
+    hideTranslation: "Hide translation",
   },
   recall: {
     title: "Active Recall",
@@ -1299,6 +1303,8 @@ const ko = {
     translationNotFound: "번역을 찾을 수 없어요",
     backToList: "← 목록으로",
     videosSuffix: "개 영상",
+    showTranslation: "번역 보기",
+    hideTranslation: "번역 숨기기",
   },
   recall: {
     title: "능동적 회상",

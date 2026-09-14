@@ -7,6 +7,7 @@ import {
   createShadowingVideo,
   updateShadowingVideo,
   deleteShadowingVideo,
+  translateShadowingSentences,
 } from "../controllers/shadowing.controller";
 import { authMiddleware } from "../middleware/auth";
 import { requireAdmin } from "../middleware/requireAdmin";
@@ -21,6 +22,7 @@ router.post("/upload", authMiddleware, requireAdmin, videoUpload.single("video")
 router.post("/transcribe", authMiddleware, requireAdmin, transcribeShadowingVideo);
 router.post("/", authMiddleware, requireAdmin, createShadowingVideo);
 router.put("/:id", authMiddleware, requireAdmin, updateShadowingVideo);
+router.post("/:id/translate-sentences", authMiddleware, requireAdmin, translateShadowingSentences);
 router.delete("/:id", authMiddleware, requireAdmin, deleteShadowingVideo);
 
 export default router;

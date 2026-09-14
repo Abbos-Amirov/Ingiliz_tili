@@ -21,6 +21,11 @@ RUN npm ci --omit=dev
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Used by transcription.service.ts to extract just the audio track from an
+# uploaded Shadowing video before sending it to OpenAI — keeps the file
+# well under Whisper's 25MB cap even for videos whose raw size is much
+# larger (that size is almost entirely picture data, not audio).
+RUN apk add --no-cache ffmpeg
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY package.json ./

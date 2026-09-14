@@ -3,15 +3,102 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
+import type { TranslationDict } from "@/lib/i18n/translations";
 import { apiFetch } from "@/lib/api";
-import type { ShadowingVideo, Word } from "@/lib/types";
+import type { ShadowingVideo, ShadowingSentence, TranscriptWord, Word } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 function cleanWord(word: string): string {
   return word.replace(/[^a-zA-Z']/g, "");
+}
+
+function wordsInRange(transcript: TranscriptWord[], sentence: ShadowingSentence): TranscriptWord[] {
+  return transcript.filter((w) => w.startTime >= sentence.startTime - 0.01 && w.startTime <= sentence.endTime + 0.01);
+}
+
+function TranscriptWordButton({
+  item,
+  isActive,
+  onTap,
+}: {
+  item: TranscriptWord;
+  isActive: boolean;
+  onTap: () => void;
+}) {
+  return (
+    <motion.button
+      onClick={onTap}
+      animate={isActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="inline rounded-md px-1 py-0.5 transition-colors duration-150"
+      style={{
+        background: isActive ? "linear-gradient(135deg, #F97316, #FB923C)" : "transparent",
+        color: isActive ? "white" : "inherit",
+        boxShadow: isActive ? "0 2px 10px rgba(249, 115, 22, 0.4)" : "none",
+      }}
+    >
+      {item.word}{" "}
+    </motion.button>
+  );
+}
+
+function SentenceBlock({
+  sentence,
+  words,
+  currentTime,
+  onWordTap,
+  t,
+}: {
+  sentence: ShadowingSentence;
+  words: TranscriptWord[];
+  currentTime: number;
+  onWordTap: (word: string) => void;
+  t: TranslationDict["shadowing"];
+}) {
+  const [showTranslation, setShowTranslation] = useState(false);
+
+  return (
+    <Card className="p-5" style={{ lineHeight: 2 }}>
+      <p className="text-lg">
+        {words.map((item, i) => (
+          <TranscriptWordButton
+            key={i}
+            item={item}
+            isActive={currentTime >= item.startTime && currentTime < item.endTime}
+            onTap={() => onWordTap(item.word)}
+          />
+        ))}
+      </p>
+
+      <button
+        onClick={() => setShowTranslation((v) => !v)}
+        className="mt-2 text-sm font-semibold text-primary hover:underline"
+      >
+        {showTranslation ? t.hideTranslation : t.showTranslation}
+      </button>
+
+      <AnimatePresence>
+        {showTranslation && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 rounded-xl bg-surface-muted p-4 space-y-1.5">
+              <p className="text-sm">🇺🇿 {sentence.translation.uz}</p>
+              <p className="text-sm">🇰🇷 {sentence.translation.ko}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
+  );
 }
 
 export default function ShadowingPlayerPage() {
@@ -19,6 +106,7 @@ export default function ShadowingPlayerPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const t = useT("shadowing");
+  const tSentence = useT("sentence");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [video, setVideo] = useState<ShadowingVideo | null>(null);
@@ -104,67 +192,77 @@ export default function ShadowingPlayerPage() {
           {t.backToList}
         </Link>
 
-        <h1 className="text-xl sm:text-2xl font-extrabold mt-3 mb-4">{video.title}</h1>
+        <div className="mt-3 mb-5 flex flex-wrap items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-extrabold gradient-text">{video.title}</h1>
+          <span className="px-2.5 py-1 rounded-full bg-surface-muted text-xs font-semibold">
+            {tSentence.levels[video.level]}
+          </span>
+        </div>
 
-        <video
-          ref={videoRef}
-          src={video.videoUrl}
-          controls
-          onTimeUpdate={handleTimeUpdate}
-          className="w-full rounded-2xl bg-black"
-        />
+        <div className="rounded-3xl overflow-hidden bg-black card-shadow">
+          <video ref={videoRef} src={video.videoUrl} controls onTimeUpdate={handleTimeUpdate} className="w-full" />
+        </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-          <button
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+          <Button
+            variant={speed === 0.75 ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setSpeed(speed === 1 ? 0.75 : 1)}
-            className={`px-3.5 py-2 rounded-full text-sm font-semibold transition-colors ${
-              speed === 0.75 ? "gradient-primary text-white" : "bg-surface-muted text-foreground/70"
-            }`}
           >
             {speed === 0.75 ? t.speedSlow : t.speedNormal}
-          </button>
-          <button onClick={rewind} className="px-3.5 py-2 rounded-full text-sm font-semibold bg-surface-muted text-foreground/70">
+          </Button>
+          <Button variant="secondary" size="sm" onClick={rewind}>
             {t.rewind}
-          </button>
+          </Button>
           {loopStart !== null && loopEnd !== null ? (
-            <button onClick={clearLoop} className="px-3.5 py-2 rounded-full text-sm font-semibold bg-success-soft text-success">
+            <button
+              onClick={clearLoop}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-success-soft text-success"
+            >
               {t.loopActive} · {t.clearLoop}
             </button>
           ) : (
             <>
-              <button onClick={markLoopStart} className="px-3.5 py-2 rounded-full text-sm font-semibold bg-surface-muted text-foreground/70">
+              <Button variant="secondary" size="sm" onClick={markLoopStart}>
                 {t.markStart}
-              </button>
-              <button
-                onClick={markLoopEnd}
-                disabled={loopStart === null}
-                className="px-3.5 py-2 rounded-full text-sm font-semibold bg-surface-muted text-foreground/70 disabled:opacity-40"
-              >
+              </Button>
+              <Button variant="secondary" size="sm" onClick={markLoopEnd} disabled={loopStart === null}>
                 {t.markEnd}
-              </button>
+              </Button>
             </>
           )}
         </div>
-        {loopStart !== null && loopEnd === null && <p className="text-center text-xs text-foreground/40 mt-2">{t.loopHint}</p>}
+        {loopStart !== null && loopEnd === null && (
+          <p className="text-center text-xs text-foreground/40 mt-2">{t.loopHint}</p>
+        )}
 
-        <Card className="mt-6 p-5 leading-loose text-lg">
-          {video.transcript.map((item, i) => {
-            const isActive = currentTime >= item.startTime && currentTime < item.endTime;
-            return (
-              <button
-                key={i}
-                onClick={() => handleWordTap(item.word)}
-                className="inline rounded px-0.5 transition-colors"
-                style={{
-                  backgroundColor: isActive ? "#F97316" : "transparent",
-                  color: isActive ? "white" : "inherit",
-                }}
-              >
-                {item.word}{" "}
-              </button>
-            );
-          })}
-        </Card>
+        <div className="mt-6 space-y-4">
+          {video.sentences.length > 0 ? (
+            video.sentences.map((sentence, si) => (
+              <SentenceBlock
+                key={si}
+                sentence={sentence}
+                words={wordsInRange(video.transcript, sentence)}
+                currentTime={currentTime}
+                onWordTap={handleWordTap}
+                t={t}
+              />
+            ))
+          ) : (
+            <Card className="p-5" style={{ lineHeight: 2 }}>
+              <p className="text-lg">
+                {video.transcript.map((item, i) => (
+                  <TranscriptWordButton
+                    key={i}
+                    item={item}
+                    isActive={currentTime >= item.startTime && currentTime < item.endTime}
+                    onTap={() => handleWordTap(item.word)}
+                  />
+                ))}
+              </p>
+            </Card>
+          )}
+        </div>
         <p className="text-center text-xs text-foreground/40 mt-2">{t.tapWordHint}</p>
 
         {popupWord && (

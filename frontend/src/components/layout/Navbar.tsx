@@ -16,17 +16,14 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Grouped into 3 topic hubs (each hub page links onward to its own
-  // sub-pages) plus 2 standalone features, so the mobile menu shows 5 items
-  // instead of the 11 individual pages they used to fill the screen with.
+  // sub-pages) plus 3 standalone features, so the mobile menu shows 6 items
+  // instead of the 11+ individual pages they used to fill the screen with.
   const links = [
     { href: "/learn", label: t.wordBank, activeMatch: ["/learn", "/all-words"] },
     { href: "/rules", label: t.rules, activeMatch: ["/rules", "/grammar", "/function-words", "/irregular-verbs"] },
-    {
-      href: "/practice",
-      label: t.practice,
-      activeMatch: ["/practice", "/questions-answers", "/flashcards", "/shadowing"],
-    },
+    { href: "/practice", label: t.practice, activeMatch: ["/practice", "/questions-answers", "/flashcards"] },
     { href: "/memory-palace", label: t.memoryPalace, activeMatch: ["/memory-palace"] },
+    { href: "/shadowing", label: t.shadowing, activeMatch: ["/shadowing"] },
     { href: "/progress", label: t.progress, activeMatch: ["/progress"] },
   ];
 

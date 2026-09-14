@@ -70,6 +70,13 @@ export interface TranscriptWord {
   endTime: number;
 }
 
+export interface ShadowingSentence {
+  text: string;
+  startTime: number;
+  endTime: number;
+  translation: { uz: string; ko: string };
+}
+
 export interface ShadowingVideo {
   _id: string;
   title: string;
@@ -77,6 +84,7 @@ export interface ShadowingVideo {
   level: Difficulty;
   duration: number;
   transcript: TranscriptWord[];
+  sentences: ShadowingSentence[];
 }
 
 export interface SentenceWordExplanation {

@@ -638,3 +638,44 @@ Keep answers SHORT (2-4 sentences), clear, warm, and encouraging — this is a c
   }
   return textBlock.text;
 }
+
+export interface SentenceTranslation {
+  uz: string;
+  ko: string;
+}
+
+const TRANSLATE_SENTENCE_TOOL = {
+  name: "translate_sentence",
+  description: "Translate an English sentence into natural Uzbek and Korean.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      uz: { type: "string" as const, description: "Natural Uzbek translation" },
+      ko: { type: "string" as const, description: "Natural Korean translation" },
+    },
+    required: ["uz", "ko"],
+  },
+};
+
+// Used by Shadowing's per-sentence translation reveal (see
+// shadowing.controller.ts's translateShadowingSentences) — run once per
+// video when an admin triggers it, result saved on the video, never called
+// live from the learner-facing player.
+export async function translateShadowingSentence(englishText: string): Promise<SentenceTranslation> {
+  const client = requireClient();
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 512,
+    tools: [TRANSLATE_SENTENCE_TOOL],
+    tool_choice: { type: "tool", name: "translate_sentence" },
+    messages: [
+      {
+        role: "user",
+        content: `Translate this English sentence into natural, fluent Uzbek and Korean: "${englishText}"\n\nCall the translate_sentence tool with your answer.`,
+      },
+    ],
+  });
+
+  return extractToolInput<SentenceTranslation>(response);
+}

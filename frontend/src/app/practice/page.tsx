@@ -23,7 +23,6 @@ export default function PracticeHubPage() {
   const items = [
     { href: "/questions-answers", icon: "❓", label: t.questionAnswers },
     { href: "/flashcards", icon: "🃏", label: t.flashcards },
-    { href: "/shadowing", icon: "🎬", label: t.shadowing },
   ];
 
   return (

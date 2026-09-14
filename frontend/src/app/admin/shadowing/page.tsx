@@ -14,6 +14,7 @@ export default function AdminShadowingPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ShadowingVideo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,6 +46,18 @@ export default function AdminShadowingPage() {
       setModalOpen(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Videoni yuklashda xatolik");
+    }
+  }
+
+  async function handleTranslate(video: ShadowingVideo) {
+    setError(null);
+    setTranslatingId(video._id);
+    try {
+      await apiFetch(`/shadowing/${video._id}/translate-sentences`, { method: "POST", admin: true });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Tarjima qilishda xatolik");
+    } finally {
+      setTranslatingId(null);
     }
   }
 
@@ -97,6 +110,13 @@ export default function AdminShadowingPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-1 text-sm shrink-0 items-end">
+                <button
+                  onClick={() => handleTranslate(v)}
+                  disabled={translatingId === v._id}
+                  className="text-primary font-medium hover:underline disabled:opacity-50"
+                >
+                  {translatingId === v._id ? "Tarjima qilinmoqda..." : "🤖 AI bilan tarjima qilish"}
+                </button>
                 <button onClick={() => openEdit(v)} className="text-primary font-medium hover:underline">
                   Tahrirlash
                 </button>
