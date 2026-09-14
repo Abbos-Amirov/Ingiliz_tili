@@ -13,6 +13,7 @@ const navLinks = [
   { href: "/admin/grammar", label: "Grammatika", emoji: "📐" },
   { href: "/admin/function-words", label: "Kichik so'zlar", emoji: "🔤" },
   { href: "/admin/questions-answers", label: "Savol-Javob", emoji: "❓" },
+  { href: "/admin/shadowing", label: "Shadowing", emoji: "🎬" },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

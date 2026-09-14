@@ -18,6 +18,7 @@ import questionAnswersRoutes from "./routes/questionAnswers.routes";
 import memoryAnchorsRoutes from "./routes/memoryAnchors.routes";
 import memoryJourneysRoutes from "./routes/memoryJourneys.routes";
 import pushRoutes from "./routes/push.routes";
+import shadowingRoutes from "./routes/shadowing.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -36,6 +37,8 @@ app.use(express.json({ limit: "3mb" }));
 // `tsx watch` in dev and the compiled dist/ build in Docker — see
 // tts.service.ts's AUDIO_DIR comment for why.
 app.use("/audio", express.static(path.resolve(process.cwd(), "public/audio")));
+// Serves uploaded Shadowing videos (see shadowing.controller.ts) the same way.
+app.use("/videos", express.static(path.resolve(process.cwd(), "public/videos")));
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
@@ -57,6 +60,7 @@ app.use("/api/question-answers", questionAnswersRoutes);
 app.use("/api/memory-anchors", memoryAnchorsRoutes);
 app.use("/api/memory-journeys", memoryJourneysRoutes);
 app.use("/api/push", pushRoutes);
+app.use("/api/shadowing", shadowingRoutes);
 
 app.use(errorHandler);
 

@@ -21,7 +21,11 @@ export function Navbar() {
   const links = [
     { href: "/learn", label: t.wordBank, activeMatch: ["/learn", "/all-words"] },
     { href: "/rules", label: t.rules, activeMatch: ["/rules", "/grammar", "/function-words", "/irregular-verbs"] },
-    { href: "/practice", label: t.practice, activeMatch: ["/practice", "/questions-answers", "/flashcards"] },
+    {
+      href: "/practice",
+      label: t.practice,
+      activeMatch: ["/practice", "/questions-answers", "/flashcards", "/shadowing"],
+    },
     { href: "/memory-palace", label: t.memoryPalace, activeMatch: ["/memory-palace"] },
     { href: "/progress", label: t.progress, activeMatch: ["/progress"] },
   ];

@@ -12,6 +12,9 @@ services:
       # `docker compose up --build` rebuilds — otherwise it'd be baked into
       # the old image layer and lost on every redeploy.
       - ./backend/public/audio:/app/public/audio
+      # Uploaded Shadowing videos (see shadowing.controller.ts) — original,
+      # non-regenerable content, so this must persist across rebuilds too.
+      - ./backend/public/videos:/app/public/videos
       # Firebase service account key (see config/firebase.ts) — mounted
       # rather than copied into the image so it never ends up baked into a
       # Docker layer; deployed to the host directory manually, same as .env.

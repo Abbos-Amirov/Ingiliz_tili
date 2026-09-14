@@ -64,6 +64,21 @@ export interface Word {
   lessonNumberEnd: number;
 }
 
+export interface TranscriptWord {
+  word: string;
+  startTime: number;
+  endTime: number;
+}
+
+export interface ShadowingVideo {
+  _id: string;
+  title: string;
+  videoUrl: string;
+  level: Difficulty;
+  duration: number;
+  transcript: TranscriptWord[];
+}
+
 export interface SentenceWordExplanation {
   text: string;
   role: GrammarRole;
