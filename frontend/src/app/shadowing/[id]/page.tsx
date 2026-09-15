@@ -199,8 +199,17 @@ export default function ShadowingPlayerPage() {
           </span>
         </div>
 
-        <div className="rounded-3xl overflow-hidden bg-black card-shadow">
-          <video ref={videoRef} src={video.videoUrl} controls onTimeUpdate={handleTimeUpdate} className="w-full" />
+        <div className="rounded-3xl overflow-hidden bg-black card-shadow flex justify-center">
+          {/* Some source clips are portrait (9:16 reels) — capping height
+              (not just width) keeps those from stretching to fill the
+              screen; the black wrapper pillarboxes them instead. */}
+          <video
+            ref={videoRef}
+            src={video.videoUrl}
+            controls
+            onTimeUpdate={handleTimeUpdate}
+            className="max-w-full max-h-[60vh]"
+          />
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2 mt-5">

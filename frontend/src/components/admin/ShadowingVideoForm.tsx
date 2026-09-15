@@ -166,12 +166,17 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
 
         {videoUrl && (
           <div className="space-y-3">
-            <video
-              src={videoUrl}
-              controls
-              className="w-full rounded-xl max-h-72 bg-black"
-              onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-            />
+            <div className="rounded-xl overflow-hidden bg-black flex justify-center">
+              {/* Portrait (9:16) clips shouldn't stretch to fill the width —
+                  capping height and letting the black wrapper pillarbox
+                  them matches the player page (see shadowing/[id]/page.tsx). */}
+              <video
+                src={videoUrl}
+                controls
+                className="max-w-full max-h-72"
+                onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+              />
+            </div>
             {words.length === 0 && (
               <Button onClick={handleTranscribe} disabled={transcribing}>
                 {transcribing ? "Transkripsiya qilinmoqda..." : "🤖 AI bilan transkripsiya qilish"}
