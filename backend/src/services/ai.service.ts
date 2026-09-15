@@ -671,7 +671,9 @@ export async function translateShadowingSentence(englishText: string): Promise<S
   for (let attempt = 0; attempt < 3; attempt++) {
     const response = await client.messages.create({
       model: MODEL,
-      max_tokens: 512,
+      // Segmentation (sentenceSegmentation.ts) caps chunks at ~20 words, but
+      // this is still generous headroom in case a future chunk runs long.
+      max_tokens: 1500,
       tools: [TRANSLATE_SENTENCE_TOOL],
       tool_choice: { type: "tool", name: "translate_sentence" },
       messages: [
