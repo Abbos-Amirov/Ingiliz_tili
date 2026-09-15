@@ -703,16 +703,13 @@ const TRANSLATE_WORDS_TOOL = {
   },
 };
 
-// Word-by-word gloss for Shadowing's "So'zma-so'z tarjima" toggle (see
-// shadowing.controller.ts) — one batched call for the whole transcript
-// rather than one call per word, since a clip can easily have 50+ tokens.
-export async function translateWordsBatch(words: string[]): Promise<SentenceTranslation[]> {
+async function translateWordsChunk(words: string[]): Promise<SentenceTranslation[]> {
   const client = requireClient();
 
   const numbered = words.map((w, i) => `${i + 1}. ${w}`).join("\n");
   const response = await client.messages.create({
     model: MODEL,
-    max_tokens: 4096,
+    max_tokens: 2048,
     tools: [TRANSLATE_WORDS_TOOL],
     tool_choice: { type: "tool", name: "translate_words" },
     messages: [
@@ -724,8 +721,69 @@ export async function translateWordsBatch(words: string[]): Promise<SentenceTran
   });
 
   const { translations } = extractToolInput<{ translations: SentenceTranslation[] }>(response);
-  if (translations.length !== words.length) {
-    throw new Error(`AI returned ${translations.length} word translations, expected ${words.length}`);
-  }
   return translations;
+}
+
+const TRANSLATE_ONE_WORD_TOOL = {
+  name: "translate_word",
+  description: "Translate one specific English word/token from a sentence into Uzbek and Korean, as it's used in that sentence.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      uz: { type: "string" as const, description: "Short Uzbek translation, no trailing punctuation" },
+      ko: { type: "string" as const, description: "Short Korean translation, no trailing punctuation" },
+    },
+    required: ["uz", "ko"],
+  },
+};
+
+// Last-resort fallback when even a retried batch call won't return a
+// matching count (see translateWordsBatch below) — one call per word, but
+// still given the sentence for context, so translation quality doesn't
+// suffer even though it's now guaranteed to return exactly one result.
+async function translateWordInContext(contextWords: string[], index: number): Promise<SentenceTranslation> {
+  const client = requireClient();
+  const sentence = contextWords.join(" ");
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 200,
+    tools: [TRANSLATE_ONE_WORD_TOOL],
+    tool_choice: { type: "tool", name: "translate_word" },
+    messages: [
+      {
+        role: "user",
+        content: `Sentence: "${sentence}"\n\nTranslate only the word "${contextWords[index]}" (as used in this specific sentence) into Uzbek and Korean, stripping any trailing punctuation. Call the translate_word tool with your answer.`,
+      },
+    ],
+  });
+
+  return extractToolInput<SentenceTranslation>(response);
+}
+
+const WORD_CHUNK_SIZE = 20;
+
+// Retries a chunk once on a count mismatch (Claude occasionally merges or
+// drops a token in longer lists), then falls back to one-call-per-word
+// (still context-aware) so this never just fails outright.
+async function translateWordsChunkSafe(words: string[]): Promise<SentenceTranslation[]> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const translations = await translateWordsChunk(words);
+    if (translations.length === words.length) return translations;
+  }
+  return Promise.all(words.map((_, i) => translateWordInContext(words, i)));
+}
+
+// Word-by-word gloss for Shadowing's "So'zma-so'z tarjima" toggle (see
+// shadowing.controller.ts) — chunked into batches of WORD_CHUNK_SIZE rather
+// than one call for the whole transcript, since asking for an exact-length
+// array back gets unreliable past ~30-40 tokens in one go; a 100-word clip
+// was seeing Claude return 77 entries instead of 100 before this existed.
+export async function translateWordsBatch(words: string[]): Promise<SentenceTranslation[]> {
+  const chunks: string[][] = [];
+  for (let i = 0; i < words.length; i += WORD_CHUNK_SIZE) {
+    chunks.push(words.slice(i, i + WORD_CHUNK_SIZE));
+  }
+  const results = await Promise.all(chunks.map((chunk) => translateWordsChunkSafe(chunk)));
+  return results.flat();
 }
