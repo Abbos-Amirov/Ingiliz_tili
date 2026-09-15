@@ -12,6 +12,8 @@ import type { ShadowingVideo, ShadowingSentence, TranscriptWord, Word } from "@/
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
+type WordLang = "uz" | "ko";
+
 function cleanWord(word: string): string {
   return word.replace(/[^a-zA-Z']/g, "");
 }
@@ -24,24 +26,30 @@ function TranscriptWordButton({
   item,
   isActive,
   onTap,
+  showWordTranslation,
+  wordLang,
 }: {
   item: TranscriptWord;
   isActive: boolean;
   onTap: () => void;
+  showWordTranslation: boolean;
+  wordLang: WordLang;
 }) {
+  const gloss = wordLang === "uz" ? item.translationUz : item.translationKo;
   return (
     <motion.button
       onClick={onTap}
       animate={isActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="inline rounded-md px-1 py-0.5 transition-colors duration-150"
+      className="inline-flex flex-col items-center rounded-md px-1.5 py-1 transition-colors duration-150"
       style={{
         background: isActive ? "linear-gradient(135deg, #F97316, #FB923C)" : "transparent",
         color: isActive ? "white" : "inherit",
         boxShadow: isActive ? "0 2px 10px rgba(249, 115, 22, 0.4)" : "none",
       }}
     >
-      {item.word}{" "}
+      <span>{item.word}</span>
+      {showWordTranslation && <span className="text-[10px] leading-tight opacity-70 mt-0.5">{gloss ?? "…"}</span>}
     </motion.button>
   );
 }
@@ -51,28 +59,34 @@ function SentenceBlock({
   words,
   currentTime,
   onWordTap,
+  showWordTranslation,
+  wordLang,
   t,
 }: {
   sentence: ShadowingSentence;
   words: TranscriptWord[];
   currentTime: number;
   onWordTap: (word: string) => void;
+  showWordTranslation: boolean;
+  wordLang: WordLang;
   t: TranslationDict["shadowing"];
 }) {
   const [showTranslation, setShowTranslation] = useState(false);
 
   return (
-    <Card className="p-5" style={{ lineHeight: 2 }}>
-      <p className="text-lg">
+    <Card className="p-5">
+      <div className="flex flex-wrap items-start gap-x-1 gap-y-1 text-lg">
         {words.map((item, i) => (
           <TranscriptWordButton
             key={i}
             item={item}
             isActive={currentTime >= item.startTime && currentTime < item.endTime}
             onTap={() => onWordTap(item.word)}
+            showWordTranslation={showWordTranslation}
+            wordLang={wordLang}
           />
         ))}
-      </p>
+      </div>
 
       <button
         onClick={() => setShowTranslation((v) => !v)}
@@ -115,6 +129,9 @@ export default function ShadowingPlayerPage() {
 
   const [loopStart, setLoopStart] = useState<number | null>(null);
   const [loopEnd, setLoopEnd] = useState<number | null>(null);
+
+  const [showWordTranslation, setShowWordTranslation] = useState(false);
+  const [wordLang, setWordLang] = useState<WordLang>("ko");
 
   const [popupWord, setPopupWord] = useState<string | null>(null);
   const [popupTranslation, setPopupTranslation] = useState<Word | null>(null);
@@ -185,6 +202,8 @@ export default function ShadowingPlayerPage() {
     );
   }
 
+  const hasWordTranslations = video.transcript.some((w) => w.translationUz || w.translationKo);
+
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-2xl">
@@ -245,6 +264,40 @@ export default function ShadowingPlayerPage() {
           <p className="text-center text-xs text-foreground/40 mt-2">{t.loopHint}</p>
         )}
 
+        {hasWordTranslations && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
+            <Button
+              variant={showWordTranslation ? "primary" : "secondary"}
+              size="sm"
+              onClick={() => setShowWordTranslation((v) => !v)}
+            >
+              🔤 {t.wordByWordTranslation}
+            </Button>
+            {showWordTranslation && (
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setWordLang("ko")}
+                  aria-label="한국어"
+                  className={`h-9 w-9 rounded-full flex items-center justify-center text-lg transition-all ${
+                    wordLang === "ko" ? "bg-primary/15 ring-2 ring-primary" : "bg-surface-muted opacity-60"
+                  }`}
+                >
+                  🇰🇷
+                </button>
+                <button
+                  onClick={() => setWordLang("uz")}
+                  aria-label="O'zbekcha"
+                  className={`h-9 w-9 rounded-full flex items-center justify-center text-lg transition-all ${
+                    wordLang === "uz" ? "bg-primary/15 ring-2 ring-primary" : "bg-surface-muted opacity-60"
+                  }`}
+                >
+                  🇺🇿
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-6 space-y-4">
           {video.sentences.length > 0 ? (
             video.sentences.map((sentence, si) => (
@@ -254,21 +307,25 @@ export default function ShadowingPlayerPage() {
                 words={wordsInRange(video.transcript, sentence)}
                 currentTime={currentTime}
                 onWordTap={handleWordTap}
+                showWordTranslation={showWordTranslation}
+                wordLang={wordLang}
                 t={t}
               />
             ))
           ) : (
-            <Card className="p-5" style={{ lineHeight: 2 }}>
-              <p className="text-lg">
+            <Card className="p-5">
+              <div className="flex flex-wrap items-start gap-x-1 gap-y-1 text-lg">
                 {video.transcript.map((item, i) => (
                   <TranscriptWordButton
                     key={i}
                     item={item}
                     isActive={currentTime >= item.startTime && currentTime < item.endTime}
                     onTap={() => handleWordTap(item.word)}
+                    showWordTranslation={showWordTranslation}
+                    wordLang={wordLang}
                   />
                 ))}
-              </p>
+              </div>
             </Card>
           )}
         </div>

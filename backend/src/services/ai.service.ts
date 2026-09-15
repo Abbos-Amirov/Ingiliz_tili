@@ -679,3 +679,53 @@ export async function translateShadowingSentence(englishText: string): Promise<S
 
   return extractToolInput<SentenceTranslation>(response);
 }
+
+const TRANSLATE_WORDS_TOOL = {
+  name: "translate_words",
+  description: "Translate a numbered, in-order list of English transcript tokens into Uzbek and Korean, one per token.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      translations: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            uz: { type: "string" as const, description: "Short Uzbek translation of this one token, no trailing punctuation" },
+            ko: { type: "string" as const, description: "Short Korean translation of this one token, no trailing punctuation" },
+          },
+          required: ["uz", "ko"],
+        },
+        description: "Exactly one entry per input token, in the same order",
+      },
+    },
+    required: ["translations"],
+  },
+};
+
+// Word-by-word gloss for Shadowing's "So'zma-so'z tarjima" toggle (see
+// shadowing.controller.ts) — one batched call for the whole transcript
+// rather than one call per word, since a clip can easily have 50+ tokens.
+export async function translateWordsBatch(words: string[]): Promise<SentenceTranslation[]> {
+  const client = requireClient();
+
+  const numbered = words.map((w, i) => `${i + 1}. ${w}`).join("\n");
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 4096,
+    tools: [TRANSLATE_WORDS_TOOL],
+    tool_choice: { type: "tool", name: "translate_words" },
+    messages: [
+      {
+        role: "user",
+        content: `These are consecutive tokens from a spoken English transcript, in order (a continuous sentence/passage, not a word list) — use that context to translate each token as it's actually used here, into Uzbek and Korean. Strip any trailing punctuation from your translation. Return exactly ${words.length} entries, one per token, same order.\n\n${numbered}\n\nCall the translate_words tool with your answer.`,
+      },
+    ],
+  });
+
+  const { translations } = extractToolInput<{ translations: SentenceTranslation[] }>(response);
+  if (translations.length !== words.length) {
+    throw new Error(`AI returned ${translations.length} word translations, expected ${words.length}`);
+  }
+  return translations;
+}

@@ -68,6 +68,8 @@ export interface TranscriptWord {
   word: string;
   startTime: number;
   endTime: number;
+  translationUz?: string | null;
+  translationKo?: string | null;
 }
 
 export interface ShadowingSentence {

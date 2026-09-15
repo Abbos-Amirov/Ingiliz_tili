@@ -141,6 +141,7 @@ const uz = {
     videosSuffix: "video",
     showTranslation: "Tarjimasini ko'rish",
     hideTranslation: "Tarjimani yashirish",
+    wordByWordTranslation: "So'zma-so'z tarjima",
   },
   recall: {
     title: "Active Recall",
@@ -723,6 +724,7 @@ const en = {
     videosSuffix: "videos",
     showTranslation: "Show translation",
     hideTranslation: "Hide translation",
+    wordByWordTranslation: "Word-by-word translation",
   },
   recall: {
     title: "Active Recall",
@@ -1305,6 +1307,7 @@ const ko = {
     videosSuffix: "개 영상",
     showTranslation: "번역 보기",
     hideTranslation: "번역 숨기기",
+    wordByWordTranslation: "단어별 번역",
   },
   recall: {
     title: "능동적 회상",

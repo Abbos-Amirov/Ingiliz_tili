@@ -5,6 +5,12 @@ const transcriptWordSchema = new Schema(
     word: { type: String, required: true },
     startTime: { type: Number, required: true },
     endTime: { type: Number, required: true },
+    // Word-by-word gloss (see ai.service.ts's translateWordsBatch) —
+    // optional because it's filled in once by the same "AI bilan tarjima
+    // qilish" action that computes `sentences[]` below, not at transcribe
+    // time. null until then.
+    translationUz: { type: String, default: null },
+    translationKo: { type: String, default: null },
   },
   { _id: false },
 );
