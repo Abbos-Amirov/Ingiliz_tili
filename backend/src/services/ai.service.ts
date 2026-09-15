@@ -661,23 +661,32 @@ const TRANSLATE_SENTENCE_TOOL = {
 // shadowing.controller.ts's translateShadowingSentences) — run once per
 // video when an admin triggers it, result saved on the video, never called
 // live from the learner-facing player.
+// Retries on an empty uz/ko field — rare, but Claude occasionally leaves
+// one blank for a short/unusual sentence (e.g. a stray interjection from
+// segmentation), which previously surfaced as a raw Mongoose "Path `ko`
+// is required" error after the round trip.
 export async function translateShadowingSentence(englishText: string): Promise<SentenceTranslation> {
   const client = requireClient();
 
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 512,
-    tools: [TRANSLATE_SENTENCE_TOOL],
-    tool_choice: { type: "tool", name: "translate_sentence" },
-    messages: [
-      {
-        role: "user",
-        content: `Translate this English sentence into natural, fluent Uzbek and Korean: "${englishText}"\n\nCall the translate_sentence tool with your answer.`,
-      },
-    ],
-  });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 512,
+      tools: [TRANSLATE_SENTENCE_TOOL],
+      tool_choice: { type: "tool", name: "translate_sentence" },
+      messages: [
+        {
+          role: "user",
+          content: `Translate this English sentence into natural, fluent Uzbek and Korean: "${englishText}"\n\nCall the translate_sentence tool with your answer.`,
+        },
+      ],
+    });
 
-  return extractToolInput<SentenceTranslation>(response);
+    const result = extractToolInput<SentenceTranslation>(response);
+    if (result.uz?.trim() && result.ko?.trim()) return result;
+  }
+
+  throw new Error(`AI failed to translate sentence after 3 attempts: "${englishText}"`);
 }
 
 const TRANSLATE_WORDS_TOOL = {
