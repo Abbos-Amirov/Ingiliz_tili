@@ -92,6 +92,14 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
 
   async function handleSave() {
     if (!videoUrl || !title.trim() || words.length === 0) return;
+    // Client-side guard for what would otherwise surface as a raw Mongoose
+    // "Path `word` is required" error after the round trip — most often an
+    // empty row left behind by "+ So'z qo'shish" on a long transcript.
+    const emptyIndex = words.findIndex((w) => !w.word.trim());
+    if (emptyIndex !== -1) {
+      setError(`${emptyIndex + 1}-qatordagi so'z bo'sh — to'ldiring yoki ✕ bilan o'chiring.`);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -197,7 +205,10 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
                   <input
                     value={w.word}
                     onChange={(e) => updateWord(i, "word", e.target.value)}
-                    className="flex-1 rounded-lg border border-border bg-surface-muted px-2.5 py-1.5 text-sm"
+                    placeholder="(bo'sh — to'ldiring)"
+                    className={`flex-1 rounded-lg border bg-surface-muted px-2.5 py-1.5 text-sm ${
+                      w.word.trim() ? "border-border" : "border-danger"
+                    }`}
                   />
                   <input
                     type="number"
