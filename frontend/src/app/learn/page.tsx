@@ -22,6 +22,7 @@ export default function WordBankHubPage() {
 
   const items = [
     { href: "/learn/match", icon: "🔤", label: t.match },
+    { href: "/learn/match-only", icon: "🧩", label: t.matchOnly },
     { href: "/all-words", icon: "📖", label: t.allWords },
     { href: "/learn/sentence", icon: "📝", label: t.sentence },
     { href: "/lessons", icon: "🎒", label: t.lessons },

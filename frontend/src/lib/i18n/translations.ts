@@ -9,6 +9,7 @@ export const localeLabels: Record<Locale, { flag: string; name: string }> = {
 const uz = {
   nav: {
     match: "So'z moslashtirish",
+    matchOnly: "Faqat so'z moslashtirish",
     sentence: "Gap tuzish",
     lessons: "Darslar",
     allWords: "Umumiy so'zlar",
@@ -592,6 +593,7 @@ const uz = {
 const en = {
   nav: {
     match: "Word Matching",
+    matchOnly: "Matching Only",
     sentence: "Sentence Building",
     lessons: "Lessons",
     allWords: "All Words",
@@ -1175,6 +1177,7 @@ const en = {
 const ko = {
   nav: {
     match: "단어 매칭",
+    matchOnly: "매칭만 하기",
     sentence: "문장 만들기",
     lessons: "수업",
     allWords: "전체 단어",
