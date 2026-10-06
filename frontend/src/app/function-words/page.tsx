@@ -10,6 +10,7 @@ import type { FunctionWord, FunctionWordCategory } from "@/lib/types";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { FunctionWordModal } from "@/components/functionWords/FunctionWordModal";
+import { functionWordTranslation } from "@/lib/contentLocale";
 
 const CATEGORY_ORDER: FunctionWordCategory[] = [
   "preposition",
@@ -45,7 +46,10 @@ export default function FunctionWordsPage() {
     const q = query.trim().toLowerCase();
     if (!q) return words;
     return words.filter(
-      (w) => w.word.toLowerCase().includes(q) || w.korean.includes(q) || w.simpleExplanation[locale].toLowerCase().includes(q),
+      (w) =>
+        w.word.toLowerCase().includes(q) ||
+        functionWordTranslation(w, locale).includes(q) ||
+        w.simpleExplanation[locale].toLowerCase().includes(q),
     );
   }, [words, query, locale]);
 
@@ -92,7 +96,12 @@ export default function FunctionWordsPage() {
                       <button type="button" onClick={() => setSelected(w)} className="w-full text-left flex items-start justify-between gap-3">
                         <div>
                           <p className="font-bold">
-                            {w.word} {w.korean && <span className="text-foreground/50 font-normal text-sm">— {w.korean}</span>}
+                            {w.word}{" "}
+                            {(w.korean || w.uzbek) && (
+                              <span className="text-foreground/50 font-normal text-sm">
+                                — {functionWordTranslation(w, locale)}
+                              </span>
+                            )}
                           </p>
                           {w.simpleExplanation[locale] && (
                             <p className="text-sm text-foreground/60 mt-1 line-clamp-2">{w.simpleExplanation[locale]}</p>

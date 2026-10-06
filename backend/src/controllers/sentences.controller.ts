@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { Sentence } from "../models/Sentence";
 import { parseLessonRange, lessonRangeOverlapFilter } from "../utils/lessonRange";
 import { GRAMMAR_ROLES } from "../config/grammar";
-import { generateSentenceExplanation } from "../services/ai.service";
+import { generateSentenceExplanation, translateShadowingSentence } from "../services/ai.service";
 
 const ROLE_SET = new Set<string>(GRAMMAR_ROLES);
 
@@ -77,9 +77,9 @@ export const getSentence: RequestHandler = async (req, res, next) => {
 
 export const createSentence: RequestHandler = async (req, res, next) => {
   try {
-    const { korean, words, distractorWords } = req.body ?? {};
-    if (!korean || !Array.isArray(words) || words.length === 0 || !isValidRoleWordArray(words)) {
-      res.status(400).json({ error: "korean and a non-empty words[] of { text, role } are required" });
+    const { korean, uzbek, words, distractorWords } = req.body ?? {};
+    if (!korean || !uzbek || !Array.isArray(words) || words.length === 0 || !isValidRoleWordArray(words)) {
+      res.status(400).json({ error: "korean, uzbek, and a non-empty words[] of { text, role } are required" });
       return;
     }
     if (distractorWords !== undefined && !isValidRoleWordArray(distractorWords)) {
@@ -126,6 +126,23 @@ export const updateSentence: RequestHandler = async (req, res, next) => {
       return;
     }
     res.json({ sentence });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Lets an admin type the English sentence once and get both the Korean
+// and Uzbek translations suggested together, instead of writing each by
+// hand — reuses the same generic sentence translator Shadowing uses.
+export const aiTranslateSentence: RequestHandler = async (req, res, next) => {
+  try {
+    const { english } = req.body ?? {};
+    if (!english || typeof english !== "string" || !english.trim()) {
+      res.status(400).json({ error: "english is required" });
+      return;
+    }
+    const suggestion = await translateShadowingSentence(english.trim());
+    res.json({ suggestion });
   } catch (err) {
     next(err);
   }

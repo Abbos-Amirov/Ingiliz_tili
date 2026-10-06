@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
 import { playAudio } from "@/lib/tts";
 import { useSrsActions } from "@/hooks/useSrsSession";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { wordTranslation, contentAudioUrl, contentSpeechLang } from "@/lib/contentLocale";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -40,6 +41,7 @@ export function MatchBoard({
 }) {
   const { submitReview } = useSrsActions();
   const t = useT("match");
+  const { locale } = useLocale();
 
   const wordsById = useMemo(() => new Map(words.map((w) => [w._id, w])), [words]);
 
@@ -99,7 +101,7 @@ export function MatchBoard({
 
   function handleRightClick(word: Word) {
     if (matched.has(word._id) || locked) return;
-    playAudio(word.koreanAudioUrl, word.korean, "ko-KR");
+    playAudio(contentAudioUrl(word.koreanAudioUrl, locale), wordTranslation(word, locale), contentSpeechLang(locale));
     setSelectedRight(word._id);
     attempt(selectedLeft, word._id);
   }
@@ -169,7 +171,7 @@ export function MatchBoard({
             return (
               <motion.div key={id} layout transition={{ type: "spring", stiffness: 500, damping: 35 }}>
                 <MatchWordTile
-                  text={w.korean}
+                  text={wordTranslation(w, locale)}
                   state={tileState(w._id, "right")}
                   onClick={() => handleRightClick(w)}
                 />

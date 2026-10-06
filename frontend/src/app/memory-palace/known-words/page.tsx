@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
+import { wordTranslation } from "@/lib/contentLocale";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ export default function KnownWordsPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("memoryPalace");
+  const { locale } = useLocale();
   const { fetchAnchors, unmarkKnown, fetchNextForRecall } = useMemoryPalace();
 
   const [view, setView] = useState<View>("list");
@@ -126,7 +128,7 @@ export default function KnownWordsPage() {
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold truncate">{a.wordId.english}</p>
-                        <p className="text-xs text-foreground/50 truncate">{a.wordId.korean}</p>
+                        <p className="text-xs text-foreground/50 truncate">{wordTranslation(a.wordId, locale)}</p>
                       </div>
                       <button
                         type="button"

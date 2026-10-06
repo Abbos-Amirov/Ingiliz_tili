@@ -9,8 +9,9 @@ import { DeepExplanationModal } from "./DeepExplanationModal";
 import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
 import { playAudio } from "@/lib/tts";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { ROLE_COLORS } from "@/lib/roleColors";
+import { sentenceTranslation } from "@/lib/contentLocale";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -37,6 +38,7 @@ export function SentenceBuilder({
 }) {
   const t = useT("sentence");
   const td = useT("deepExplanation");
+  const { locale } = useLocale();
   const pool = useMemo(() => {
     const all = [...sentence.words, ...sentence.distractorWords];
     return shuffle(all.map((rw, i) => ({ key: `${rw.text}-${i}`, text: rw.text, role: rw.role, audioUrl: rw.audioUrl })));
@@ -97,7 +99,7 @@ export function SentenceBuilder({
         <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50 mb-2">
           {t.koreanSentenceLabel}
         </p>
-        <p className="text-xl sm:text-2xl font-bold">{sentence.korean}</p>
+        <p className="text-xl sm:text-2xl font-bold">{sentenceTranslation(sentence, locale)}</p>
       </div>
 
       {sentence.formula && (

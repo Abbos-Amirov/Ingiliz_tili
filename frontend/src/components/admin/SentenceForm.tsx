@@ -81,6 +81,8 @@ export function SentenceForm({
 }) {
   const levelsConfig = useLevelsConfig();
   const [korean, setKorean] = useState(initial?.korean ?? "");
+  const [uzbek, setUzbek] = useState(initial?.uzbek ?? "");
+  const [translating, setTranslating] = useState(false);
   const [englishText, setEnglishText] = useState(initial?.words.map((w) => w.text).join(" ") ?? "");
   const [words, setWords] = useState<RoleWord[]>(initial?.words ?? []);
   const [distractorText, setDistractorText] = useState("");
@@ -130,6 +132,28 @@ export function SentenceForm({
     setDistractorWords((prev) => prev.filter((_, i) => i !== index));
   }
 
+  async function handleTranslate() {
+    if (!englishText.trim()) {
+      setError("Avval ingliz gapni kiriting");
+      return;
+    }
+    setTranslating(true);
+    setError(null);
+    try {
+      const res = await apiFetch<{ suggestion: { uz: string; ko: string } }>("/sentences/ai-translate", {
+        method: "POST",
+        body: JSON.stringify({ english: englishText.trim() }),
+        admin: true,
+      });
+      setKorean(res.suggestion.ko);
+      setUzbek(res.suggestion.uz);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik yuz berdi");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   async function handleAiAssist() {
     if (!englishText.trim() || !korean.trim()) {
       setError("AI ishlashi uchun avval koreys va ingliz gapni kiriting");
@@ -170,7 +194,7 @@ export function SentenceForm({
     setSaving(true);
     setError(null);
     try {
-      const payload = { korean, words, distractorWords, formula, deepExplanation, level, ...lessonRange };
+      const payload = { korean, uzbek, words, distractorWords, formula, deepExplanation, level, ...lessonRange };
       if (initial) {
         await apiFetch(`/sentences/${initial._id}`, {
           method: "PUT",
@@ -197,16 +221,6 @@ export function SentenceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Koreys gap</span>
-        <input
-          required
-          value={korean}
-          onChange={(e) => setKorean(e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
-        />
-      </label>
-
-      <label className="block">
         <span className="block text-sm font-medium mb-1.5">To&apos;g&apos;ri ingliz gap</span>
         <div className="flex gap-2">
           <input
@@ -219,6 +233,36 @@ export function SentenceForm({
             So&apos;zlarga bo&apos;lish
           </Button>
         </div>
+      </label>
+
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleTranslate}
+        disabled={translating}
+        className="!bg-accent-soft !text-accent shadow-none"
+      >
+        {translating ? "AI tarjima qilmoqda..." : "🌐 AI bilan tarjima qilish (koreys + o'zbek)"}
+      </Button>
+
+      <label className="block">
+        <span className="block text-sm font-medium mb-1.5">Koreys gap</span>
+        <input
+          required
+          value={korean}
+          onChange={(e) => setKorean(e.target.value)}
+          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
+        />
+      </label>
+
+      <label className="block">
+        <span className="block text-sm font-medium mb-1.5">O&apos;zbek gap</span>
+        <input
+          required
+          value={uzbek}
+          onChange={(e) => setUzbek(e.target.value)}
+          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
+        />
       </label>
 
       <Button type="button" size="sm" onClick={handleAiAssist} disabled={aiLoading} className="!bg-accent-soft !text-accent shadow-none">

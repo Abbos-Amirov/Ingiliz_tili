@@ -15,8 +15,16 @@ const imageAttributionSchema = new Schema(
 const wordSchema = new Schema({
   english: { type: String, required: true, trim: true },
   korean: { type: String, required: true, trim: true },
+  // Uzbek counterpart to korean/exampleSentenceKo — this app originally
+  // taught English via Korean only; these let a learner on the Uzbek
+  // locale learn via Uzbek instead (see frontend/src/lib/contentLocale.ts
+  // for the uz-vs-korean pick). Optional at the schema level so existing
+  // words aren't invalidated before the backfill script fills them in —
+  // words.controller.ts requires both on new creates going forward.
+  uzbek: { type: String, default: "" },
   exampleSentenceEn: { type: String, default: "" },
   exampleSentenceKo: { type: String, default: "" },
+  exampleSentenceUz: { type: String, default: "" },
   category: { type: String, default: "general", index: true },
   difficulty: {
     type: String,

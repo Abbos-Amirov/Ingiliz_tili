@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { IrregularVerb, IrregularVerbCategory } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { irregularVerbTranslation } from "@/lib/contentLocale";
 
 function groupByCategory(verbs: IrregularVerb[]): [IrregularVerbCategory, IrregularVerb[]][] {
   const map = new Map<IrregularVerbCategory, IrregularVerb[]>();
@@ -18,6 +19,7 @@ function groupByCategory(verbs: IrregularVerb[]): [IrregularVerbCategory, Irregu
 
 export function IrregularVerbTable() {
   const t = useT("irregularVerbs");
+  const { locale } = useLocale();
   const [verbs, setVerbs] = useState<IrregularVerb[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +66,7 @@ export function IrregularVerbTable() {
                     <td className="px-4 py-3 font-semibold">{v.base}</td>
                     <td className="px-4 py-3">{v.past}</td>
                     <td className="px-4 py-3">{v.participle}</td>
-                    <td className="px-4 py-3">{v.korean}</td>
+                    <td className="px-4 py-3">{irregularVerbTranslation(v, locale)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -116,7 +116,7 @@ const uz = {
     subtitle: "So'zlarni tartib bilan bosib, to'g'ri gap tuzing.",
     levels: { beginner: "Boshlang'ich", intermediate: "O'rta", advanced: "Murakkab" },
     empty: "Bu darajada gaplar hozircha mavjud emas.",
-    koreanSentenceLabel: "Koreys gap",
+    koreanSentenceLabel: "O'zbek gap",
     placeholder: "Gap shu yerda tuziladi...",
     wrongHint: "Bu so'z hozircha noto'g'ri joyda. Gap tartibini diqqat bilan o'ylab ko'ring.",
     correct: "To'g'ri! 🎉",

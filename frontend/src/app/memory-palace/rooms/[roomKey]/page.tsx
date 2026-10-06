@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
+import { wordTranslation } from "@/lib/contentLocale";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PALACE_ROOMS } from "@/lib/palaceRooms";
@@ -17,6 +18,7 @@ export default function MemoryPalaceRoomDetailPage() {
   const params = useParams<{ roomKey: string }>();
   const t = useT("memoryPalace");
   const rooms = useT("palaceRooms");
+  const { locale } = useLocale();
   const { fetchAnchors, deleteAnchor } = useMemoryPalace();
 
   const room = PALACE_ROOMS.find((r) => r.key === params.roomKey);
@@ -94,7 +96,7 @@ export default function MemoryPalaceRoomDetailPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold truncate">{a.wordId.english}</p>
-                  <p className="text-xs text-foreground/50 truncate">{a.wordId.korean}</p>
+                  <p className="text-xs text-foreground/50 truncate">{wordTranslation(a.wordId, locale)}</p>
                 </div>
                 <button
                   type="button"

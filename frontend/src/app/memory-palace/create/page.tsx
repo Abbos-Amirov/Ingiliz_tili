@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { useMemoryPalace } from "@/hooks/useMemoryPalace";
+import { wordTranslation } from "@/lib/contentLocale";
 import { apiFetch } from "@/lib/api";
 import { compressImage } from "@/lib/imageCompression";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -26,6 +27,7 @@ function CreateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT("memoryPalace");
+  const { locale } = useLocale();
   const { fetchAnchors, fetchJourneys, createJourney, createAnchor, suggestRoom } = useMemoryPalace();
   const rooms = useT("palaceRooms");
 
@@ -88,8 +90,8 @@ function CreateContent() {
     if (!words) return [];
     const q = search.trim().toLowerCase();
     if (!q) return words;
-    return words.filter((w) => w.english.toLowerCase().includes(q) || w.korean.includes(q));
-  }, [words, search]);
+    return words.filter((w) => w.english.toLowerCase().includes(q) || wordTranslation(w, locale).includes(q));
+  }, [words, search, locale]);
 
   const totalPages = Math.max(1, Math.ceil(filteredWords.length / WORDS_PER_PAGE));
   const pagedWords = useMemo(
@@ -248,7 +250,7 @@ function CreateContent() {
                             </span>
                           )}
                           <p className="font-semibold text-sm pr-4">{w.english}</p>
-                          <p className="text-xs text-foreground/50">{w.korean}</p>
+                          <p className="text-xs text-foreground/50">{wordTranslation(w, locale)}</p>
                         </button>
                       ))}
                     </div>
@@ -295,7 +297,7 @@ function CreateContent() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="font-extrabold text-xl">{selectedWord.english}</p>
-                <p className="text-sm text-foreground/50">{selectedWord.korean}</p>
+                <p className="text-sm text-foreground/50">{wordTranslation(selectedWord, locale)}</p>
               </div>
               <button
                 type="button"

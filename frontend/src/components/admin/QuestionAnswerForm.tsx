@@ -69,15 +69,16 @@ function RoleWordChips({
 
 interface SentenceHalf {
   korean: string;
+  uzbek: string;
   englishText: string;
   words: RoleWord[];
   formula: string;
 }
 
-const emptyHalf: SentenceHalf = { korean: "", englishText: "", words: [], formula: "" };
+const emptyHalf: SentenceHalf = { korean: "", uzbek: "", englishText: "", words: [], formula: "" };
 
-function toHalf(korean: string, words: RoleWord[], formula: string): SentenceHalf {
-  return { korean, englishText: words.map((w) => w.text).join(" "), words, formula };
+function toHalf(korean: string, uzbek: string, words: RoleWord[], formula: string): SentenceHalf {
+  return { korean, uzbek, englishText: words.map((w) => w.text).join(" "), words, formula };
 }
 
 function SentenceHalfFields({
@@ -102,6 +103,15 @@ function SentenceHalfFields({
           required
           value={value.korean}
           onChange={(e) => onChange({ ...value, korean: e.target.value })}
+          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
+        />
+      </label>
+      <label className="block">
+        <span className="block text-sm font-medium mb-1.5">O&apos;zbekcha</span>
+        <input
+          required
+          value={value.uzbek}
+          onChange={(e) => onChange({ ...value, uzbek: e.target.value })}
           className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
         />
       </label>
@@ -150,10 +160,10 @@ export function QuestionAnswerForm({
   const [subLevel, setSubLevel] = useState<1 | 2 | 3>(initial?.question.subLevel ?? 2);
   const [questionCategory, setQuestionCategory] = useState<QuestionCategory>(initial?.question.questionCategory ?? "yes_no");
   const [question, setQuestion] = useState<SentenceHalf>(
-    initial ? toHalf(initial.question.korean, initial.question.words, initial.question.formula) : emptyHalf,
+    initial ? toHalf(initial.question.korean, initial.question.uzbek, initial.question.words, initial.question.formula) : emptyHalf,
   );
   const [answer, setAnswer] = useState<SentenceHalf>(
-    initial ? toHalf(initial.answer.korean, initial.answer.words, initial.answer.formula) : emptyHalf,
+    initial ? toHalf(initial.answer.korean, initial.answer.uzbek, initial.answer.words, initial.answer.formula) : emptyHalf,
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -181,8 +191,8 @@ export function QuestionAnswerForm({
         level,
         subLevel,
         questionCategory,
-        question: { korean: question.korean, words: question.words, formula: question.formula },
-        answer: { korean: answer.korean, words: answer.words, formula: answer.formula },
+        question: { korean: question.korean, uzbek: question.uzbek, words: question.words, formula: question.formula },
+        answer: { korean: answer.korean, uzbek: answer.uzbek, words: answer.words, formula: answer.formula },
       };
       if (initial) {
         await apiFetch(`/question-answers/${initial.question._id}`, {

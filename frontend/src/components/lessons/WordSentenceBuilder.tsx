@@ -7,7 +7,8 @@ import { MatchWordTile } from "@/components/match/MatchWordTile";
 import { Button } from "@/components/ui/Button";
 import { MotivationToast } from "@/components/ui/MotivationToast";
 import { speak } from "@/lib/tts";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { wordExampleSentence } from "@/lib/contentLocale";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -29,6 +30,7 @@ interface Tile {
 // this is plain tap-the-words-in-order with no role coloring or formula bar.
 export function WordSentenceBuilder({ word, onComplete }: { word: Word; onComplete: () => void }) {
   const t = useT("sentence");
+  const { locale } = useLocale();
 
   const targetWords = useMemo(() => word.exampleSentenceEn.trim().split(/\s+/), [word]);
   const pool = useMemo(
@@ -71,7 +73,7 @@ export function WordSentenceBuilder({ word, onComplete }: { word: Word; onComple
       <MotivationToast signal={motivationSignal} />
       <div className="rounded-2xl bg-surface-muted border border-border p-6 text-center">
         <p className="text-xs font-semibold uppercase tracking-wide text-foreground/50 mb-2">{t.koreanSentenceLabel}</p>
-        <p className="text-xl sm:text-2xl font-bold">{word.exampleSentenceKo}</p>
+        <p className="text-xl sm:text-2xl font-bold">{wordExampleSentence(word, locale)}</p>
       </div>
 
       <div className="mt-6 min-h-16 rounded-2xl border-2 border-dashed border-border p-4 flex flex-wrap gap-3 items-start justify-center">

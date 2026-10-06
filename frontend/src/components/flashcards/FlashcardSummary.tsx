@@ -7,7 +7,8 @@ import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { wordTranslation } from "@/lib/contentLocale";
 
 export function FlashcardSummary({
   words,
@@ -23,6 +24,7 @@ export function FlashcardSummary({
   onExit: () => void;
 }) {
   const t = useT("flashcards");
+  const { locale } = useLocale();
   const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function FlashcardSummary({
           <div className="flex flex-wrap justify-center gap-2">
             {hardestWords.map((w) => (
               <span key={w._id} className="px-3 py-1 rounded-full bg-danger-soft text-danger text-sm font-medium">
-                {w.english} — {w.korean}
+                {w.english} — {wordTranslation(w, locale)}
               </span>
             ))}
           </div>

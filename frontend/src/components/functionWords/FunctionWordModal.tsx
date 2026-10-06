@@ -4,6 +4,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useT, useLocale } from "@/hooks/useT";
 import { playAudio } from "@/lib/tts";
 import type { FunctionWord } from "@/lib/types";
+import { functionWordTranslation } from "@/lib/contentLocale";
 
 /** Full explanation for a single function word (preposition/article/question
  * word) — reusable both from the /function-words glossary page and, nested
@@ -19,7 +20,9 @@ export function FunctionWordModal({ functionWord, onClose }: { functionWord: Fun
         <div className="space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              {functionWord.korean && <p className="text-foreground/60 text-sm">{functionWord.korean}</p>}
+              {(functionWord.korean || functionWord.uzbek) && (
+                <p className="text-foreground/60 text-sm">{functionWordTranslation(functionWord, locale)}</p>
+              )}
               {functionWord.simpleExplanation[locale] && (
                 <p className="text-sm leading-relaxed mt-1">{functionWord.simpleExplanation[locale]}</p>
               )}

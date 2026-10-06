@@ -50,6 +50,10 @@ const deepExplanationSchema = new Schema(
 
 const sentenceSchema = new Schema({
   korean: { type: String, required: true, trim: true },
+  // Uzbek translation of the sentence — see Word.uzbek's comment for why
+  // this exists and the optional-at-schema-level/required-at-create-time
+  // split.
+  uzbek: { type: String, default: "" },
   // The correct, ordered sentence — each word tagged with its grammatical role.
   words: { type: [roleWordSchema], required: true },
   // Extra wrong-choice words mixed into the pool, also role-tagged (e.g. "goes"

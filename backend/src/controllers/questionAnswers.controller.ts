@@ -35,6 +35,7 @@ function guessQuestionCategory(englishQuestion: string): "yes_no" | "wh_question
 
 interface SentencePayload {
   korean: string;
+  uzbek: string;
   words: { text: string; role: string }[];
   distractorWords?: { text: string; role: string }[];
   formula?: string;
@@ -44,6 +45,7 @@ function isValidSentencePayload(body: unknown): body is SentencePayload {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
   if (typeof b.korean !== "string" || !b.korean.trim()) return false;
+  if (typeof b.uzbek !== "string" || !b.uzbek.trim()) return false;
   if (!Array.isArray(b.words) || b.words.length === 0 || !isValidRoleWordArray(b.words)) return false;
   if (b.distractorWords !== undefined && !isValidRoleWordArray(b.distractorWords)) return false;
   return true;
@@ -72,7 +74,7 @@ export const createQuestionAnswerPair: RequestHandler = async (req, res, next) =
   try {
     const { level, subLevel, questionCategory, question, answer } = req.body ?? {};
     if (!isValidSentencePayload(question) || !isValidSentencePayload(answer)) {
-      res.status(400).json({ error: "question and answer each need korean and a non-empty words[] of { text, role }" });
+      res.status(400).json({ error: "question and answer each need korean, uzbek, and a non-empty words[] of { text, role }" });
       return;
     }
     if (!level || !["beginner", "intermediate", "advanced"].includes(level)) {
@@ -83,6 +85,7 @@ export const createQuestionAnswerPair: RequestHandler = async (req, res, next) =
 
     const savedQuestion = await Sentence.create({
       korean: question.korean,
+      uzbek: question.uzbek,
       words: question.words,
       distractorWords: question.distractorWords ?? [],
       formula: question.formula ?? "",
@@ -93,6 +96,7 @@ export const createQuestionAnswerPair: RequestHandler = async (req, res, next) =
     });
     const savedAnswer = await Sentence.create({
       korean: answer.korean,
+      uzbek: answer.uzbek,
       words: answer.words,
       distractorWords: answer.distractorWords ?? [],
       formula: answer.formula ?? "",
@@ -119,11 +123,11 @@ export const updateQuestionAnswerPair: RequestHandler = async (req, res, next) =
       return;
     }
     if (question !== undefined && !isValidSentencePayload(question)) {
-      res.status(400).json({ error: "question needs korean and a non-empty words[] of { text, role }" });
+      res.status(400).json({ error: "question needs korean, uzbek, and a non-empty words[] of { text, role }" });
       return;
     }
     if (answer !== undefined && !isValidSentencePayload(answer)) {
-      res.status(400).json({ error: "answer needs korean and a non-empty words[] of { text, role }" });
+      res.status(400).json({ error: "answer needs korean, uzbek, and a non-empty words[] of { text, role }" });
       return;
     }
 
@@ -135,6 +139,7 @@ export const updateQuestionAnswerPair: RequestHandler = async (req, res, next) =
     if (question) {
       Object.assign(questionUpdate, {
         korean: question.korean,
+        uzbek: question.uzbek,
         words: question.words,
         distractorWords: question.distractorWords ?? [],
         formula: question.formula ?? "",
@@ -146,6 +151,7 @@ export const updateQuestionAnswerPair: RequestHandler = async (req, res, next) =
     if (answer) {
       Object.assign(answerUpdate, {
         korean: answer.korean,
+        uzbek: answer.uzbek,
         words: answer.words,
         distractorWords: answer.distractorWords ?? [],
         formula: answer.formula ?? "",

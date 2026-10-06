@@ -1,4 +1,6 @@
-export function speak(text: string, lang: "en-US" | "ko-KR" = "en-US"): void {
+export type SpeechLang = "en-US" | "ko-KR" | "uz-UZ";
+
+export function speak(text: string, lang: SpeechLang = "en-US"): void {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   // Must run synchronously inside the tap/click handler that calls it. iOS
   // Safari and WKWebView-based in-app browsers (KakaoTalk, Instagram, ...)
@@ -30,7 +32,7 @@ let currentAudio: HTMLAudioElement | null = null;
  * reliable option there. Falls back to speak() when no clip is available yet
  * (e.g. newly added content) or if playback fails for any reason.
  */
-export function playAudio(url: string | null | undefined, fallbackText: string, fallbackLang: "en-US" | "ko-KR" = "en-US"): void {
+export function playAudio(url: string | null | undefined, fallbackText: string, fallbackLang: SpeechLang = "en-US"): void {
   if (typeof window === "undefined") return;
   if (url) {
     try {

@@ -28,6 +28,7 @@ interface FormValues {
   word: string;
   category: FunctionWordCategory;
   korean: string;
+  uzbek: string;
   simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];
@@ -40,6 +41,7 @@ const emptyValues: FormValues = {
   word: "",
   category: "preposition",
   korean: "",
+  uzbek: "",
   simpleExplanation: emptyTrilingual,
   usageTypes: [],
   commonMistakes: [],
@@ -53,6 +55,7 @@ function fromWord(w: FunctionWord): FormValues {
     word: w.word,
     category: w.category,
     korean: w.korean,
+    uzbek: w.uzbek,
     simpleExplanation: w.simpleExplanation,
     usageTypes: w.usageTypes,
     commonMistakes: w.commonMistakes,
@@ -151,14 +154,24 @@ export function FunctionWordForm({
         </label>
       </div>
 
-      <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Koreys tarjimasi</span>
-        <input
-          value={values.korean}
-          onChange={(e) => update("korean", e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
-        />
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block">
+          <span className="block text-sm font-medium mb-1.5">Koreys tarjimasi</span>
+          <input
+            value={values.korean}
+            onChange={(e) => update("korean", e.target.value)}
+            className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
+          />
+        </label>
+        <label className="block">
+          <span className="block text-sm font-medium mb-1.5">O&apos;zbekcha tarjimasi</span>
+          <input
+            value={values.uzbek}
+            onChange={(e) => update("uzbek", e.target.value)}
+            className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
+          />
+        </label>
+      </div>
 
       <AiFunctionWordAssistButton word={values.word} category={values.category} onSuggestion={applyAiSuggestion} />
 

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { sentenceTranslation } from "@/lib/contentLocale";
 import { apiFetch } from "@/lib/api";
 import type { Word, Sentence } from "@/lib/types";
 import { MatchBoard } from "@/components/match/MatchBoard";
@@ -40,6 +41,7 @@ function PracticeContent() {
   const t = useT("lessons");
   const tMatch = useT("match");
   const tSentence = useT("sentence");
+  const { locale } = useLocale();
 
   const isAll = searchParams.get("all") === "true";
   const lessonsParam = searchParams.get("lessons") ?? "";
@@ -93,9 +95,13 @@ function PracticeContent() {
   const current = mode === "sentence" ? sentences[sentenceIndex] : undefined;
   const setChatContext = useAiChatContextStore((s) => s.setContext);
   useEffect(() => {
-    setChatContext(current ? { korean: current.korean, englishWords: current.words.map((w) => w.text), formula: current.formula } : null);
+    setChatContext(
+      current
+        ? { korean: sentenceTranslation(current, locale), englishWords: current.words.map((w) => w.text), formula: current.formula }
+        : null,
+    );
     return () => setChatContext(null);
-  }, [current, setChatContext]);
+  }, [current, locale, setChatContext]);
 
   if (!ready || !user) return null;
 

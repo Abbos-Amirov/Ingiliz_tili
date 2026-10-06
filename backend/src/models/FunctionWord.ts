@@ -41,6 +41,7 @@ const functionWordSchema = new Schema({
   word: { type: String, required: true, trim: true, lowercase: true },
   category: { type: String, enum: FUNCTION_WORD_CATEGORIES, required: true },
   korean: { type: String, default: "" },
+  uzbek: { type: String, default: "" },
   simpleExplanation: { type: trilingualSchema, default: () => ({}) },
   usageTypes: { type: [usageTypeSchema], default: [] },
   commonMistakes: { type: [mistakeSchema], default: [] },

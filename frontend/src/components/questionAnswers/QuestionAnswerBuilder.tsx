@@ -12,6 +12,7 @@ import { playAudio } from "@/lib/tts";
 import { useT, useLocale } from "@/hooks/useT";
 import { ROLE_COLORS } from "@/lib/roleColors";
 import { getWhWordMeaning } from "@/lib/whWordMeanings";
+import { sentenceTranslation } from "@/lib/contentLocale";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -117,7 +118,7 @@ export function QuestionAnswerBuilder({
           {promptIsQuestion ? tqa.questionLabel : tqa.answerLabel}
         </p>
         <p className="text-xl sm:text-2xl font-bold">{promptSentence.words.map((w) => w.text).join(" ")}</p>
-        <p className="text-sm text-foreground/60 mt-1">{promptSentence.korean}</p>
+        <p className="text-sm text-foreground/60 mt-1">{sentenceTranslation(promptSentence, locale)}</p>
 
         {promptIsQuestion && category && (
           <div className="mt-3 flex justify-center">

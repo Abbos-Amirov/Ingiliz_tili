@@ -20,8 +20,10 @@ import type {
 
 interface Suggestion {
   korean: string;
+  uzbek: string;
   exampleSentenceEn: string;
   exampleSentenceKo: string;
+  exampleSentenceUz: string;
   partOfSpeech: PartOfSpeech;
 }
 
@@ -306,6 +308,7 @@ interface IrregularVerbSuggestion {
   past: string;
   participle: string;
   korean: string;
+  uzbek: string;
   category: IrregularVerbCategory;
 }
 

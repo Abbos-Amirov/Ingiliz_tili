@@ -45,9 +45,9 @@ export const listIrregularVerbs: RequestHandler = async (req, res, next) => {
 
 export const createIrregularVerb: RequestHandler = async (req, res, next) => {
   try {
-    const { base, past, participle, korean, category, frequency } = req.body ?? {};
-    if (!base || !past || !participle || !korean) {
-      res.status(400).json({ error: "base, past, participle and korean are required" });
+    const { base, past, participle, korean, uzbek, category, frequency } = req.body ?? {};
+    if (!base || !past || !participle || !korean || !uzbek) {
+      res.status(400).json({ error: "base, past, participle, korean and uzbek are required" });
       return;
     }
     const baseNorm = String(base).trim().toLowerCase();
@@ -61,6 +61,7 @@ export const createIrregularVerb: RequestHandler = async (req, res, next) => {
       past: String(past).trim().toLowerCase(),
       participle: String(participle).trim().toLowerCase(),
       korean: String(korean).trim(),
+      uzbek: String(uzbek).trim(),
       category: IRREGULAR_VERB_CATEGORIES.includes(category) ? category : "other",
       frequency: frequency === undefined || frequency === null || frequency === "" ? null : Number(frequency),
     });

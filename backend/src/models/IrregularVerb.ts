@@ -8,6 +8,7 @@ const irregularVerbSchema = new Schema({
   past: { type: String, required: true, trim: true, lowercase: true },
   participle: { type: String, required: true, trim: true, lowercase: true },
   korean: { type: String, required: true, trim: true },
+  uzbek: { type: String, default: "" },
   category: { type: String, enum: IRREGULAR_VERB_CATEGORIES, default: "other" },
   frequency: { type: Number, default: null },
   createdAt: { type: Date, default: Date.now },

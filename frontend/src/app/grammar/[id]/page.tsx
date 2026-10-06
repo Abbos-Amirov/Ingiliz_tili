@@ -162,8 +162,7 @@ export default function GrammarTopicPage() {
                   {topic.examples.map((ex, i) => (
                     <div key={i} className="rounded-xl bg-surface-muted p-3.5 space-y-0.5">
                       <p className="font-semibold text-sm">{ex.english}</p>
-                      <p className="text-sm text-foreground/70">{ex.korean}</p>
-                      <p className="text-xs text-foreground/50">{ex.uzbek}</p>
+                      <p className="text-sm text-foreground/70">{locale === "uz" ? ex.uzbek || ex.korean : ex.korean}</p>
                     </div>
                   ))}
                 </div>

@@ -9,8 +9,9 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { MotivationToast } from "@/components/ui/MotivationToast";
 import { MatchWordTile } from "@/components/match/MatchWordTile";
 import { useIrregularVerbActions, type IrregularVerbForm } from "@/hooks/useIrregularVerbPractice";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import type { TranslationDict } from "@/lib/i18n/translations";
+import { irregularVerbTranslation } from "@/lib/contentLocale";
 
 type FieldStage = "idle" | "choices" | "write";
 type FieldResult = "correct" | "wrong" | "helped" | null;
@@ -56,6 +57,7 @@ const FORMS: IrregularVerbForm[] = ["past", "participle"];
 
 export function IrregularVerbPractice() {
   const t = useT("irregularVerbs");
+  const { locale } = useLocale();
   const { fetchPracticeBatch, submitFormReview, fetchFormDistractors } = useIrregularVerbActions();
 
   const [verbs, setVerbs] = useState<IrregularVerb[] | null>(null);
@@ -241,7 +243,7 @@ export function IrregularVerbPractice() {
               {t.baseLabel}
             </p>
             <p className="text-3xl font-extrabold gradient-text mb-1 text-center">{verb.base.toUpperCase()}</p>
-            <p className="text-foreground/60 text-center mb-6">{verb.korean}</p>
+            <p className="text-foreground/60 text-center mb-6">{irregularVerbTranslation(verb, locale)}</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <FormField

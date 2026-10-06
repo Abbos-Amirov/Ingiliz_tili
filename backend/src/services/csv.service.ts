@@ -5,8 +5,10 @@ import type { LessonRange } from "../utils/lessonRange";
 export interface WordCsvRow {
   english: string;
   korean: string;
+  uzbek?: string;
   exampleSentenceEn?: string;
   exampleSentenceKo?: string;
+  exampleSentenceUz?: string;
   category?: string;
   difficulty?: string;
   lessonNumber?: string;
@@ -16,8 +18,10 @@ export interface WordCsvRow {
 interface WordInsert {
   english: string;
   korean: string;
+  uzbek: string;
   exampleSentenceEn: string;
   exampleSentenceKo: string;
+  exampleSentenceUz: string;
   category: string;
   difficulty: string;
   lessonNumber: number;
@@ -81,8 +85,10 @@ export async function bulkUploadWordsFromCsv(
     toInsert.push({
       english: row.english.trim(),
       korean: row.korean.trim(),
+      uzbek: row.uzbek?.trim() ?? "",
       exampleSentenceEn: row.exampleSentenceEn?.trim() ?? "",
       exampleSentenceKo: row.exampleSentenceKo?.trim() ?? "",
+      exampleSentenceUz: row.exampleSentenceUz?.trim() ?? "",
       category: row.category?.trim() || "general",
       difficulty,
       lessonNumber,

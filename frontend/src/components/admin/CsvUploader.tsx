@@ -78,8 +78,8 @@ export function CsvUploader() {
         <p className="text-sm text-foreground/60 mb-4">
           CSV ustunlari:{" "}
           <code className="text-xs bg-surface-muted px-1.5 py-0.5 rounded">
-            english, korean, exampleSentenceEn, exampleSentenceKo, category, difficulty, lessonNumber (ixtiyoriy),
-            lessonNumberEnd (ixtiyoriy)
+            english, korean, uzbek (ixtiyoriy), exampleSentenceEn, exampleSentenceKo, exampleSentenceUz (ixtiyoriy),
+            category, difficulty, lessonNumber (ixtiyoriy), lessonNumberEnd (ixtiyoriy)
           </code>
         </p>
 

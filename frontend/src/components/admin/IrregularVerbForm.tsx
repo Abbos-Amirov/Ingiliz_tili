@@ -12,6 +12,7 @@ interface FormValues {
   past: string;
   participle: string;
   korean: string;
+  uzbek: string;
   category: IrregularVerbCategory;
   frequency: string;
 }
@@ -21,6 +22,7 @@ const emptyValues: FormValues = {
   past: "",
   participle: "",
   korean: "",
+  uzbek: "",
   category: "other",
   frequency: "",
 };
@@ -39,6 +41,7 @@ export function IrregularVerbForm({
           past: initial.past,
           participle: initial.participle,
           korean: initial.korean,
+          uzbek: initial.uzbek,
           category: initial.category,
           frequency: initial.frequency != null ? String(initial.frequency) : "",
         }
@@ -85,6 +88,7 @@ export function IrregularVerbForm({
         past: values.past.trim(),
         participle: values.participle.trim(),
         korean: values.korean.trim(),
+        uzbek: values.uzbek.trim(),
         category: values.category,
         frequency: values.frequency.trim() === "" ? null : Number(values.frequency),
       };
@@ -150,6 +154,7 @@ export function IrregularVerbForm({
             past: s.past,
             participle: s.participle,
             korean: s.korean,
+            uzbek: s.uzbek,
             category: s.category,
           }))
         }
@@ -159,6 +164,12 @@ export function IrregularVerbForm({
         <Field label="Koreys tarjimasi">
           <input required value={values.korean} onChange={(e) => update("korean", e.target.value)} className="input" />
         </Field>
+        <Field label="O'zbekcha tarjimasi">
+          <input required value={values.uzbek} onChange={(e) => update("uzbek", e.target.value)} className="input" />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Kategoriya">
           <select
             value={values.category}

@@ -51,8 +51,10 @@ export interface Word {
   _id: string;
   english: string;
   korean: string;
+  uzbek: string;
   exampleSentenceEn: string;
   exampleSentenceKo: string;
+  exampleSentenceUz: string;
   category: string;
   difficulty: Difficulty;
   partOfSpeech?: PartOfSpeech | null;
@@ -110,6 +112,7 @@ export type QuestionCategory = "yes_no" | "wh_question";
 export interface Sentence {
   _id: string;
   korean: string;
+  uzbek: string;
   words: RoleWord[];
   distractorWords: RoleWord[];
   formula: string;
@@ -181,6 +184,7 @@ export interface IrregularVerb {
   past: string;
   participle: string;
   korean: string;
+  uzbek: string;
   category: IrregularVerbCategory;
   frequency: number | null;
 }
@@ -259,6 +263,7 @@ export interface FunctionWord {
   word: string;
   category: FunctionWordCategory;
   korean: string;
+  uzbek: string;
   simpleExplanation: Trilingual;
   usageTypes: FunctionWordUsageType[];
   commonMistakes: FunctionWordMistake[];

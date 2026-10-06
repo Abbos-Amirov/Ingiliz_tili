@@ -9,12 +9,14 @@ import type { UserStats, Word } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { wordTranslation } from "@/lib/contentLocale";
 
 export default function ProgressPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("progress");
+  const { locale } = useLocale();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [difficultWords, setDifficultWords] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export default function ProgressPage() {
                       key={w._id}
                       className="px-3 py-1.5 rounded-full bg-danger-soft text-danger text-sm font-semibold"
                     >
-                      {w.english} — {w.korean}
+                      {w.english} — {wordTranslation(w, locale)}
                     </span>
                   ))}
                 </div>

@@ -7,8 +7,10 @@ import { PALACE_ROOM_KEYS, PalaceRoomKey } from "../config/palaceRooms";
 
 export interface TranslationSuggestion {
   korean: string;
+  uzbek: string;
   exampleSentenceEn: string;
   exampleSentenceKo: string;
+  exampleSentenceUz: string;
   partOfSpeech: PartOfSpeech;
 }
 
@@ -42,19 +44,25 @@ function extractToolInput<T>(response: Anthropic.Message): T {
 
 const SUGGEST_TRANSLATION_TOOL = {
   name: "suggest_translation",
-  description: "Provide a Korean translation, example sentence pair, and part of speech for an English word.",
+  description: "Provide Korean and Uzbek translations, example sentence pairs, and part of speech for an English word.",
   input_schema: {
     type: "object" as const,
     properties: {
       korean: { type: "string", description: "Korean translation of the English word" },
+      uzbek: { type: "string", description: "Uzbek translation of the English word" },
       exampleSentenceEn: { type: "string", description: "Short example sentence in English using the word" },
       exampleSentenceKo: { type: "string", description: "Korean translation of that example sentence" },
+      exampleSentenceUz: { type: "string", description: "Uzbek translation of that example sentence" },
       partOfSpeech: { type: "string", enum: PARTS_OF_SPEECH as unknown as string[], description: "The word's dictionary part of speech" },
     },
-    required: ["korean", "exampleSentenceEn", "exampleSentenceKo", "partOfSpeech"],
+    required: ["korean", "uzbek", "exampleSentenceEn", "exampleSentenceKo", "exampleSentenceUz", "partOfSpeech"],
   },
 };
 
+// Serves BOTH learner tracks this app supports — originally Korean-only,
+// now also Uzbek (see frontend/src/lib/contentLocale.ts) — in one call
+// rather than two, since the example sentence and part-of-speech context
+// is shared between them anyway.
 export async function suggestTranslation(english: string): Promise<TranslationSuggestion> {
   const client = requireClient();
 
@@ -66,7 +74,7 @@ export async function suggestTranslation(english: string): Promise<TranslationSu
     messages: [
       {
         role: "user",
-        content: `Translate the English word "${english}" into Korean for a Uzbek learner studying English via Korean. Provide a natural Korean translation, a short simple example sentence (beginner-friendly) in both English and Korean, and the word's part of speech. Call the suggest_translation tool with your answer.`,
+        content: `Translate the English word "${english}" into Korean AND Uzbek — this app teaches English to learners via either Korean or Uzbek. Provide a natural Korean translation, a natural Uzbek translation, a short simple example sentence (beginner-friendly) in English, that same sentence translated into Korean, that same sentence translated into Uzbek, and the word's part of speech. Call the suggest_translation tool with your answer.`,
       },
     ],
   });
@@ -78,25 +86,27 @@ export interface IrregularVerbSuggestion {
   past: string;
   participle: string;
   korean: string;
+  uzbek: string;
   category: IrregularVerbCategory;
 }
 
 const SUGGEST_IRREGULAR_VERB_TOOL = {
   name: "suggest_irregular_verb",
-  description: "Provide the past tense and past participle forms, Korean translation, and semantic category for an English irregular verb's base form.",
+  description: "Provide the past tense and past participle forms, Korean and Uzbek translations, and semantic category for an English irregular verb's base form.",
   input_schema: {
     type: "object" as const,
     properties: {
       past: { type: "string", description: "The simple past tense form (V2), lowercase, e.g. 'drank'" },
       participle: { type: "string", description: "The past participle form (V3), lowercase, e.g. 'drunk'" },
       korean: { type: "string", description: "Korean translation of the base (dictionary) form of the verb" },
+      uzbek: { type: "string", description: "Uzbek translation of the base (dictionary) form of the verb" },
       category: {
         type: "string",
         enum: IRREGULAR_VERB_CATEGORIES as unknown as string[],
         description: "Semantic grouping of the verb's meaning",
       },
     },
-    required: ["past", "participle", "korean", "category"],
+    required: ["past", "participle", "korean", "uzbek", "category"],
   },
 };
 
@@ -111,7 +121,7 @@ export async function suggestIrregularVerb(base: string): Promise<IrregularVerbS
     messages: [
       {
         role: "user",
-        content: `The English irregular verb's base form (V1) is "${base}". Provide its simple past tense (V2), past participle (V3), a Korean translation of the base form, and a semantic category from: ${IRREGULAR_VERB_CATEGORIES.join(", ")}. Call the suggest_irregular_verb tool with your answer.`,
+        content: `The English irregular verb's base form (V1) is "${base}". Provide its simple past tense (V2), past participle (V3), a Korean translation of the base form, an Uzbek translation of the base form, and a semantic category from: ${IRREGULAR_VERB_CATEGORIES.join(", ")}. Call the suggest_irregular_verb tool with your answer.`,
       },
     ],
   });

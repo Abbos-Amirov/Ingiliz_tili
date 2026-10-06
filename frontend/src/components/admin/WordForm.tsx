@@ -13,8 +13,10 @@ import { PARTS_OF_SPEECH, PARTS_OF_SPEECH_LABELS } from "@/lib/partsOfSpeech";
 interface WordFormValues {
   english: string;
   korean: string;
+  uzbek: string;
   exampleSentenceEn: string;
   exampleSentenceKo: string;
+  exampleSentenceUz: string;
   category: string;
   difficulty: Difficulty;
   partOfSpeech: PartOfSpeech | "";
@@ -25,8 +27,10 @@ interface WordFormValues {
 const emptyValues: WordFormValues = {
   english: "",
   korean: "",
+  uzbek: "",
   exampleSentenceEn: "",
   exampleSentenceKo: "",
+  exampleSentenceUz: "",
   category: "general",
   difficulty: "beginner",
   partOfSpeech: "",
@@ -41,8 +45,10 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
       ? {
           english: initial.english,
           korean: initial.korean,
+          uzbek: initial.uzbek,
           exampleSentenceEn: initial.exampleSentenceEn,
           exampleSentenceKo: initial.exampleSentenceKo,
+          exampleSentenceUz: initial.exampleSentenceUz,
           category: initial.category,
           difficulty: initial.difficulty,
           partOfSpeech: initial.partOfSpeech ?? "",
@@ -179,6 +185,14 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
             className="input"
           />
         </Field>
+        <Field label="O'zbekcha so'z">
+          <input
+            required
+            value={values.uzbek}
+            onChange={(e) => update("uzbek", e.target.value)}
+            className="input"
+          />
+        </Field>
       </div>
 
       {checkingLive && <p className="text-xs text-foreground/40 -mt-2">Tekshirilmoqda...</p>}
@@ -221,8 +235,10 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
           setValues((prev) => ({
             ...prev,
             korean: s.korean,
+            uzbek: s.uzbek,
             exampleSentenceEn: s.exampleSentenceEn,
             exampleSentenceKo: s.exampleSentenceKo,
+            exampleSentenceUz: s.exampleSentenceUz,
             partOfSpeech: s.partOfSpeech,
           }))
         }
@@ -246,6 +262,13 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
         <input
           value={values.exampleSentenceKo}
           onChange={(e) => update("exampleSentenceKo", e.target.value)}
+          className="input"
+        />
+      </Field>
+      <Field label="Misol gap (o'zbekcha)">
+        <input
+          value={values.exampleSentenceUz}
+          onChange={(e) => update("exampleSentenceUz", e.target.value)}
           className="input"
         />
       </Field>

@@ -7,7 +7,9 @@ import type { Sentence } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useGrammarTopics } from "@/hooks/useGrammarTopics";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { sentenceTranslation } from "@/lib/contentLocale";
+import type { Locale } from "@/lib/i18n/translations";
 
 interface Question {
   korean: string;
@@ -24,18 +26,19 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-function buildQuestions(pool: Sentence[], count: number): Question[] {
+function buildQuestions(pool: Sentence[], count: number, locale: Locale): Question[] {
   const allTexts = pool.map((s) => s.words.map((w) => w.text).join(" "));
   const chosen = shuffle(pool).slice(0, Math.min(count, pool.length));
   return chosen.map((s) => {
     const correct = s.words.map((w) => w.text).join(" ");
     const distractors = shuffle(allTexts.filter((text) => text !== correct)).slice(0, 3);
-    return { korean: s.korean, correct, options: shuffle([correct, ...distractors]) };
+    return { korean: sentenceTranslation(s, locale), correct, options: shuffle([correct, ...distractors]) };
   });
 }
 
 export function GrammarQuiz({ topicId, formula }: { topicId: string; formula: string }) {
   const t = useT("grammar");
+  const { locale } = useLocale();
   const { submitQuizResult } = useGrammarTopics();
 
   const [pool, setPool] = useState<Sentence[] | null>(null);
@@ -54,7 +57,7 @@ export function GrammarQuiz({ topicId, formula }: { topicId: string; formula: st
 
   function start() {
     if (!pool || pool.length < 2) return;
-    setQuestions(buildQuestions(pool, 5));
+    setQuestions(buildQuestions(pool, 5, locale));
     setIndex(0);
     setSelected(null);
     setCorrectCount(0);

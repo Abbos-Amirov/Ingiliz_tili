@@ -8,7 +8,8 @@ import { MotivationToast } from "@/components/ui/MotivationToast";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { playAudio } from "@/lib/tts";
 import { useSrsActions } from "@/hooks/useSrsSession";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { wordTranslation } from "@/lib/contentLocale";
 
 export interface FlashcardResults {
   known: string[];
@@ -27,6 +28,7 @@ const VERIFY_EVERY = 3;
 
 export function FlashcardDeck({ words, onFinish }: { words: Word[]; onFinish: (results: FlashcardResults) => void }) {
   const t = useT("flashcards");
+  const { locale } = useLocale();
   const { submitReview } = useSrsActions();
 
   const [index, setIndex] = useState(0);
@@ -91,7 +93,7 @@ export function FlashcardDeck({ words, onFinish }: { words: Word[]; onFinish: (r
   function handleVerifySubmit(e: FormEvent) {
     e.preventDefault();
     if (verifyResult) return;
-    const ok = normalize(verifyInput) === normalize(word.korean);
+    const ok = normalize(verifyInput) === normalize(wordTranslation(word, locale));
     setVerifyResult(ok ? "correct" : "wrong");
     window.setTimeout(() => {
       setVerifying(false);
@@ -168,7 +170,7 @@ export function FlashcardDeck({ words, onFinish }: { words: Word[]; onFinish: (r
               animate={{ opacity: 1, y: 0 }}
               className="text-lg font-bold text-danger mt-1"
             >
-              {word.korean}
+              {wordTranslation(word, locale)}
             </motion.p>
           )}
         </motion.div>

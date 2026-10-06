@@ -11,9 +11,10 @@ import { MotivationToast } from "@/components/ui/MotivationToast";
 import { WordImage } from "@/components/ui/WordImage";
 import { MatchWordTile } from "@/components/match/MatchWordTile";
 import { useSrsActions } from "@/hooks/useSrsSession";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
 import { useSessionStore } from "@/store/session";
 import { playAudio, speak } from "@/lib/tts";
+import { wordTranslation } from "@/lib/contentLocale";
 
 interface RecallResult {
   wordId: string;
@@ -38,6 +39,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function RecallQuiz({ words, onFinish }: { words: Word[]; onFinish: (results: RecallResult[]) => void }) {
   const t = useT("recall");
+  const { locale } = useLocale();
   const { submitReview, fetchDistractors } = useSrsActions();
   const imageHiddenByWordId = useSessionStore((s) => s.imageHiddenByWordId);
 
@@ -170,7 +172,7 @@ export function RecallQuiz({ words, onFinish }: { words: Word[]; onFinish: (resu
                 />
               </div>
             )}
-            <p className="text-3xl font-extrabold gradient-text mb-6">{word.korean}</p>
+            <p className="text-3xl font-extrabold gradient-text mb-6">{wordTranslation(word, locale)}</p>
 
             <form
               onSubmit={stage === "write" ? handleWriteSubmit : handleSubmit}

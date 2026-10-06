@@ -9,6 +9,7 @@ import { useGrammarTopics } from "@/hooks/useGrammarTopics";
 import { apiFetch } from "@/lib/api";
 import { ROLE_COLORS } from "@/lib/roleColors";
 import type { FunctionWord, GrammarRole, Sentence } from "@/lib/types";
+import { sentenceTranslation } from "@/lib/contentLocale";
 
 const ROLE_EMOJI: Record<GrammarRole, string> = {
   subject: "🔵",
@@ -80,7 +81,7 @@ export function DeepExplanationModal({
           <div className="space-y-5">
             <div className="rounded-xl bg-surface-muted p-3 text-center">
               <p className="font-bold">{sentence.words.map((w) => w.text).join(" ")}</p>
-              <p className="text-sm text-foreground/60 mt-0.5">{sentence.korean}</p>
+              <p className="text-sm text-foreground/60 mt-0.5">{sentenceTranslation(sentence, locale)}</p>
               {sentence.formula && (
                 <p className="text-xs font-mono text-foreground/40 mt-1">
                   {t.formulaLabel}: {sentence.formula}

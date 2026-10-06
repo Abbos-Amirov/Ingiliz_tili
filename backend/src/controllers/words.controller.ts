@@ -70,9 +70,9 @@ export const getWord: RequestHandler = async (req, res, next) => {
 
 export const createWord: RequestHandler = async (req, res, next) => {
   try {
-    const { english, korean, force } = req.body ?? {};
-    if (!english || !korean) {
-      res.status(400).json({ error: "english and korean are required" });
+    const { english, korean, uzbek, force } = req.body ?? {};
+    if (!english || !korean || !uzbek) {
+      res.status(400).json({ error: "english, korean, and uzbek are required" });
       return;
     }
     const lessonRange = parseLessonRange(req.body ?? {});

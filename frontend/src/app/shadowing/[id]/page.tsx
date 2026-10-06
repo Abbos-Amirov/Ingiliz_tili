@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { wordTranslation } from "@/lib/contentLocale";
 import type { TranslationDict } from "@/lib/i18n/translations";
 import { apiFetch } from "@/lib/api";
 import type { ShadowingVideo, ShadowingSentence, TranscriptWord, Word } from "@/lib/types";
@@ -121,6 +122,7 @@ export default function ShadowingPlayerPage() {
   const params = useParams<{ id: string }>();
   const t = useT("shadowing");
   const tSentence = useT("sentence");
+  const { locale } = useLocale();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [video, setVideo] = useState<ShadowingVideo | null>(null);
@@ -343,7 +345,7 @@ export default function ShadowingPlayerPage() {
                 {popupLoading ? (
                   <p className="text-sm text-foreground/40 mt-1">...</p>
                 ) : popupTranslation ? (
-                  <p className="text-sm text-foreground/70 mt-1">{popupTranslation.korean}</p>
+                  <p className="text-sm text-foreground/70 mt-1">{wordTranslation(popupTranslation, locale)}</p>
                 ) : (
                   <p className="text-sm text-foreground/40 mt-1">{t.translationNotFound}</p>
                 )}

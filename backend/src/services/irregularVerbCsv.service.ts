@@ -7,6 +7,7 @@ export interface IrregularVerbCsvRow {
   past: string;
   participle: string;
   korean: string;
+  uzbek?: string;
   category?: string;
   frequency?: string;
 }
@@ -16,6 +17,7 @@ interface IrregularVerbInsert {
   past: string;
   participle: string;
   korean: string;
+  uzbek: string;
   category: IrregularVerbCategory;
   frequency: number | null;
 }
@@ -68,6 +70,7 @@ export async function bulkUploadIrregularVerbsFromCsv(buffer: Buffer): Promise<B
       past: row.past.trim().toLowerCase(),
       participle: row.participle.trim().toLowerCase(),
       korean: row.korean.trim(),
+      uzbek: row.uzbek?.trim() ?? "",
       category,
       frequency,
     });

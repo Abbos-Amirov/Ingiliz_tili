@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useT, useLocale } from "@/hooks/useT";
+import { sentenceTranslation } from "@/lib/contentLocale";
 import { apiFetch } from "@/lib/api";
 import type { Difficulty, QuestionAnswerPair } from "@/lib/types";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -29,6 +30,7 @@ export default function QuestionAnswersPage() {
   const router = useRouter();
   const t = useT("questionAnswers");
   const tSentence = useT("sentence");
+  const { locale } = useLocale();
 
   const [level, setLevel] = useState<Difficulty>("beginner");
   const [category, setCategory] = useState<CategoryFilter>("all");
@@ -66,11 +68,15 @@ export default function QuestionAnswersPage() {
   useEffect(() => {
     setChatContext(
       targetSentence
-        ? { korean: targetSentence.korean, englishWords: targetSentence.words.map((w) => w.text), formula: targetSentence.formula }
+        ? {
+            korean: sentenceTranslation(targetSentence, locale),
+            englishWords: targetSentence.words.map((w) => w.text),
+            formula: targetSentence.formula,
+          }
         : null,
     );
     return () => setChatContext(null);
-  }, [targetSentence, setChatContext]);
+  }, [targetSentence, locale, setChatContext]);
 
   if (!ready || !user) return null;
 
