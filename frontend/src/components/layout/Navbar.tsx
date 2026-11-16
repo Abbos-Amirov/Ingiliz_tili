@@ -42,16 +42,16 @@ export function Navbar() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/85 backdrop-blur-md shadow-[0_1px_0_0_rgba(85,25,158,0.06)]">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 flex items-center justify-between h-16">
         <Link href="/" className="flex items-center gap-2.5 group" aria-label="Pallo!">
           <PalloLogo
             size={40}
-            className="shrink-0 drop-shadow-[0_4px_10px_rgba(85,25,158,0.35)] transition-transform group-hover:rotate-12"
+            className="shrink-0 transition-transform duration-500 group-hover:rotate-[20deg]"
           />
           <span className="flex flex-col leading-none">
-            <span className="font-black text-lg tracking-tight gradient-text">PALLO!</span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">English</span>
+            <span className="font-serif font-bold text-xl tracking-tight text-foreground">Pallo!</span>
+            <span className="mt-0.5 text-[10px] font-extrabold uppercase tracking-[0.22em] text-accent">English</span>
           </span>
         </Link>
 
@@ -61,13 +61,19 @@ export function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`relative px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive(l.activeMatch)
-                    ? "bg-primary/10 text-primary font-bold"
-                    : "text-foreground/70 hover:text-foreground hover:bg-surface-muted"
+                    ? "text-foreground font-bold"
+                    : "font-semibold text-foreground/60 hover:text-foreground hover:bg-surface-muted"
                 }`}
               >
                 {l.label}
+                {isActive(l.activeMatch) && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="absolute left-3 right-3 -bottom-0.5 h-[3px] rounded-full bg-gold"
+                  />
+                )}
               </Link>
             ))}
           </nav>
@@ -89,7 +95,7 @@ export function Navbar() {
             ready && (
               <Link
                 href="/login"
-                className="text-sm font-bold gradient-primary text-white px-4 py-2 rounded-xl shadow-[0_3px_0_0_var(--primary-strong)] hover:brightness-110 active:translate-y-0.5 active:shadow-none transition"
+                className="text-sm font-bold bg-ink text-on-ink px-5 py-2.5 rounded-xl ring-1 ring-inset ring-white/10 hover:bg-ink-soft transition-colors dark:bg-gold dark:text-[#1b1035]"
               >
                 {t.login}
               </Link>
@@ -135,7 +141,7 @@ export function Navbar() {
                   key={l.href}
                   href={l.href}
                   className={`px-4 py-3 rounded-lg text-sm font-medium ${
-                    isActive(l.activeMatch) ? "bg-primary/10 text-primary font-bold" : "text-foreground/70"
+                    isActive(l.activeMatch) ? "bg-ink text-on-ink font-bold" : "font-semibold text-foreground/70"
                   }`}
                 >
                   {l.label}

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
+import { AuthBackdrop } from "@/components/ui/AuthBackdrop";
+import { PalloLogo } from "@/components/ui/PalloLogo";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
@@ -37,14 +39,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center px-4 py-12">
+    <div className="relative flex-1 flex items-center justify-center px-4 py-12">
+      <AuthBackdrop />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="w-full max-w-sm"
       >
-        <Card className="p-7">
+        <Card className="relative p-7 sm:p-8 rounded-3xl">
+          <PalloLogo size={52} className="mb-5" />
           <h1 className="text-2xl font-extrabold mb-1">{t.registerTitle}</h1>
           <p className="text-foreground/60 text-sm mb-6">{t.registerSubtitle}</p>
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -55,6 +55,10 @@ const uz = {
     titleSuffix: "o'rganing",
     subtitle:
       "So'z moslashtirish, gap tuzish va ilmiy asoslangan takrorlash tizimi bilan so'zlarni uzoq muddatli xotirada mustahkamlang.",
+    eyebrow: "Pallo! o'quv markazi",
+    featuresEyebrow: "Qanday o'rganamiz",
+    featuresTitle: "Har bir dars — aniq natija sari bir qadam",
+    ctaTitle: "Bugun birinchi qadamni qo'ying",
     startLearning: "O'rganishni boshlash",
     register: "Ro'yxatdan o'tish",
     login: "Kirish",
@@ -639,6 +643,10 @@ const en = {
     titleSuffix: "through Korean",
     subtitle:
       "Reinforce vocabulary in long-term memory with word matching, sentence building, and a science-based spaced repetition system.",
+    eyebrow: "Pallo! learning centre",
+    featuresEyebrow: "How you learn",
+    featuresTitle: "Every lesson is a clear step forward",
+    ctaTitle: "Take your first step today",
     startLearning: "Start learning",
     register: "Sign up",
     login: "Log in",
@@ -1223,6 +1231,10 @@ const ko = {
     titleSuffix: "배우기",
     subtitle:
       "단어 매칭, 문장 만들기, 그리고 과학적 근거에 기반한 간격 반복 시스템으로 단어를 장기 기억에 정착시키세요.",
+    eyebrow: "Pallo! 학습 센터",
+    featuresEyebrow: "학습 방법",
+    featuresTitle: "모든 수업이 확실한 한 걸음입니다",
+    ctaTitle: "오늘 첫 걸음을 내딛으세요",
     startLearning: "학습 시작하기",
     register: "회원가입",
     login: "로그인",

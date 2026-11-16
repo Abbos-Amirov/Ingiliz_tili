@@ -1,67 +1,80 @@
 @import "tailwindcss";
 
 /*
- * Pallo! brand palette — built around the logo purple (#55199E).
- *  - primary: Pallo purple → bright violet gradient (buttons, active states)
- *  - accent:  warm tangerine, the complementary of purple (hints, badges);
- *             dark enough to be used as text on light surfaces
- *  - sunny:   playful yellow for decorative highlights (stars, streaks)
+ * Pallo! — "academic, but alive".
+ *  - ink:     deep plum for hero bands and strong text (serious, premium)
+ *  - primary: the logo purple #55199E (actions, active states)
+ *  - gold:    warm gold for highlights and the shapes layer (emotion)
+ *  - paper:   warm off-white page background instead of cold grey/lavender
+ * Headings use a serif display face (Fraunces); body text uses Manrope.
  */
 :root {
-  --background: #f8f5fe;
-  --foreground: #1d1233;
+  --background: #f7f5f1;
+  --foreground: #1a1230;
   --surface: #ffffff;
-  --surface-muted: #f2ecfb;
-  --border: #e4d9f5;
+  --surface-muted: #f2eff6;
+  --border: #e5e0ea;
+
+  --ink: #1b1035;
+  --ink-soft: #2b1a52;
+  --on-ink: #f5f1fb;
 
   --brand: #55199e;
-  --primary-from: #55199e;
-  --primary-to: #8b3fe0;
+  --primary-from: #4a1592;
+  --primary-to: #6424b8;
   --primary: #55199e;
-  --primary-strong: #3b0f73;
+  --primary-strong: #3a0f73;
   --primary-foreground: #ffffff;
 
-  --accent: #d9480f;
-  --accent-soft: #fff1e6;
-  --sunny: #ffc83d;
+  /* accent = gold, dark enough to be used as text on paper/white */
+  --accent: #9a5b00;
+  --accent-soft: #fbf1dc;
+  --gold: #e9a823;
+  --sunny: #e9a823;
 
-  --success: #16a34a;
-  --success-soft: #e8f8ee;
-  --danger: #dc2626;
-  --danger-soft: #fdecec;
+  --success: #15803d;
+  --success-soft: #e6f4ea;
+  --danger: #c62828;
+  --danger-soft: #fbeaea;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.9rem;
   --radius-lg: 1.25rem;
   --radius-xl: 1.75rem;
 
-  --shadow-soft: 0 12px 32px -12px rgba(85, 25, 158, 0.35);
-  --shadow-card: 0 4px 20px -6px rgba(59, 15, 115, 0.1);
-  --btn-lip: 0 4px 0 0 var(--primary-strong);
+  --shadow-soft: 0 18px 40px -18px rgba(27, 16, 53, 0.35);
+  --shadow-card: 0 1px 2px rgba(27, 16, 53, 0.04), 0 8px 24px -12px rgba(27, 16, 53, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #120a21;
-    --foreground: #f3eefc;
-    --surface: #1c1233;
-    --surface-muted: #271a45;
-    --border: #3a2a5c;
+    --background: #0e0a19;
+    --foreground: #f1edf8;
+    --surface: #171127;
+    --surface-muted: #21183a;
+    --border: #33284f;
 
-    /* Lighter purple so text-primary / borders stay readable on dark. */
-    --primary-from: #6d28d9;
-    --primary-to: #9f67ff;
-    --primary: #a77bff;
-    --primary-strong: #3b0f73;
+    --ink: #120b24;
+    --ink-soft: #24173f;
 
-    --accent: #ff8a4c;
-    --accent-soft: #3a2014;
-    --success: #22c55e;
-    --success-soft: #123322;
+    --primary-from: #4a1691;
+    --primary-to: #6c2fc2;
+    /* lighter so text-primary / ring-primary stay readable on dark */
+    --primary: #b597f0;
+    --primary-strong: #2a0b57;
+
+    --accent: #f2b53a;
+    --accent-soft: #33240c;
+    --gold: #f2b53a;
+    --sunny: #f2b53a;
+
+    --success: #4ade80;
+    --success-soft: #10291a;
     --danger: #f87171;
     --danger-soft: #3a1a1d;
-    --shadow-card: 0 4px 24px -6px rgba(0, 0, 0, 0.5);
-    --shadow-soft: 0 12px 32px -12px rgba(159, 103, 255, 0.35);
+
+    --shadow-soft: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -71,18 +84,23 @@
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-on-ink: var(--on-ink);
   --color-brand: var(--brand);
   --color-primary: var(--primary);
   --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
   --color-sunny: var(--sunny);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --font-sans: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -95,13 +113,16 @@
 
 body {
   background-color: var(--background);
-  /* Soft brand-tinted glows so pages feel lively without distracting. */
-  background-image:
-    radial-gradient(48rem 28rem at 100% -10%, rgba(139, 63, 224, 0.1), transparent 70%),
-    radial-gradient(40rem 24rem at -10% 110%, rgba(255, 200, 61, 0.1), transparent 70%);
-  background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Page/section titles get the serif display face for a confident,
+   editorial tone; smaller headings (card titles) stay in the sans. */
+h1,
+h2 {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  letter-spacing: -0.015em;
 }
 
 .gradient-primary {
@@ -109,7 +130,7 @@ body {
 }
 
 .gradient-text {
-  background-image: linear-gradient(135deg, var(--primary-from), var(--primary-to));
+  background-image: linear-gradient(135deg, var(--primary-from), #8a4fd6);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -117,8 +138,19 @@ body {
 
 @media (prefers-color-scheme: dark) {
   .gradient-text {
-    background-image: linear-gradient(135deg, #b98bff, #e0c3ff);
+    background-image: linear-gradient(135deg, #c9b1f7, #f2d38a);
   }
+}
+
+/* Deep plum band with a faint dot texture — used for hero/CTA blocks. */
+.ink-panel {
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(circle at 85% 15%, rgba(100, 36, 184, 0.55), transparent 45%),
+    radial-gradient(circle at 10% 100%, rgba(233, 168, 35, 0.16), transparent 40%),
+    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: auto, auto, 18px 18px;
+  color: var(--on-ink);
 }
 
 .card-shadow {
@@ -131,13 +163,13 @@ body {
 
 /* Clear keyboard focus for every interactive element. */
 :where(button, a, input, select, textarea, [role="button"]):focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--gold) 70%, transparent);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--primary);
-  color: white;
+  background: var(--gold);
+  color: var(--ink);
 }
 
 @keyframes shake {
@@ -150,4 +182,11 @@ body {
 
 .animate-shake {
   animation: shake 0.35s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

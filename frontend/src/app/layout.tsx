@@ -1,16 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
+import { Fraunces, Manrope } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { AiChatWidget } from "@/components/chat/AiChatWidget";
 import { PushNotificationsInit } from "@/components/push/PushNotificationsInit";
 import "./globals.css";
 
-// Nunito's rounded letterforms echo the Pallo! logo and feel friendly to learners.
-const display = Nunito({
+// Serif display face for headings (confident, academic) + a clean,
+// highly legible sans for body text and UI.
+const display = Fraunces({
   variable: "--font-display",
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  subsets: ["latin", "latin-ext"],
+  weight: ["500", "600", "700", "800"],
+});
+
+const body = Manrope({
+  variable: "--font-body",
+  subsets: ["latin", "latin-ext", "cyrillic"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -34,12 +41,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#55199E",
+  themeColor: "#1B1035",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uz" className={`${display.variable} h-full antialiased`}>
+    <html lang="uz" className={`${display.variable} ${body.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
         <PushNotificationsInit />

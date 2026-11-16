@@ -25,7 +25,7 @@ export function PalloLogo({ size = 40, className = "" }: { size?: number; classN
         fontSize="12.5"
         textLength="40"
         lengthAdjust="spacingAndGlyphs"
-        style={{ fontFamily: "var(--font-display), 'Arial Black', sans-serif" }}
+        style={{ fontFamily: "var(--font-body), 'Arial Black', sans-serif" }}
       >
         PALLO!
       </text>

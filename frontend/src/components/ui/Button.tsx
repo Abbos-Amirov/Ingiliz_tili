@@ -3,7 +3,7 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import { motion } from "framer-motion";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "gold";
 type Size = "sm" | "md" | "lg";
 
 type ConflictingProps =
@@ -18,22 +18,22 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, Conf
   size?: Size;
 }
 
-// Primary/danger get a solid "lip" under them so they read as pressable
-// buttons at a glance; the lip collapses on press (see whileTap below).
+// Solid, high-contrast variants so every action is obvious at a glance.
+// "gold" is for buttons that sit on the dark ink panels (hero, CTA).
 const variantClasses: Record<Variant, string> = {
   primary:
-    "gradient-primary text-white shadow-[0_4px_0_0_var(--primary-strong),0_10px_24px_-10px_rgba(85,25,158,0.6)] hover:brightness-110 active:shadow-[0_1px_0_0_var(--primary-strong)]",
+    "gradient-primary text-white shadow-[0_10px_24px_-10px_rgba(58,15,115,0.7)] ring-1 ring-inset ring-white/10 hover:brightness-115 hover:shadow-[0_14px_28px_-10px_rgba(58,15,115,0.75)]",
   secondary:
-    "bg-surface text-primary border-2 border-primary/35 shadow-[0_3px_0_0_color-mix(in_srgb,var(--primary)_25%,transparent)] hover:bg-primary/5 hover:border-primary/60 active:shadow-none",
+    "bg-surface text-foreground border-2 border-foreground/15 hover:border-primary hover:text-primary",
   ghost: "bg-transparent text-primary hover:bg-primary/10",
-  danger:
-    "bg-danger text-white shadow-[0_4px_0_0_#991b1b] hover:brightness-110 active:shadow-[0_1px_0_0_#991b1b]",
+  danger: "bg-danger text-white shadow-[0_10px_24px_-12px_rgba(198,40,40,0.7)] hover:brightness-110",
+  gold: "bg-gold text-[#1b1035] shadow-[0_10px_28px_-10px_rgba(233,168,35,0.7)] hover:brightness-105",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "px-3.5 py-1.5 text-sm rounded-xl",
-  md: "px-5 py-2.5 text-base rounded-xl",
-  lg: "px-8 py-3.5 text-lg rounded-2xl",
+  sm: "px-4 py-1.5 text-sm rounded-xl",
+  md: "px-6 py-2.5 text-[15px] rounded-xl",
+  lg: "px-8 py-3.5 text-base sm:text-lg rounded-2xl",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -41,10 +41,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <motion.button
         ref={ref}
-        whileTap={disabled ? undefined : { y: 3, scale: 0.98 }}
+        whileTap={disabled ? undefined : { scale: 0.97 }}
         whileHover={disabled ? undefined : { y: -1 }}
         disabled={disabled}
-        className={`inline-flex items-center justify-center gap-2 font-bold tracking-tight transition-[filter,background-color,border-color,box-shadow] duration-150 disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none min-h-11 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 font-bold tracking-tight transition-[filter,background-color,border-color,box-shadow,color] duration-200 disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none min-h-11 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         {...props}
       >
         {children}
