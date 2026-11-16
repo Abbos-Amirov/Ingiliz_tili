@@ -108,7 +108,7 @@ const btnStyle: CSSProperties = {
   padding: "12px 20px",
   borderRadius: 10,
   border: "none",
-  background: "#6366f1",
+  background: "#55199e",
   color: "white",
   fontWeight: 600,
   fontSize: 14,

@@ -33,8 +33,8 @@ export function MotivationToast({ signal }: { signal: number }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="rounded-full px-5 py-2.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-indigo-500/30"
-            style={{ background: "linear-gradient(90deg, #22c55e, #6366f1)" }}
+            className="rounded-full px-5 py-2.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-[#55199e]/30"
+            style={{ background: "linear-gradient(90deg, #16a34a, #8b3fe0)" }}
           >
             {current}
           </motion.div>

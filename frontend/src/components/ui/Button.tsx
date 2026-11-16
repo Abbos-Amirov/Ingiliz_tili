@@ -18,19 +18,22 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, Conf
   size?: Size;
 }
 
+// Primary/danger get a solid "lip" under them so they read as pressable
+// buttons at a glance; the lip collapses on press (see whileTap below).
 const variantClasses: Record<Variant, string> = {
   primary:
-    "gradient-primary text-white shadow-md shadow-indigo-500/25 hover:shadow-lg hover:shadow-indigo-500/35",
+    "gradient-primary text-white shadow-[0_4px_0_0_var(--primary-strong),0_10px_24px_-10px_rgba(85,25,158,0.6)] hover:brightness-110 active:shadow-[0_1px_0_0_var(--primary-strong)]",
   secondary:
-    "bg-surface text-foreground border border-border hover:bg-surface-muted",
-  ghost: "bg-transparent text-foreground hover:bg-surface-muted",
-  danger: "bg-danger text-white hover:brightness-105",
+    "bg-surface text-primary border-2 border-primary/35 shadow-[0_3px_0_0_color-mix(in_srgb,var(--primary)_25%,transparent)] hover:bg-primary/5 hover:border-primary/60 active:shadow-none",
+  ghost: "bg-transparent text-primary hover:bg-primary/10",
+  danger:
+    "bg-danger text-white shadow-[0_4px_0_0_#991b1b] hover:brightness-110 active:shadow-[0_1px_0_0_#991b1b]",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-sm rounded-lg",
+  sm: "px-3.5 py-1.5 text-sm rounded-xl",
   md: "px-5 py-2.5 text-base rounded-xl",
-  lg: "px-7 py-3.5 text-lg rounded-2xl",
+  lg: "px-8 py-3.5 text-lg rounded-2xl",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -38,10 +41,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <motion.button
         ref={ref}
-        whileTap={disabled ? undefined : { scale: 0.96 }}
+        whileTap={disabled ? undefined : { y: 3, scale: 0.98 }}
         whileHover={disabled ? undefined : { y: -1 }}
         disabled={disabled}
-        className={`inline-flex items-center justify-center gap-2 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-11 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 font-bold tracking-tight transition-[filter,background-color,border-color,box-shadow] duration-150 disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none min-h-11 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         {...props}
       >
         {children}

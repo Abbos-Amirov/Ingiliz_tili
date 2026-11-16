@@ -155,7 +155,7 @@ export function SentenceBuilder({
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="absolute left-1/2 -translate-x-1/2 -bottom-6 z-10 w-[92%] sm:w-auto sm:max-w-sm gradient-primary text-white rounded-2xl px-4 py-2.5 shadow-lg shadow-indigo-500/30 text-xs font-semibold text-center leading-snug hover:brightness-105 transition-[filter]"
+              className="absolute left-1/2 -translate-x-1/2 -bottom-6 z-10 w-[92%] sm:w-auto sm:max-w-sm gradient-primary text-white rounded-2xl px-4 py-2.5 shadow-lg shadow-[#55199e]/30 text-xs font-semibold text-center leading-snug hover:brightness-105 transition-[filter]"
             >
               {td.triggerBtn}
             </motion.button>

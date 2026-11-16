@@ -1,13 +1,13 @@
 {
-  "name": "English✦Learn",
-  "short_name": "EnglishLearn",
-  "description": "Koreys tili orqali ingliz tilini o'rganish ilovasi — so'z moslashtirish, gap tuzish va spaced repetition.",
+  "name": "Pallo! English",
+  "short_name": "Pallo!",
+  "description": "Pallo! o'quv markazi — koreys va o'zbek tili orqali ingliz tilini o'rganish ilovasi — so'z moslashtirish, gap tuzish va spaced repetition.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f8f7ff",
-  "theme_color": "#6366F1",
+  "background_color": "#f8f5fe",
+  "theme_color": "#55199E",
   "lang": "uz",
   "icons": [
     {

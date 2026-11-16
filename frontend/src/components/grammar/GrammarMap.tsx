@@ -5,7 +5,7 @@ import type { Difficulty, GrammarTopic } from "@/lib/types";
 import { useLocale } from "@/hooks/useT";
 
 const LEVEL_Y: Record<Difficulty, number> = { beginner: 36, intermediate: 118, advanced: 200 };
-const LEVEL_COLOR: Record<Difficulty, string> = { beginner: "#22c55e", intermediate: "#6366f1", advanced: "#f97316" };
+const LEVEL_COLOR: Record<Difficulty, string> = { beginner: "#22c55e", intermediate: "#8b3fe0", advanced: "#ea580c" };
 const LEVELS: Difficulty[] = ["beginner", "intermediate", "advanced"];
 
 /** A lightweight SVG diagram: topics as nodes grouped by level, connected by

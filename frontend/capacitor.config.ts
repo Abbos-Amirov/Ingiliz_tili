@@ -8,7 +8,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // exception can be dropped.
 const config: CapacitorConfig = {
   appId: "uz.abbosamirov.englishlearn",
-  appName: "English✦Learn",
+  appName: "Pallo! English",
   webDir: "www",
   server: {
     url: "http://38.247.134.248:5050",
@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 1200,
-      backgroundColor: "#6366F1",
+      backgroundColor: "#F8F5FE",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,

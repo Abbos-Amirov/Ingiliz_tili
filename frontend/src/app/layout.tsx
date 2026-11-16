@@ -1,29 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { AiChatWidget } from "@/components/chat/AiChatWidget";
 import { PushNotificationsInit } from "@/components/push/PushNotificationsInit";
 import "./globals.css";
 
-const display = Plus_Jakarta_Sans({
+// Nunito's rounded letterforms echo the Pallo! logo and feel friendly to learners.
+const display = Nunito({
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
-  title: "English✦Learn — koreys tili orqali ingliz tilini o'rganing",
+  title: "Pallo! English — ingliz tilini zavq bilan o'rganing",
   description:
-    "So'z moslashtirish va gap tuzish orqali ingliz tilini koreys tili yordamida interaktiv o'rganish ilovasi.",
+    "Pallo! o'quv markazining ilovasi: so'z moslashtirish va gap tuzish orqali ingliz tilini interaktiv o'rganing.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "English✦Learn",
+    title: "Pallo!",
   },
   icons: {
     icon: [
+      { url: "/pallo-logo.svg", type: "image/svg+xml" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
@@ -32,7 +34,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#6366F1",
+  themeColor: "#55199E",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { PalloLogo } from "@/components/ui/PalloLogo";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -41,10 +42,17 @@ export function Navbar() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border bg-surface/85 backdrop-blur-md shadow-[0_1px_0_0_rgba(85,25,158,0.06)]">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 flex items-center justify-between h-16">
-        <Link href="/" className="font-extrabold text-lg gradient-text">
-          English✦Learn
+        <Link href="/" className="flex items-center gap-2.5 group" aria-label="Pallo!">
+          <PalloLogo
+            size={40}
+            className="shrink-0 drop-shadow-[0_4px_10px_rgba(85,25,158,0.35)] transition-transform group-hover:rotate-12"
+          />
+          <span className="flex flex-col leading-none">
+            <span className="font-black text-lg tracking-tight gradient-text">PALLO!</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">English</span>
+          </span>
         </Link>
 
         {ready && user && (
@@ -55,7 +63,7 @@ export function Navbar() {
                 href={l.href}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive(l.activeMatch)
-                    ? "bg-surface-muted text-primary"
+                    ? "bg-primary/10 text-primary font-bold"
                     : "text-foreground/70 hover:text-foreground hover:bg-surface-muted"
                 }`}
               >
@@ -81,7 +89,7 @@ export function Navbar() {
             ready && (
               <Link
                 href="/login"
-                className="text-sm font-semibold gradient-primary text-white px-4 py-2 rounded-lg"
+                className="text-sm font-bold gradient-primary text-white px-4 py-2 rounded-xl shadow-[0_3px_0_0_var(--primary-strong)] hover:brightness-110 active:translate-y-0.5 active:shadow-none transition"
               >
                 {t.login}
               </Link>
@@ -127,7 +135,7 @@ export function Navbar() {
                   key={l.href}
                   href={l.href}
                   className={`px-4 py-3 rounded-lg text-sm font-medium ${
-                    isActive(l.activeMatch) ? "bg-surface-muted text-primary" : "text-foreground/70"
+                    isActive(l.activeMatch) ? "bg-primary/10 text-primary font-bold" : "text-foreground/70"
                   }`}
                 >
                   {l.label}
