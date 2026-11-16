@@ -1,10 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { PalloLogo } from "@/components/ui/PalloLogo";
-import { Asterisk, DotGrid, Floating, HalfMoon, Plus, QuarterArc, Ring, Squiggle } from "@/components/ui/Shapes";
+import { Asterisk, DotGrid, Floating, HalfMoon, QuarterArc, Ring } from "@/components/ui/Shapes";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 
@@ -33,59 +33,6 @@ function FeatureBadge({ index }: { index: number }) {
   return variants[index % variants.length];
 }
 
-/* Decorative stack of word cards on the hero's right side. */
-function HeroCards() {
-  return (
-    <div className="relative mx-auto h-[300px] w-[300px] sm:h-[340px] sm:w-[340px]">
-      <Floating className="-left-6 top-6" distance={10}>
-        <Ring size={64} stroke={6} color="rgba(233,168,35,0.9)" />
-      </Floating>
-      <Floating className="-right-4 -top-2" spin duration={8}>
-        <Asterisk size={56} outline color="rgba(255,255,255,0.45)" />
-      </Floating>
-      <Floating className="right-2 -bottom-4" delay={1}>
-        <DotGrid cols={5} rows={4} gap={12} color="rgba(255,255,255,0.3)" />
-      </Floating>
-
-      <motion.div
-        initial={{ opacity: 0, rotate: -14, y: 30 }}
-        animate={{ opacity: 1, rotate: -8, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute left-0 top-2 w-52 rounded-2xl bg-ink-soft/90 border border-white/10 p-5 shadow-2xl backdrop-blur"
-      >
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold">한국어</p>
-        <p className="mt-2 text-2xl font-bold text-on-ink">안녕하세요</p>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, rotate: 12, y: 30 }}
-        animate={{ opacity: 1, rotate: 5, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute right-0 top-28 w-56 rounded-2xl bg-white p-5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]"
-      >
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#9a5b00]">English</p>
-          <span className="h-7 w-7 rounded-full bg-[#55199e] flex items-center justify-center">
-            <Asterisk size={14} color="#fff" />
-          </span>
-        </div>
-        <p className="mt-2 font-serif text-3xl font-bold text-[#1b1035]">Hello!</p>
-        <Squiggle width={90} stroke={6} color="#e9a823" className="mt-1" />
-        <p className="mt-2 text-sm font-semibold text-[#1b1035]/60">Salom!</p>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.6 }}
-        className="absolute left-6 bottom-2"
-      >
-        <PalloLogo size={76} className="drop-shadow-[0_16px_30px_rgba(0,0,0,0.5)]" />
-      </motion.div>
-    </div>
-  );
-}
-
 export default function Home() {
   const { user, ready } = useAuth();
   const t = useT("home");
@@ -107,22 +54,37 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* ───────── Hero ───────── */}
+      {/* ───────── Hero ─────────
+          The classroom photo is shown whole (16:9, nothing laid over it) and
+          the copy sits on the ink panel below it, so no part of the photo is
+          covered on any screen size. */}
       <section className="px-3 sm:px-6 pt-4 sm:pt-6">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] ink-panel">
-          {/* background shapes */}
-          <QuarterArc size={220} color="rgba(233,168,35,0.10)" className="absolute -left-10 -bottom-10 rotate-90" />
-          <Floating className="left-[46%] top-10 hidden md:block" delay={0.5}>
-            <Plus size={18} color="rgba(233,168,35,0.8)" />
-          </Floating>
-          <Floating className="left-8 top-8" delay={1.2} distance={6}>
-            <Plus size={14} color="rgba(255,255,255,0.35)" />
-          </Floating>
+          <motion.div
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="relative aspect-[16/9]"
+          >
+            <Image
+              src="/images/pallo-classroom.jpg"
+              alt="Pallo! o'quv markazida talabalar ingliz tilini birga o'rganmoqda"
+              fill
+              priority
+              unoptimized
+              sizes="(min-width: 1152px) 1152px, 100vw"
+              className="object-cover"
+            />
+            {/* thin fade so the photo melts into the panel below */}
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink to-transparent" />
+          </motion.div>
 
-          <div className="relative grid items-center gap-10 px-6 py-12 sm:px-12 sm:py-16 lg:grid-cols-[1.15fr_1fr]">
+          <QuarterArc size={200} color="rgba(233,168,35,0.10)" className="absolute -right-10 -bottom-10" />
+
+          <div className="relative grid gap-6 px-6 pb-10 pt-6 sm:px-12 sm:pb-12 lg:grid-cols-[1.1fr_1fr] lg:items-end lg:gap-12">
             <div className="text-center lg:text-left">
               <motion.p
-                {...fadeUp(0)}
+                {...fadeUp(0.1)}
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-gold"
               >
                 <Asterisk size={12} color="var(--gold)" />
@@ -130,24 +92,22 @@ export default function Home() {
               </motion.p>
 
               <motion.h1
-                {...fadeUp(0.08)}
-                className="mt-6 text-[2.5rem] leading-[1.12] sm:text-6xl font-bold text-on-ink text-balance"
+                {...fadeUp(0.18)}
+                className="mt-5 text-[2.5rem] leading-[1.1] sm:text-5xl lg:text-[3.5rem] font-bold text-on-ink text-balance"
               >
-                {t.titlePrefix}{" "}
-                <span className="italic text-gold">{t.titleHighlight}</span>{" "}
+                {t.titlePrefix} <span className="italic text-gold">{t.titleHighlight}</span>{" "}
                 {t.titleSuffix}
               </motion.h1>
+            </div>
 
-              <motion.p
-                {...fadeUp(0.16)}
-                className="mt-7 max-w-xl text-base sm:text-lg leading-relaxed text-on-ink/70 mx-auto lg:mx-0"
-              >
+            <div className="text-center lg:text-left">
+              <motion.p {...fadeUp(0.26)} className="text-base sm:text-lg leading-relaxed text-on-ink/75">
                 {t.subtitle}
               </motion.p>
 
               <motion.div
-                {...fadeUp(0.24)}
-                className="mt-9 flex flex-wrap items-center justify-center lg:justify-start gap-3"
+                {...fadeUp(0.34)}
+                className="mt-7 flex flex-wrap items-center justify-center lg:justify-start gap-3"
               >
                 {primaryCta}
                 {!(ready && user) && (
@@ -162,10 +122,6 @@ export default function Home() {
                   </Link>
                 )}
               </motion.div>
-            </div>
-
-            <div className="relative hidden lg:block">
-              <HeroCards />
             </div>
           </div>
         </div>
