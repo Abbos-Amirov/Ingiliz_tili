@@ -55,34 +55,37 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col">
       {/* ───────── Hero ─────────
-          The classroom photo is shown whole (16:9, nothing laid over it) and
-          the copy sits on the ink panel below it, so no part of the photo is
-          covered on any screen size. */}
+          The Pallo! hall photo (portrait, ~1211×1299) is always shown whole at
+          its own aspect ratio with nothing laid over it: beside the copy on
+          desktop, above it on phones. */}
       <section className="px-3 sm:px-6 pt-4 sm:pt-6">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] ink-panel">
-          <motion.div
-            initial={{ opacity: 0, scale: 1.03 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="relative aspect-[16/9]"
-          >
-            <Image
-              src="/images/pallo-classroom.jpg"
-              alt="Pallo! o'quv markazida talabalar ingliz tilini birga o'rganmoqda"
-              fill
-              priority
-              unoptimized
-              sizes="(min-width: 1152px) 1152px, 100vw"
-              className="object-cover"
-            />
-            {/* thin fade so the photo melts into the panel below */}
-            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink to-transparent" />
-          </motion.div>
+          <QuarterArc size={220} color="rgba(233,168,35,0.10)" className="absolute -left-10 -bottom-10 rotate-90" />
+          <Floating className="left-8 top-8 hidden lg:block" delay={1.2} distance={6}>
+            <Ring size={34} stroke={8} color="rgba(233,168,35,0.6)" />
+          </Floating>
 
-          <QuarterArc size={200} color="rgba(233,168,35,0.10)" className="absolute -right-10 -bottom-10" />
+          <div className="relative grid lg:grid-cols-[1fr_1fr] lg:items-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              className="relative order-first lg:order-last p-3 sm:p-4 lg:p-5"
+            >
+              <div className="relative aspect-[1211/1299] overflow-hidden rounded-[1.5rem] shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]">
+                <Image
+                  src="/images/pallo-hall.jpg"
+                  alt="Pallo! o'quv markazi zalida talabalar ingliz tilini birga o'rganmoqda"
+                  fill
+                  priority
+                  unoptimized
+                  sizes="(min-width: 1024px) 576px, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            </motion.div>
 
-          <div className="relative grid gap-6 px-6 pb-10 pt-6 sm:px-12 sm:pb-12 lg:grid-cols-[1.1fr_1fr] lg:items-end lg:gap-12">
-            <div className="text-center lg:text-left">
+            <div className="px-6 pb-10 pt-4 sm:px-12 lg:py-14 lg:pr-6 text-center lg:text-left">
               <motion.p
                 {...fadeUp(0.1)}
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-gold"
@@ -93,21 +96,22 @@ export default function Home() {
 
               <motion.h1
                 {...fadeUp(0.18)}
-                className="mt-5 text-[2.5rem] leading-[1.1] sm:text-5xl lg:text-[3.5rem] font-bold text-on-ink text-balance"
+                className="mt-6 text-[2.5rem] leading-[1.1] sm:text-5xl lg:text-[3.6rem] font-bold text-on-ink text-balance"
               >
                 {t.titlePrefix} <span className="italic text-gold">{t.titleHighlight}</span>{" "}
                 {t.titleSuffix}
               </motion.h1>
-            </div>
 
-            <div className="text-center lg:text-left">
-              <motion.p {...fadeUp(0.26)} className="text-base sm:text-lg leading-relaxed text-on-ink/75">
+              <motion.p
+                {...fadeUp(0.26)}
+                className="mt-6 text-base sm:text-lg leading-relaxed text-on-ink/75 max-w-xl mx-auto lg:mx-0"
+              >
                 {t.subtitle}
               </motion.p>
 
               <motion.div
                 {...fadeUp(0.34)}
-                className="mt-7 flex flex-wrap items-center justify-center lg:justify-start gap-3"
+                className="mt-9 flex flex-wrap items-center justify-center lg:justify-start gap-3"
               >
                 {primaryCta}
                 {!(ready && user) && (
