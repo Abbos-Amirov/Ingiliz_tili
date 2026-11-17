@@ -50,40 +50,57 @@ const uz = {
     nextGroup: "Keyingi guruh →",
   },
   home: {
-    titlePrefix: "Koreys tili orqali",
-    titleHighlight: "ingliz tilini",
-    titleSuffix: "o'rganing",
-    subtitle:
-      "So'z moslashtirish, gap tuzish va ilmiy asoslangan takrorlash tizimi bilan so'zlarni uzoq muddatli xotirada mustahkamlang.",
-    eyebrow: "Pallo! o'quv markazi",
-    featuresEyebrow: "Qanday o'rganamiz",
-    featuresTitle: "Har bir dars — aniq natija sari bir qadam",
-    ctaTitle: "Bugun birinchi qadamni qo'ying",
+    centerName: "PALLO! ingliz tili o'quv markazi",
+    tagline: "Yorqin kelajak sari birinchi qadamingiz.",
     startLearning: "O'rganishni boshlash",
     register: "Ro'yxatdan o'tish",
     login: "Kirish",
-    features: [
-      {
-        emoji: "🧩",
-        title: "So'z moslashtirish",
-        desc: "Ingliz va koreys so'zlarni juftlashtiring, chiroyli animatsiyalar bilan mustahkamlang.",
+    stats: [
+      { value: "5,000+", valueShort: "5,000+", label: "Mamnun o'quvchilar",
       },
-      {
-        emoji: "🧠",
-        title: "Gap tuzish",
-        desc: "Aralashtirilgan so'zlardan to'g'ri gap tuzing, xatolarni tushuntirish bilan o'rganing.",
+      { value: "10+ yil", valueShort: "10+", label: "Tajriba",
       },
-      {
-        emoji: "🔁",
-        title: "Spaced Repetition",
-        desc: "Miya ilmi asosidagi takrorlash tizimi — so'zlar aynan kerakli vaqtda qaytadan chiqadi.",
+      { value: "98%", valueShort: "98%", label: "Mamnuniyat darajasi",
       },
-      {
-        emoji: "🔥",
-        title: "Streak va progress",
-        desc: "Kunlik ketma-ketlik va statistikalar bilan motivatsiyangizni saqlang.",
+      { value: "Cheonan", valueShort: "Cheonan", label: "Bizning manzil",
       },
     ],
+    statsShort: [
+      "O'quvchilar",
+      "Yil",
+      "Mamnuniyat",
+    ],
+    coursesEyebrow: "Kurslarimiz",
+    coursesTitle: "Maqsadingizga mos kursni toping",
+    coursesSubtitle: "Kundalik suhbatdan biznes ingliz tiligacha — hammasi bizda!",
+    courses: [
+      {
+        title: "Gapirish",
+        desc: "Suhbatda o'zingizga ishonchni oshiring.",
+      },
+      {
+        title: "Tinglash",
+        desc: "Subtitrsiz ko'proq tushuning.",
+      },
+      {
+        title: "Grammatika",
+        desc: "Mustahkam poydevor quring.",
+      },
+      {
+        title: "Biznes ingliz tili",
+        desc: "Professional muloqot qiling.",
+      },
+    ],
+    viewAllCourses: "Barcha kurslar",
+    aboutEyebrow: "PALLO! haqida",
+    aboutTitle: "Bu shunchaki dars emas — bu jamoa",
+    aboutBody: "PALLO! — ingliz tilini zavq bilan o'rganadigan, ajoyib insonlar bilan tanishadigan va maqsadlaringizga erishadigan joy.",
+    aboutPoints: [
+      "Samimiy o'qituvchilar",
+      "Zamonaviy o'quv muhiti",
+      "Har bir o'quvchiga e'tibor",
+    ],
+    learnMore: "Batafsil",
   },
   auth: {
     loginTitle: "Xush kelibsiz",
@@ -764,40 +781,57 @@ const en = {
     nextGroup: "Next group →",
   },
   home: {
-    titlePrefix: "Learn",
-    titleHighlight: "English",
-    titleSuffix: "through Korean",
-    subtitle:
-      "Reinforce vocabulary in long-term memory with word matching, sentence building, and a science-based spaced repetition system.",
-    eyebrow: "Pallo! learning centre",
-    featuresEyebrow: "How you learn",
-    featuresTitle: "Every lesson is a clear step forward",
-    ctaTitle: "Take your first step today",
-    startLearning: "Start learning",
+    centerName: "PALLO! English Learning Center",
+    tagline: "Your first step to a brighter future.",
+    startLearning: "Start Learning",
     register: "Sign up",
     login: "Log in",
-    features: [
-      {
-        emoji: "🧩",
-        title: "Word Matching",
-        desc: "Pair English and Korean words together, reinforced with beautiful animations.",
+    stats: [
+      { value: "5,000+", valueShort: "5,000+", label: "Happy Students",
       },
-      {
-        emoji: "🧠",
-        title: "Sentence Building",
-        desc: "Build correct sentences from shuffled words, learning from explained mistakes.",
+      { value: "10+ Years", valueShort: "10+", label: "Of Experience",
       },
-      {
-        emoji: "🔁",
-        title: "Spaced Repetition",
-        desc: "A brain-science-based review system — words resurface exactly when you need them.",
+      { value: "98%", valueShort: "98%", label: "Satisfaction Rate",
       },
-      {
-        emoji: "🔥",
-        title: "Streaks & Progress",
-        desc: "Keep your motivation up with daily streaks and detailed statistics.",
+      { value: "Cheonan", valueShort: "Cheonan", label: "Our Location",
       },
     ],
+    statsShort: [
+      "Students",
+      "Years",
+      "Satisfaction",
+    ],
+    coursesEyebrow: "Our Courses",
+    coursesTitle: "Find the Right Course for Your Goal",
+    coursesSubtitle: "From daily conversation to business English, we've got you!",
+    courses: [
+      {
+        title: "Speaking",
+        desc: "Boost your confidence in conversation.",
+      },
+      {
+        title: "Listening",
+        desc: "Understand more, without subtitles.",
+      },
+      {
+        title: "Grammar",
+        desc: "Build a strong foundation.",
+      },
+      {
+        title: "Business English",
+        desc: "Communicate professionally.",
+      },
+    ],
+    viewAllCourses: "View All Courses",
+    aboutEyebrow: "About PALLO!",
+    aboutTitle: "More Than a Class, A Community",
+    aboutBody: "PALLO! is a place where you can learn English with fun, meet great people, and achieve your goals.",
+    aboutPoints: [
+      "Friendly Teachers",
+      "Modern Learning Space",
+      "Personalized Care",
+    ],
+    learnMore: "Learn More",
   },
   auth: {
     loginTitle: "Welcome back",
@@ -1478,40 +1512,57 @@ const ko = {
     nextGroup: "다음 그룹 →",
   },
   home: {
-    titlePrefix: "한국어로",
-    titleHighlight: "영어",
-    titleSuffix: "배우기",
-    subtitle:
-      "단어 매칭, 문장 만들기, 그리고 과학적 근거에 기반한 간격 반복 시스템으로 단어를 장기 기억에 정착시키세요.",
-    eyebrow: "Pallo! 학습 센터",
-    featuresEyebrow: "학습 방법",
-    featuresTitle: "모든 수업이 확실한 한 걸음입니다",
-    ctaTitle: "오늘 첫 걸음을 내딛으세요",
+    centerName: "PALLO! 영어 학습 센터",
+    tagline: "더 밝은 미래를 향한 첫걸음.",
     startLearning: "학습 시작하기",
     register: "회원가입",
     login: "로그인",
-    features: [
-      {
-        emoji: "🧩",
-        title: "단어 매칭",
-        desc: "영어와 한국어 단어를 짝지어 보세요. 아름다운 애니메이션으로 기억에 남깁니다.",
+    stats: [
+      { value: "5,000+", valueShort: "5,000+", label: "행복한 수강생",
       },
-      {
-        emoji: "🧠",
-        title: "문장 만들기",
-        desc: "섞인 단어로 올바른 문장을 만들어보세요. 오류 설명과 함께 배웁니다.",
+      { value: "10년+", valueShort: "10+", label: "교육 경력",
       },
-      {
-        emoji: "🔁",
-        title: "간격 반복 학습",
-        desc: "뇌과학에 기반한 복습 시스템 — 단어가 꼭 필요한 순간에 다시 나타납니다.",
+      { value: "98%", valueShort: "98%", label: "만족도",
       },
-      {
-        emoji: "🔥",
-        title: "연속 학습과 진행 상황",
-        desc: "매일의 연속 학습과 통계로 동기부여를 유지하세요.",
+      { value: "천안", valueShort: "천안", label: "센터 위치",
       },
     ],
+    statsShort: [
+      "수강생",
+      "년",
+      "만족도",
+    ],
+    coursesEyebrow: "교육 과정",
+    coursesTitle: "목표에 맞는 과정을 찾아보세요",
+    coursesSubtitle: "일상 회화부터 비즈니스 영어까지, 모두 준비되어 있어요!",
+    courses: [
+      {
+        title: "스피킹",
+        desc: "자신 있게 대화하세요.",
+      },
+      {
+        title: "리스닝",
+        desc: "자막 없이 더 많이 이해하세요.",
+      },
+      {
+        title: "문법",
+        desc: "탄탄한 기초를 쌓으세요.",
+      },
+      {
+        title: "비즈니스 영어",
+        desc: "전문적으로 소통하세요.",
+      },
+    ],
+    viewAllCourses: "전체 과정 보기",
+    aboutEyebrow: "PALLO! 소개",
+    aboutTitle: "수업 그 이상, 함께하는 커뮤니티",
+    aboutBody: "PALLO!는 즐겁게 영어를 배우고, 좋은 사람들을 만나고, 목표를 이루는 곳입니다.",
+    aboutPoints: [
+      "친절한 선생님",
+      "현대적인 학습 공간",
+      "맞춤형 관리",
+    ],
+    learnMore: "자세히 보기",
   },
   auth: {
     loginTitle: "다시 오신 것을 환영합니다",

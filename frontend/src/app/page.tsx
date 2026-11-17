@@ -3,186 +3,310 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
-import { Asterisk, DotGrid, Floating, HalfMoon, QuarterArc, Ring } from "@/components/ui/Shapes";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 
+// Pallo! landing page — built from the centre's own mockup (desktop + mobile).
+// The slogan stays in English in every locale (it's the brand line painted
+// on the centre's wall); everything else follows the language switcher.
+
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 16 },
+  initial: { opacity: 0, y: 18 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
-/* One geometric badge per feature — each card gets its own shape. */
-function FeatureBadge({ index }: { index: number }) {
-  const variants = [
-    <div key="0" className="relative h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
-      <Asterisk size={28} color="var(--brand)" />
-    </div>,
-    <div key="1" className="relative h-14 w-14 rounded-2xl bg-accent-soft flex items-center justify-center rotate-6">
-      <Ring size={26} stroke={14} color="var(--gold)" />
-    </div>,
-    <div key="2" className="relative h-14 w-14 rounded-2xl bg-ink flex items-end justify-center overflow-hidden">
-      <HalfMoon size={40} color="var(--gold)" />
-    </div>,
-    <div key="3" className="relative h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-      <QuarterArc size={30} color="var(--brand)" className="translate-x-1 translate-y-1" />
-    </div>,
-  ];
-  return variants[index % variants.length];
+// Lucide-style line icons (24×24, stroke = currentColor).
+const ICONS = {
+  users: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  trophy: (
+    <>
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </>
+  ),
+  star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+  pin: (
+    <>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </>
+  ),
+  chat: (
+    <>
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+      <path d="M8 12h.01" />
+      <path d="M12 12h.01" />
+      <path d="M16 12h.01" />
+    </>
+  ),
+  headphones: (
+    <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />
+  ),
+  book: (
+    <>
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <rect width="20" height="14" x="2" y="7" rx="2" ry="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+    </>
+  ),
+  check: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  arrow: (
+    <>
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </>
+  ),
+};
+
+function Icon({ name, className = "h-6 w-6" }: { name: keyof typeof ICONS; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      {ICONS[name]}
+    </svg>
+  );
+}
+
+const STAT_ICONS = ["users", "trophy", "star", "pin"] as const;
+const COURSE_ICONS = ["chat", "headphones", "book", "briefcase"] as const;
+
+function PillLink({
+  href,
+  children,
+  variant = "solid",
+  className = "",
+}: {
+  href: string;
+  children: React.ReactNode;
+  variant?: "solid" | "outline" | "white";
+  className?: string;
+}) {
+  const styles = {
+    solid: "bg-brand text-white hover:brightness-110 shadow-[0_12px_24px_-12px_rgba(85,25,158,0.8)]",
+    outline: "border-2 border-brand/30 text-brand hover:border-brand bg-surface/70 dark:text-primary dark:border-primary/40",
+    white: "bg-white text-[#55199e] hover:bg-white/90",
+  }[variant];
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-all hover:-translate-y-0.5 ${styles} ${className}`}
+    >
+      {children}
+    </Link>
+  );
 }
 
 export default function Home() {
   const { user, ready } = useAuth();
   const t = useT("home");
-
-  const primaryCta =
-    ready && user ? (
-      <Link href="/learn/match">
-        <Button size="lg" variant="gold">
-          {t.startLearning} <span aria-hidden>→</span>
-        </Button>
-      </Link>
-    ) : (
-      <Link href="/register">
-        <Button size="lg" variant="gold">
-          {t.register} <span aria-hidden>→</span>
-        </Button>
-      </Link>
-    );
+  const loggedIn = ready && !!user;
+  const startHref = loggedIn ? "/lessons" : "/register";
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* ───────── Hero ─────────
-          The Pallo! hall photo (portrait, ~1211×1299) is always shown whole at
-          its own aspect ratio with nothing laid over it: beside the copy on
-          desktop, above it on phones. */}
-      <section className="px-3 sm:px-6 pt-4 sm:pt-6">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] ink-panel">
-          <QuarterArc size={220} color="rgba(233,168,35,0.10)" className="absolute -left-10 -bottom-10 rotate-90" />
-          <Floating className="left-8 top-8 hidden lg:block" delay={1.2} distance={6}>
-            <Ring size={34} stroke={8} color="rgba(233,168,35,0.6)" />
-          </Floating>
+    <div className="flex-1 bg-lavender/60">
+      {/* ───────── Hero ───────── */}
+      <section className="relative overflow-hidden bg-lavender">
+        {/* Photo: right ~60% on desktop, the lower part of the hero on phones;
+            a lavender fade keeps the headline readable where they meet. */}
+        <div className="absolute inset-x-0 bottom-0 top-[44%] sm:top-[38%] lg:inset-y-0 lg:left-auto lg:right-0 lg:w-[62%]">
+          <Image
+            src="/images/pallo-classroom.jpg"
+            alt="Pallo! o'quv markazida talabalar va o'qituvchi"
+            fill
+            priority
+            unoptimized
+            sizes="(min-width: 1024px) 62vw, 100vw"
+            className="object-cover object-[62%_center]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-lavender via-lavender/20 to-transparent lg:hidden" />
+          <div className="absolute inset-0 hidden lg:block bg-[linear-gradient(90deg,var(--lavender)_0%,color-mix(in_srgb,var(--lavender)_88%,transparent)_22%,color-mix(in_srgb,var(--lavender)_35%,transparent)_40%,transparent_55%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-lavender/80 to-transparent" />
+        </div>
 
-          <div className="relative grid lg:grid-cols-[1fr_1fr] lg:items-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 1.03 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-              className="relative order-first lg:order-last p-3 sm:p-4 lg:p-5"
+        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 pt-10 pb-[300px] sm:pb-[340px] lg:pt-20 lg:pb-40 lg:min-h-[600px]">
+          <div className="max-w-xl">
+            {/* small burst doodle, as in the mockup */}
+            <svg viewBox="0 0 40 40" className="hidden sm:block h-9 w-9 -ml-8 mb-1 text-brand dark:text-primary" aria-hidden>
+              <path d="M8 30 L2 22 M14 24 L10 12 M22 22 L22 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" />
+            </svg>
+            <motion.h1
+              {...fadeUp(0)}
+              className="font-sans text-[2.6rem] leading-[1.05] sm:text-6xl lg:text-[4.2rem] font-extrabold tracking-tight text-foreground"
             >
-              <div className="relative aspect-[1211/1299] overflow-hidden rounded-[1.5rem] shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]">
-                <Image
-                  src="/images/pallo-hall.jpg"
-                  alt="Pallo! o'quv markazi zalida talabalar ingliz tilini birga o'rganmoqda"
-                  fill
-                  priority
-                  unoptimized
-                  sizes="(min-width: 1024px) 576px, 100vw"
-                  className="object-cover"
-                />
-              </div>
+              Learn English.
+              <br />
+              Grow{" "}
+              <span className="bg-gradient-to-r from-[#55199e] to-[#8b3fe0] bg-clip-text text-transparent dark:from-[#b597f0] dark:to-[#d9c4ff]">
+                Together.
+              </span>
+            </motion.h1>
+            <motion.p {...fadeUp(0.1)} className="mt-5 text-base sm:text-lg leading-relaxed text-foreground/75">
+              {t.centerName}
+              <br />
+              {t.tagline}
+            </motion.p>
+            <motion.div {...fadeUp(0.2)} className="mt-7 flex flex-wrap items-center gap-3">
+              <PillLink href={startHref}>
+                {t.startLearning} <Icon name="arrow" className="h-4 w-4" />
+              </PillLink>
+              {!loggedIn && ready && (
+                <PillLink href="/login" variant="outline">
+                  {t.login}
+                </PillLink>
+              )}
             </motion.div>
-
-            <div className="px-6 pb-10 pt-4 sm:px-12 lg:py-14 lg:pr-6 text-center lg:text-left">
-              <motion.p
-                {...fadeUp(0.1)}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-gold"
-              >
-                <Asterisk size={12} color="var(--gold)" />
-                {t.eyebrow}
-              </motion.p>
-
-              <motion.h1
-                {...fadeUp(0.18)}
-                className="mt-6 text-[2.5rem] leading-[1.1] sm:text-5xl lg:text-[3.6rem] font-bold text-on-ink text-balance"
-              >
-                {t.titlePrefix} <span className="italic text-gold">{t.titleHighlight}</span>{" "}
-                {t.titleSuffix}
-              </motion.h1>
-
-              <motion.p
-                {...fadeUp(0.26)}
-                className="mt-6 text-base sm:text-lg leading-relaxed text-on-ink/75 max-w-xl mx-auto lg:mx-0"
-              >
-                {t.subtitle}
-              </motion.p>
-
-              <motion.div
-                {...fadeUp(0.34)}
-                className="mt-9 flex flex-wrap items-center justify-center lg:justify-start gap-3"
-              >
-                {primaryCta}
-                {!(ready && user) && (
-                  <Link href="/login">
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      className="!bg-white/5 !text-on-ink !border-white/25 hover:!border-white/60"
-                    >
-                      {t.login}
-                    </Button>
-                  </Link>
-                )}
-              </motion.div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* ───────── Features ───────── */}
-      <section className="relative px-4 sm:px-6 pt-20 pb-16">
-        <Floating className="right-[8%] top-12 hidden sm:block" spin duration={7}>
-          <Asterisk size={40} outline color="var(--gold)" />
-        </Floating>
-        <Floating className="left-[6%] top-28 hidden sm:block" delay={0.8}>
-          <DotGrid cols={4} rows={4} color="color-mix(in srgb, var(--brand) 30%, transparent)" />
-        </Floating>
+      {/* ───────── Stats (overlaps the hero) ───────── */}
+      <section className="relative z-10 -mt-20 lg:-mt-16 px-4 sm:px-8">
+        <motion.div
+          {...fadeUp(0.3)}
+          className="mx-auto grid max-w-5xl grid-cols-3 lg:grid-cols-4 gap-2 rounded-3xl bg-surface px-3 py-5 sm:px-8 sm:py-6 shadow-[0_24px_50px_-24px_rgba(27,16,53,0.35)] ring-1 ring-border"
+        >
+          {t.stats.map((s, i) => (
+            <div
+              key={s.label}
+              className={`flex flex-col items-center gap-1.5 text-center lg:flex-row lg:gap-3 lg:text-left ${i === 3 ? "hidden lg:flex" : ""}`}
+            >
+              <span className="text-brand dark:text-primary">
+                <Icon name={STAT_ICONS[i]} className="h-7 w-7" />
+              </span>
+              <div>
+                <p className="text-lg sm:text-xl font-extrabold leading-tight">
+                  <span className="lg:hidden">{s.valueShort}</span>
+                  <span className="hidden lg:inline">{s.value}</span>
+                </p>
+                <p className="text-xs sm:text-sm text-foreground/60">
+                  <span className="lg:hidden">{t.statsShort[i] ?? s.label}</span>
+                  <span className="hidden lg:inline">{s.label}</span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </section>
 
-        <div className="mx-auto max-w-5xl">
-          <div className="text-center mb-12">
-            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-accent">
-              <span className="h-px w-8 bg-accent/50" />
-              {t.featuresEyebrow}
-              <span className="h-px w-8 bg-accent/50" />
+      {/* ───────── Courses ───────── */}
+      <section className="px-5 sm:px-8 pt-14 sm:pt-20 pb-12">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.85fr_2fr] lg:items-center">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-bold text-brand dark:text-primary">
+              <span className="h-0.5 w-6 rounded bg-current" />
+              {t.coursesEyebrow}
             </p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-bold max-w-2xl mx-auto text-balance">{t.featuresTitle}</h2>
+            <h2 className="mt-2 font-sans text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">{t.coursesTitle}</h2>
+            <p className="mt-3 hidden lg:block text-foreground/70">{t.coursesSubtitle}</p>
+            <div className="mt-6 hidden lg:block">
+              <PillLink href="/lessons">
+                {t.viewAllCourses} <Icon name="arrow" className="h-4 w-4" />
+              </PillLink>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {t.features.map((f, i) => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {t.courses.map((c, i) => (
               <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.45, delay: i * 0.07 }}
-                className="group relative overflow-hidden rounded-3xl bg-surface border border-border card-shadow p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-soft)] hover:border-primary/30"
+                key={c.title}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.35 + i * 0.07 }}
+                className="rounded-2xl bg-lavender-strong p-4 sm:p-5 text-center lg:text-left transition-transform hover:-translate-y-1"
               >
-                <span className="absolute right-6 top-5 font-serif text-5xl font-bold text-foreground/[0.06] group-hover:text-primary/15 transition-colors">
-                  0{i + 1}
+                <span className="inline-flex text-brand dark:text-primary">
+                  <Icon name={COURSE_ICONS[i]} className="h-8 w-8" />
                 </span>
-                <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-primary/[0.04] group-hover:scale-125 transition-transform duration-500" />
-                <FeatureBadge index={i} />
-                <h3 className="mt-5 font-bold text-lg">{f.title}</h3>
-                <p className="mt-2 text-foreground/65 text-[15px] leading-relaxed">{f.desc}</p>
+                <p className="mt-2 font-bold">{c.title}</p>
+                <p className="mt-1 hidden lg:block text-sm text-foreground/65 leading-snug">{c.desc}</p>
               </motion.div>
             ))}
           </div>
+
+          <div className="lg:hidden">
+            <PillLink href="/lessons" className="w-full py-3.5">
+              {t.viewAllCourses} <Icon name="arrow" className="h-4 w-4" />
+            </PillLink>
+          </div>
         </div>
       </section>
 
-      {/* ───────── Closing CTA ───────── */}
-      <section className="px-3 sm:px-6 pb-20">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] ink-panel px-6 py-12 sm:px-12 text-center">
-          <HalfMoon size={180} color="rgba(233,168,35,0.14)" className="absolute -bottom-1 left-8" />
-          <Floating className="right-8 top-6" spin duration={9}>
-            <Asterisk size={64} color="rgba(255,255,255,0.08)" />
-          </Floating>
-          <Ring size={110} stroke={4} color="rgba(255,255,255,0.08)" className="absolute -right-6 bottom-4" />
-          <h2 className="relative text-3xl sm:text-4xl font-bold text-on-ink">{t.ctaTitle}</h2>
-          <div className="relative mt-7 flex justify-center">{primaryCta}</div>
+      {/* ───────── About ───────── */}
+      <section className="px-4 sm:px-8 pb-20">
+        <div className="mx-auto grid max-w-6xl overflow-hidden rounded-3xl shadow-[0_30px_60px_-30px_rgba(27,16,53,0.5)] lg:grid-cols-[0.9fr_1.4fr]">
+          <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[260px]">
+            <Image
+              src="/images/pallo-hall.jpg"
+              alt="Pallo! o'quv markazi zali"
+              fill
+              unoptimized
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              className="object-cover object-[center_55%]"
+            />
+          </div>
+          <div className="relative overflow-hidden bg-gradient-to-br from-[#5b21b6] to-[#7c3aed] p-7 sm:p-10 text-white">
+            {/* faint brand mark */}
+            <svg viewBox="0 0 100 100" className="pointer-events-none absolute -right-8 top-1/2 h-48 w-48 -translate-y-1/2 opacity-10" aria-hidden>
+              <g stroke="white" strokeWidth="22" strokeLinecap="round">
+                <line x1="14" y1="50" x2="86" y2="50" />
+                <line x1="30" y1="24" x2="70" y2="76" />
+                <line x1="70" y1="24" x2="30" y2="76" />
+              </g>
+            </svg>
+            <div className="relative grid gap-7 sm:grid-cols-[1.4fr_1fr] sm:items-center">
+              <div>
+                <p className="flex items-center gap-2 text-xs font-bold text-white/80">
+                  <span className="h-0.5 w-6 rounded bg-white/70" />
+                  {t.aboutEyebrow}
+                </p>
+                <h2 className="mt-2 font-sans text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-white">
+                  {t.aboutTitle}
+                </h2>
+                <p className="mt-3 text-sm sm:text-base text-white/80 leading-relaxed">{t.aboutBody}</p>
+                <PillLink href={startHref} variant="white" className="mt-5 py-2.5">
+                  {t.learnMore} <Icon name="arrow" className="h-4 w-4" />
+                </PillLink>
+              </div>
+              <ul className="space-y-3">
+                {t.aboutPoints.map((p) => (
+                  <li key={p} className="flex items-center gap-2.5 text-sm font-semibold">
+                    <Icon name="check" className="h-5 w-5 shrink-0 text-white" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
     </div>
