@@ -134,34 +134,35 @@ export default function Home() {
 
   return (
     <div className="flex-1 bg-lavender/60">
-      {/* ───────── Hero ───────── */}
+      {/* ───────── Hero ─────────
+          Desktop: photo fills the right ~60%, fading into lavender on the
+          left where the copy sits. Phones: compact copy first, then the photo
+          directly under it (in normal flow, so it never drifts down the
+          screen), with only a thin fade at its top edge. */}
       <section className="relative overflow-hidden bg-lavender">
-        {/* Photo: right ~60% on desktop, the lower part of the hero on phones;
-            a lavender fade keeps the headline readable where they meet. */}
-        <div className="absolute inset-x-0 bottom-0 top-[44%] sm:top-[38%] lg:inset-y-0 lg:left-auto lg:right-0 lg:w-[62%]">
+        <div className="absolute inset-y-0 right-0 hidden w-[62%] lg:block">
           <Image
             src="/images/pallo-hall.jpg"
             alt="Pallo! o'quv markazi zalida talabalar ingliz tilini o'rganmoqda"
             fill
             priority
             unoptimized
-            sizes="(min-width: 1024px) 62vw, 100vw"
-            className="object-cover object-[center_62%] lg:object-[center_58%]"
+            sizes="62vw"
+            className="object-cover object-[center_58%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-lavender via-lavender/20 to-transparent lg:hidden" />
-          <div className="absolute inset-0 hidden lg:block bg-[linear-gradient(90deg,var(--lavender)_0%,color-mix(in_srgb,var(--lavender)_88%,transparent)_22%,color-mix(in_srgb,var(--lavender)_35%,transparent)_40%,transparent_55%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-lavender/80 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--lavender)_0%,color-mix(in_srgb,var(--lavender)_88%,transparent)_22%,color-mix(in_srgb,var(--lavender)_35%,transparent)_40%,transparent_55%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-lavender/70 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 pt-10 pb-[320px] sm:pb-[360px] lg:pt-20 lg:pb-40 lg:min-h-[600px]">
+        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 pt-7 sm:pt-10 lg:pt-20 lg:pb-40 lg:min-h-[600px]">
           <div className="max-w-xl">
             {/* small burst doodle, as in the mockup */}
-            <svg viewBox="0 0 40 40" className="hidden sm:block h-9 w-9 -ml-8 mb-1 text-brand dark:text-primary" aria-hidden>
+            <svg viewBox="0 0 40 40" className="hidden lg:block h-9 w-9 -ml-8 mb-1 text-brand dark:text-primary" aria-hidden>
               <path d="M8 30 L2 22 M14 24 L10 12 M22 22 L22 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" />
             </svg>
             <motion.h1
               {...fadeUp(0)}
-              className="font-sans text-[2.6rem] leading-[1.05] sm:text-6xl lg:text-[4.2rem] font-extrabold tracking-tight text-foreground"
+              className="font-sans text-[2.15rem] leading-[1.05] sm:text-5xl lg:text-[4.2rem] font-extrabold tracking-tight text-foreground"
             >
               Learn English.
               <br />
@@ -170,22 +171,36 @@ export default function Home() {
                 Together.
               </span>
             </motion.h1>
-            <motion.p {...fadeUp(0.1)} className="mt-5 text-base sm:text-lg leading-relaxed text-foreground/75">
+            <motion.p {...fadeUp(0.1)} className="mt-3 lg:mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-foreground/75">
               {t.centerName}
               <br />
               {t.tagline}
             </motion.p>
-            <motion.div {...fadeUp(0.2)} className="mt-7 flex flex-wrap items-center gap-3">
-              <PillLink href={startHref}>
+            <motion.div {...fadeUp(0.2)} className="mt-5 lg:mt-7 flex flex-wrap items-center gap-2.5 lg:gap-3">
+              <PillLink href={startHref} className="px-5 py-2.5 lg:px-6 lg:py-3">
                 {t.startLearning} <Icon name="arrow" className="h-4 w-4" />
               </PillLink>
               {!loggedIn && ready && (
-                <PillLink href="/login" variant="outline">
+                <PillLink href="/login" variant="outline" className="px-5 py-2.5 lg:px-6 lg:py-3">
                   {t.login}
                 </PillLink>
               )}
             </motion.div>
           </div>
+        </div>
+
+        {/* phone / tablet photo, right under the copy */}
+        <div className="relative mt-5 aspect-[4/3] w-full sm:aspect-[16/10] lg:hidden">
+          <Image
+            src="/images/pallo-hall.jpg"
+            alt="Pallo! o'quv markazi zalida talabalar ingliz tilini o'rganmoqda"
+            fill
+            priority
+            unoptimized
+            sizes="100vw"
+            className="object-cover object-[center_62%]"
+          />
+          <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-lavender to-transparent" />
         </div>
       </section>
 
