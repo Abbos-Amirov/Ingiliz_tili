@@ -1,24 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Manrope } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { AiChatWidget } from "@/components/chat/AiChatWidget";
 import { PushNotificationsInit } from "@/components/push/PushNotificationsInit";
 import "./globals.css";
 
-// Serif display face for headings (confident, academic) + a clean,
-// highly legible sans for body text and UI.
-const display = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin", "latin-ext"],
-  weight: ["500", "600", "700", "800"],
-});
-
-const body = Manrope({
-  variable: "--font-body",
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["400", "500", "600", "700", "800"],
-});
+// Fonts are self-hosted from npm (@fontsource-variable/*) rather than
+// next/font/google: the production Docker build kept failing intermittently
+// while fetching from Google Fonts. Each @font-face carries a unicode-range,
+// so browsers only download the subsets a page actually uses.
+// Fraunces (serif display, with optical sizing) for headings; Manrope for body/UI.
+import "@fontsource-variable/fraunces/opsz.css";
+import "@fontsource-variable/fraunces/opsz-italic.css";
+import "@fontsource-variable/manrope/index.css";
 
 export const metadata: Metadata = {
   title: "Pallo! English — ingliz tilini zavq bilan o'rganing",
@@ -46,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uz" className={`${display.variable} ${body.variable} h-full antialiased`}>
+    <html lang="uz" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
         <PushNotificationsInit />

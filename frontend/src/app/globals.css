@@ -9,6 +9,10 @@
  * Headings use a serif display face (Fraunces); body text uses Manrope.
  */
 :root {
+  /* self-hosted families, see layout.tsx */
+  --font-display: "Fraunces Variable";
+  --font-body: "Manrope Variable";
+
   --background: #f7f5f1;
   --foreground: #1a1230;
   --surface: #ffffff;
