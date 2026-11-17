@@ -140,20 +140,20 @@ export default function Home() {
             a lavender fade keeps the headline readable where they meet. */}
         <div className="absolute inset-x-0 bottom-0 top-[44%] sm:top-[38%] lg:inset-y-0 lg:left-auto lg:right-0 lg:w-[62%]">
           <Image
-            src="/images/pallo-classroom.jpg"
-            alt="Pallo! o'quv markazida talabalar va o'qituvchi"
+            src="/images/pallo-hall.jpg"
+            alt="Pallo! o'quv markazi zalida talabalar ingliz tilini o'rganmoqda"
             fill
             priority
             unoptimized
             sizes="(min-width: 1024px) 62vw, 100vw"
-            className="object-cover object-[62%_center]"
+            className="object-cover object-[center_62%] lg:object-[center_58%]"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-lavender via-lavender/20 to-transparent lg:hidden" />
           <div className="absolute inset-0 hidden lg:block bg-[linear-gradient(90deg,var(--lavender)_0%,color-mix(in_srgb,var(--lavender)_88%,transparent)_22%,color-mix(in_srgb,var(--lavender)_35%,transparent)_40%,transparent_55%)]" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-lavender/80 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 pt-10 pb-[300px] sm:pb-[340px] lg:pt-20 lg:pb-40 lg:min-h-[600px]">
+        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 pt-10 pb-[320px] sm:pb-[360px] lg:pt-20 lg:pb-40 lg:min-h-[600px]">
           <div className="max-w-xl">
             {/* small burst doodle, as in the mockup */}
             <svg viewBox="0 0 40 40" className="hidden sm:block h-9 w-9 -ml-8 mb-1 text-brand dark:text-primary" aria-hidden>
@@ -190,25 +190,25 @@ export default function Home() {
       </section>
 
       {/* ───────── Stats (overlaps the hero) ───────── */}
-      <section className="relative z-10 -mt-20 lg:-mt-16 px-4 sm:px-8">
+      <section className="relative z-10 -mt-9 sm:-mt-14 lg:-mt-16 px-4 sm:px-8">
         <motion.div
           {...fadeUp(0.3)}
-          className="mx-auto grid max-w-5xl grid-cols-3 lg:grid-cols-4 gap-2 rounded-3xl bg-surface px-3 py-5 sm:px-8 sm:py-6 shadow-[0_24px_50px_-24px_rgba(27,16,53,0.35)] ring-1 ring-border"
+          className="mx-auto grid max-w-5xl grid-cols-3 lg:grid-cols-4 gap-1 sm:gap-2 rounded-2xl sm:rounded-3xl bg-surface px-2 py-2.5 sm:px-8 sm:py-6 shadow-[0_24px_50px_-24px_rgba(27,16,53,0.35)] ring-1 ring-border"
         >
           {t.stats.map((s, i) => (
             <div
               key={s.label}
-              className={`flex flex-col items-center gap-1.5 text-center lg:flex-row lg:gap-3 lg:text-left ${i === 3 ? "hidden lg:flex" : ""}`}
+              className={`flex flex-col items-center gap-0.5 sm:gap-1.5 text-center lg:flex-row lg:gap-3 lg:text-left ${i === 3 ? "hidden lg:flex" : ""}`}
             >
               <span className="text-brand dark:text-primary">
-                <Icon name={STAT_ICONS[i]} className="h-7 w-7" />
+                <Icon name={STAT_ICONS[i]} className="h-4.5 w-4.5 sm:h-7 sm:w-7" />
               </span>
               <div>
-                <p className="text-lg sm:text-xl font-extrabold leading-tight">
+                <p className="text-sm sm:text-xl font-extrabold leading-tight">
                   <span className="lg:hidden">{s.valueShort}</span>
                   <span className="hidden lg:inline">{s.value}</span>
                 </p>
-                <p className="text-xs sm:text-sm text-foreground/60">
+                <p className="text-[11px] sm:text-sm leading-tight text-foreground/60">
                   <span className="lg:hidden">{t.statsShort[i] ?? s.label}</span>
                   <span className="hidden lg:inline">{s.label}</span>
                 </p>
@@ -266,12 +266,12 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl overflow-hidden rounded-3xl shadow-[0_30px_60px_-30px_rgba(27,16,53,0.5)] lg:grid-cols-[0.9fr_1.4fr]">
           <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[260px]">
             <Image
-              src="/images/pallo-hall.jpg"
-              alt="Pallo! o'quv markazi zali"
+              src="/images/pallo-classroom.jpg"
+              alt="Pallo! o'quv markazida talabalar va o'qituvchi"
               fill
               unoptimized
               sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover object-[center_55%]"
+              className="object-cover object-[45%_center]"
             />
           </div>
           <div className="relative overflow-hidden bg-gradient-to-br from-[#5b21b6] to-[#7c3aed] p-7 sm:p-10 text-white">
