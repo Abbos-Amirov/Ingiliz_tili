@@ -182,7 +182,7 @@ export default function TextbookLessonPage() {
                     </p>
                     <div className="grid gap-2.5">
                       {items.map((k) => (
-                        <KeywordCard key={k.word} keyword={k} status={data.keywordStatus[k.word]} />
+                        <KeywordCard key={k.word} keyword={k} />
                       ))}
                     </div>
                   </div>

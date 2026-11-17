@@ -7,7 +7,8 @@ import { CHECKLIST_COLUMNS, ChecklistColumn } from "../config/textbook";
 import { TEXTBOOK_LESSONS } from "../data/textbook";
 import { TextbookLesson, TextbookLessonDoc } from "../models/TextbookLesson";
 import type { UserLessonProgressDoc } from "../models/UserLessonProgress";
-import { synthesizeSpeechBuffer } from "./tts.service";
+import { Word } from "../models/Word";
+import { generateWordAudio, synthesizeSpeechBuffer } from "./tts.service";
 
 // ─── Content sync ──────────────────────────────────────────────────────────
 
@@ -31,6 +32,66 @@ export async function syncTextbookLessons(): Promise<void> {
   }
   await TextbookLesson.syncIndexes();
   console.log(`Textbook: synced ${TEXTBOOK_LESSONS.length} lesson(s)`);
+  await ensureKeywordWords();
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Every textbook keyword should also exist in the app's vocabulary (Word),
+// so it shows up in All Words, can be placed in the Memory Palace, etc.
+// Keywords already in the vocabulary (matched case-insensitively) are left
+// alone; missing ones are created from the lesson's own translations with
+// category "textbook" and lesson 0 (kept out of the old word-lesson listing,
+// see lessons.controller.ts), and get pronunciation clips in the background.
+export async function ensureKeywordWords(): Promise<void> {
+  const keywords = new Map<string, { word: string; korean: string; uzbek: string; partOfSpeech: string }>();
+  for (const seed of TEXTBOOK_LESSONS) {
+    for (const k of seed.keywords) keywords.set(k.word.trim().toLowerCase(), k);
+  }
+  if (keywords.size === 0) return;
+
+  const existing = await Word.find({
+    $or: Array.from(keywords.keys()).map((w) => ({ english: { $regex: `^${escapeRegex(w)}$`, $options: "i" } })),
+  })
+    .select("english")
+    .lean();
+  const have = new Set(existing.map((w) => w.english.trim().toLowerCase()));
+
+  const created: { id: string; english: string; korean: string }[] = [];
+  for (const [key, k] of keywords) {
+    if (have.has(key)) continue;
+    try {
+      const doc = await Word.create({
+        english: key,
+        korean: k.korean,
+        uzbek: k.uzbek,
+        partOfSpeech: k.partOfSpeech,
+        category: "textbook",
+        lessonNumber: 0,
+        lessonNumberEnd: 0,
+      });
+      created.push({ id: String(doc._id), english: doc.english, korean: doc.korean });
+    } catch (err) {
+      console.error(`Textbook keyword "${k.word}" could not be saved as a Word:`, (err as Error).message);
+    }
+  }
+  if (created.length === 0) return;
+  console.log(`Textbook: added ${created.length} keyword(s) to the vocabulary`);
+
+  if (!OPENAI_API_KEY) return;
+  // Same clips admin-created words get; best-effort, in the background.
+  void (async () => {
+    for (const w of created) {
+      try {
+        const urls = await generateWordAudio(w.id, w.english, w.korean);
+        await Word.updateOne({ _id: w.id }, urls);
+      } catch (err) {
+        console.error(`Audio for keyword "${w.english}" failed:`, (err as Error).message);
+      }
+    }
+  })();
 }
 
 // ─── Puzzle checking ───────────────────────────────────────────────────────

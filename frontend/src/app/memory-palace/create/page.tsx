@@ -34,8 +34,7 @@ function CreateContent() {
   const presetJourneyId = searchParams.get("journeyId") ?? "";
   const presetRoomParam = searchParams.get("roomKey");
   const presetRoomKey = PALACE_ROOMS.some((r) => r.key === presetRoomParam) ? (presetRoomParam as PalaceRoomKey) : null;
-  // ?wordId= preselects a word — used by a textbook keyword's "📷 Rasm
-  // biriktirish" link right after it was quick-added to the palace.
+  // ?wordId= preselects a word (deep link straight to placing one word).
   const presetWordId = searchParams.get("wordId");
 
   const [words, setWords] = useState<Word[] | null>(null);

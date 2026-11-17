@@ -25,7 +25,6 @@ export default function WordBankHubPage() {
     { href: "/learn/match-only", icon: "🧩", label: t.matchOnly },
     { href: "/all-words", icon: "📖", label: t.allWords },
     { href: "/learn/sentence", icon: "📝", label: t.sentence },
-    { href: "/lessons", icon: "🎒", label: t.lessons },
   ];
 
   return (

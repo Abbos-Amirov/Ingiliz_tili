@@ -1,11 +1,9 @@
 import { RequestHandler } from "express";
 import { Types } from "mongoose";
 import { GrammarType, ROUND_SUBJECTS, Transform, VERB_TYPES, VerbType } from "../config/textbook";
-import { MemoryAnchor } from "../models/MemoryAnchor";
 import { TextbookLesson, TextbookLessonDoc } from "../models/TextbookLesson";
 import { UserLessonProgress } from "../models/UserLessonProgress";
 import { UserMistake } from "../models/UserMistake";
-import { Word } from "../models/Word";
 import { gradeStoryAnswer } from "../services/ai.service";
 import { TEXTBOOK_BOOKS } from "../data/textbook/books";
 import {
@@ -49,27 +47,6 @@ async function findLesson(levelParam: unknown, lessonNumberParam: unknown) {
   const n = Number(lessonNumberParam);
   if (level === null || !Number.isInteger(n) || n < 1) return null;
   return TextbookLesson.findOne({ level, lessonNumber: n });
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-// Case-insensitive lookup of existing vocabulary Words for keywords, so a
-// keyword can show whether it's already in the learner's Memory Palace.
-export async function findWordsForKeywords(words: string[]) {
-  if (words.length === 0) return new Map<string, Types.ObjectId>();
-  const docs = await Word.find({
-    $or: words.map((w) => ({ english: { $regex: `^${escapeRegex(w.trim())}$`, $options: "i" } })),
-  })
-    .select("_id english")
-    .lean();
-  const map = new Map<string, Types.ObjectId>();
-  for (const d of docs) {
-    const key = d.english.trim().toLowerCase();
-    if (!map.has(key)) map.set(key, d._id);
-  }
-  return map;
 }
 
 // The lesson as sent to learners: puzzle answers are stripped (blanks are
@@ -186,18 +163,6 @@ export const getTextbookLesson: RequestHandler = async (req, res, next) => {
     }
     const progress = await UserLessonProgress.findOne({ userId, lessonId: lesson._id }).lean();
 
-    // Memory Palace status per keyword (spec item 4).
-    const wordIds = await findWordsForKeywords(lesson.keywords.map((k) => k.word));
-    const anchored = await MemoryAnchor.find({ userId, wordId: { $in: Array.from(wordIds.values()) } })
-      .select("wordId")
-      .lean();
-    const anchoredSet = new Set(anchored.map((a) => String(a.wordId)));
-    const keywordStatus: Record<string, { wordId: string | null; inPalace: boolean }> = {};
-    for (const k of lesson.keywords) {
-      const id = wordIds.get(k.word.trim().toLowerCase());
-      keywordStatus[k.word] = { wordId: id ? String(id) : null, inPalace: id ? anchoredSet.has(String(id)) : false };
-    }
-
     res.json({
       lesson: publicLesson(lesson),
       progress: {
@@ -206,7 +171,6 @@ export const getTextbookLesson: RequestHandler = async (req, res, next) => {
         checklist: computeChecklist(progress),
         ...progressSummary(lesson, progress),
       },
-      keywordStatus,
       audio: lessonAudioMap(lessonSpeakableTexts(lesson)),
     });
   } catch (err) {

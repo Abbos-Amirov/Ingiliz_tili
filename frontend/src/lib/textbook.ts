@@ -152,7 +152,6 @@ export interface LessonProgress extends ProgressCounts {
 export interface TextbookLessonResponse {
   lesson: TextbookLesson;
   progress: LessonProgress;
-  keywordStatus: Record<string, { wordId: string | null; inPalace: boolean }>;
   audio: Record<string, string>;
 }
 

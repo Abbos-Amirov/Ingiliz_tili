@@ -53,7 +53,6 @@ function QuestionCard({
 }) {
   const t = useT("textbook");
   const { locale } = useLocale();
-  const [draft, setDraft] = useState(saved?.koreanDraft ?? "");
   const [answer, setAnswer] = useState(saved?.answer ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,13 +64,13 @@ function QuestionCard({
     try {
       const res = await apiFetch<{ result: StoryGrade; checklist: Checklist } & ProgressCounts>("/textbook/check-answer", {
         method: "POST",
-        body: JSON.stringify({ lessonId, questionKey: question.key, round, answer, koreanDraft: draft }),
+        body: JSON.stringify({ lessonId, questionKey: question.key, round, answer }),
       });
       onGraded(
         {
           questionKey: question.key,
           round,
-          koreanDraft: draft,
+          koreanDraft: "",
           answer: answer.trim(),
           checkedAt: new Date().toISOString(),
           ...res.result,
@@ -115,13 +114,6 @@ function QuestionCard({
       </div>
 
       <div className="mt-4 grid gap-2">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={`① ${t.nativeDraft}`}
-          maxLength={300}
-          className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
-        />
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -132,7 +124,7 @@ function QuestionCard({
           <input
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            placeholder={`② ${t.englishAnswer} — ${subject} ...`}
+            placeholder={`${t.englishAnswer} — ${subject} ...`}
             maxLength={300}
             autoCapitalize="sentences"
             spellCheck={false}

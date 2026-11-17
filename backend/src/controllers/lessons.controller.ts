@@ -21,9 +21,9 @@ const GROUP_BY_RANGE_PIPELINE = [
   { $group: { _id: { start: "$lessonNumber", end: "$lessonNumberEnd" }, count: { $sum: 1 } } },
 ];
 
-// Words created from a textbook keyword via Memory Palace quick-add (see
-// memoryAnchors.controller.ts quickAddMemoryAnchor) carry category
-// "textbook" and lesson 0 — they aren't part of the word-lesson curriculum.
+// Words auto-created from textbook keywords (see textbook.service.ts
+// ensureKeywordWords) carry category "textbook" and lesson 0 — they aren't
+// part of the word-lesson curriculum.
 const WORD_GROUP_BY_RANGE_PIPELINE = [{ $match: { category: { $ne: "textbook" } } }, ...GROUP_BY_RANGE_PIPELINE];
 
 // Grammar Hub practice sentences and Savol-Javob question/answer pairs

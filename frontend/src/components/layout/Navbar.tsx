@@ -20,7 +20,10 @@ export function Navbar() {
   // sub-pages) plus 3 standalone features, so the mobile menu shows 6 items
   // instead of the 11+ individual pages they used to fill the screen with.
   const links = [
-    { href: "/learn", label: t.wordBank, activeMatch: ["/learn", "/all-words"] },
+    // /lessons/practice is the old word-lesson practice (reached from All
+    // Words), so it stays under Word Bank rather than Lessons.
+    { href: "/lessons", label: t.lessons, activeMatch: ["/lessons"], exclude: ["/lessons/practice"] },
+    { href: "/learn", label: t.wordBank, activeMatch: ["/learn", "/all-words", "/lessons/practice"] },
     { href: "/rules", label: t.rules, activeMatch: ["/rules", "/grammar", "/function-words", "/irregular-verbs"] },
     { href: "/practice", label: t.practice, activeMatch: ["/practice", "/questions-answers", "/flashcards"] },
     { href: "/memory-palace", label: t.memoryPalace, activeMatch: ["/memory-palace"] },
@@ -28,8 +31,9 @@ export function Navbar() {
     { href: "/progress", label: t.progress, activeMatch: ["/progress"] },
   ];
 
-  function isActive(activeMatch: string[]) {
-    return activeMatch.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  function isActive(activeMatch: string[], exclude: string[] = []) {
+    const matches = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
+    return activeMatch.some(matches) && !exclude.some(matches);
   }
 
   useEffect(() => {
@@ -43,7 +47,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 flex items-center justify-between h-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-center justify-between gap-4 h-16">
         <Link href="/" className="flex items-center gap-2.5 group" aria-label="Pallo!">
           <PalloLogo
             size={40}
@@ -56,19 +60,19 @@ export function Navbar() {
         </Link>
 
         {ready && user && (
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-0.5">
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`relative px-3 py-2 rounded-lg text-sm transition-colors ${
-                  isActive(l.activeMatch)
+                className={`relative whitespace-nowrap px-2.5 py-2 rounded-lg text-sm transition-colors ${
+                  isActive(l.activeMatch, l.exclude)
                     ? "text-foreground font-bold"
                     : "font-semibold text-foreground/60 hover:text-foreground hover:bg-surface-muted"
                 }`}
               >
                 {l.label}
-                {isActive(l.activeMatch) && (
+                {isActive(l.activeMatch, l.exclude) && (
                   <motion.span
                     layoutId="nav-active"
                     className="absolute left-3 right-3 -bottom-0.5 h-[3px] rounded-full bg-gold"
@@ -87,7 +91,7 @@ export function Navbar() {
                 logout();
                 router.push("/");
               }}
-              className="hidden sm:inline text-sm font-medium text-foreground/60 hover:text-foreground"
+              className="hidden xl:inline whitespace-nowrap text-sm font-medium text-foreground/60 hover:text-foreground"
             >
               {t.logout}
             </button>
@@ -107,7 +111,7 @@ export function Navbar() {
               onClick={() => setMenuOpen((v) => !v)}
               aria-label="Menyu"
               aria-expanded={menuOpen}
-              className="sm:hidden flex flex-col items-center justify-center gap-1 h-10 w-10 rounded-lg hover:bg-surface-muted"
+              className="xl:hidden flex flex-col items-center justify-center gap-1 h-10 w-10 rounded-lg hover:bg-surface-muted"
             >
               <motion.span
                 animate={menuOpen ? { rotate: 45, y: 5 } : { rotate: 0, y: 0 }}
@@ -133,7 +137,7 @@ export function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="sm:hidden overflow-hidden border-t border-border bg-surface"
+            className="xl:hidden overflow-hidden border-t border-border bg-surface"
           >
             <div className="flex flex-col p-2">
               {links.map((l) => (
@@ -141,7 +145,7 @@ export function Navbar() {
                   key={l.href}
                   href={l.href}
                   className={`px-4 py-3 rounded-lg text-sm font-medium ${
-                    isActive(l.activeMatch) ? "bg-ink text-on-ink font-bold" : "font-semibold text-foreground/70"
+                    isActive(l.activeMatch, l.exclude) ? "bg-ink text-on-ink font-bold" : "font-semibold text-foreground/70"
                   }`}
                 >
                   {l.label}
