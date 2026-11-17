@@ -34,6 +34,9 @@ function CreateContent() {
   const presetJourneyId = searchParams.get("journeyId") ?? "";
   const presetRoomParam = searchParams.get("roomKey");
   const presetRoomKey = PALACE_ROOMS.some((r) => r.key === presetRoomParam) ? (presetRoomParam as PalaceRoomKey) : null;
+  // ?wordId= preselects a word — used by a textbook keyword's "📷 Rasm
+  // biriktirish" link right after it was quick-added to the palace.
+  const presetWordId = searchParams.get("wordId");
 
   const [words, setWords] = useState<Word[] | null>(null);
   const [anchoredWordIds, setAnchoredWordIds] = useState<Set<string>>(new Set());
@@ -65,10 +68,19 @@ function CreateContent() {
     // The whole project's word list (same /words endpoint the "Umumiy
     // so'zlar" page uses), not just words the SRS has already surfaced —
     // so every word in the app is placeable here, not only "learned" ones.
-    apiFetch<{ words: Word[] }>("/words?limit=500").then((res) => setWords(res.words));
+    apiFetch<{ words: Word[] }>("/words?limit=500").then(async (res) => {
+      setWords(res.words);
+      if (!presetWordId) return;
+      const preset =
+        res.words.find((w) => w._id === presetWordId) ??
+        (await apiFetch<{ word: Word }>(`/words/${presetWordId}`)
+          .then((r) => r.word)
+          .catch(() => null));
+      if (preset) setSelectedWord(preset);
+    });
     fetchAnchors().then((res) => setAnchoredWordIds(new Set(res.anchors.map((a) => a.wordId._id))));
     fetchJourneys().then((res) => setJourneys(res.journeys));
-  }, [ready, user, fetchAnchors, fetchJourneys]);
+  }, [ready, user, fetchAnchors, fetchJourneys, presetWordId]);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");

@@ -9,6 +9,7 @@ import type { UserStats, Word } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { WeaknessInsight } from "@/components/textbook/WeaknessInsight";
 import { useT, useLocale } from "@/hooks/useT";
 import { wordTranslation } from "@/lib/contentLocale";
 
@@ -51,6 +52,7 @@ export default function ProgressPage() {
           </div>
         ) : (
           <div className="space-y-6">
+            <WeaknessInsight />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <StatTile emoji="🔥" value={stats.currentStreak} label={t.dailyStreak} />
               <StatTile emoji="🏆" value={stats.longestStreak} label={t.longestStreak} />

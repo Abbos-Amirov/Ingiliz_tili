@@ -7,6 +7,9 @@ import { reviewWord } from "../services/srs.service";
 import { searchUnsplashPhotos } from "../services/unsplash.service";
 import { suggestPalaceRoom } from "../services/ai.service";
 import { PALACE_ROOM_KEYS, PalaceRoomKey } from "../config/palaceRooms";
+import { TextbookLesson } from "../models/TextbookLesson";
+import { generateWordAudio } from "../services/tts.service";
+import { findWordsForKeywords } from "./textbook.controller";
 
 function parseRoomKey(value: unknown): PalaceRoomKey | undefined {
   return typeof value === "string" && (PALACE_ROOM_KEYS as readonly string[]).includes(value)
@@ -325,6 +328,67 @@ export const submitRecallResult: RequestHandler = async (req, res, next) => {
     await anchor.save();
 
     res.json({ anchor, correctAnswer: (anchor.wordId as unknown as WordDoc).english });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/memory-anchors/quick-add  { word }
+// "🏰 Saroyga qo'shish" on a textbook keyword. A MemoryAnchor must point at a
+// Word (wordId is required and the palace pages populate it), so the keyword
+// is matched to an existing vocabulary Word case-insensitively, or — if the
+// vocabulary doesn't have it yet — a Word is created from the textbook's own
+// data (category "textbook", lesson 0, kept out of the word-lesson listing;
+// see lessons.controller.ts). Only real textbook keywords are accepted, and
+// their translations come from the lesson, never from the request body.
+// The anchor starts with the keyword's meaning as its text description; the
+// learner can attach a photo afterwards on /memory-palace/create?wordId=...
+export const quickAddMemoryAnchor: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const word = typeof req.body?.word === "string" ? req.body.word.trim() : "";
+    if (!word) {
+      res.status(400).json({ error: "word is required" });
+      return;
+    }
+    const lesson = await TextbookLesson.findOne({
+      "keywords.word": { $regex: `^${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+    }).lean();
+    const keyword = lesson?.keywords.find((k) => k.word.toLowerCase() === word.toLowerCase());
+    if (!keyword) {
+      res.status(404).json({ error: "Not a textbook keyword" });
+      return;
+    }
+
+    let wordId = (await findWordsForKeywords([keyword.word])).get(keyword.word.toLowerCase()) ?? null;
+    if (!wordId) {
+      const created = await Word.create({
+        english: keyword.word.toLowerCase(),
+        korean: keyword.korean,
+        uzbek: keyword.uzbek,
+        partOfSpeech: keyword.partOfSpeech,
+        category: "textbook",
+        lessonNumber: 0,
+        lessonNumberEnd: 0,
+      });
+      wordId = created._id;
+      // Same pronunciation clips admin-created words get; best-effort.
+      generateWordAudio(String(created._id), created.english, created.korean)
+        .then((urls) => Word.updateOne({ _id: created._id }, urls))
+        .catch((err) => console.error("quick-add audio failed:", (err as Error).message));
+    }
+
+    const existing = await MemoryAnchor.findOne({ userId, wordId });
+    if (existing) {
+      res.json({ anchorId: existing._id, wordId, alreadyInPalace: true });
+      return;
+    }
+    const anchor = await MemoryAnchor.create({
+      userId,
+      wordId,
+      textDescription: `${keyword.korean} · ${keyword.uzbek}`,
+    });
+    res.status(201).json({ anchorId: anchor._id, wordId, alreadyInPalace: false });
   } catch (err) {
     next(err);
   }

@@ -21,6 +21,11 @@ const GROUP_BY_RANGE_PIPELINE = [
   { $group: { _id: { start: "$lessonNumber", end: "$lessonNumberEnd" }, count: { $sum: 1 } } },
 ];
 
+// Words created from a textbook keyword via Memory Palace quick-add (see
+// memoryAnchors.controller.ts quickAddMemoryAnchor) carry category
+// "textbook" and lesson 0 — they aren't part of the word-lesson curriculum.
+const WORD_GROUP_BY_RANGE_PIPELINE = [{ $match: { category: { $ne: "textbook" } } }, ...GROUP_BY_RANGE_PIPELINE];
+
 // Grammar Hub practice sentences and Savol-Javob question/answer pairs
 // aren't part of the lesson curriculum (they default lessonNumber to 1,
 // which would otherwise pollute lesson 1's counts).
@@ -32,7 +37,7 @@ const SENTENCE_GROUP_BY_RANGE_PIPELINE = [
 export const listLessons: RequestHandler = async (_req, res, next) => {
   try {
     const [wordCounts, sentenceCounts] = await Promise.all([
-      Word.aggregate<RangeCount>(GROUP_BY_RANGE_PIPELINE),
+      Word.aggregate<RangeCount>(WORD_GROUP_BY_RANGE_PIPELINE),
       Sentence.aggregate<RangeCount>(SENTENCE_GROUP_BY_RANGE_PIPELINE),
     ]);
 

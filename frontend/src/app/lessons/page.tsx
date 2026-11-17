@@ -5,103 +5,91 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { useT } from "@/hooks/useT";
+import { useLocale, useT } from "@/hooks/useT";
 import { apiFetch } from "@/lib/api";
-import type { Lesson } from "@/lib/types";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { pick, type TextbookLessonSummary } from "@/lib/textbook";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { formatLessonRange } from "@/lib/lessonRange";
+import { Asterisk } from "@/components/ui/Shapes";
 
-function lessonsQueryParam(lesson: Lesson): string {
-  const numbers: number[] = [];
-  for (let n = lesson.lessonNumber; n <= lesson.lessonNumberEnd; n++) numbers.push(n);
-  return numbers.join(",");
-}
-
+// "수업" — the Pallo! textbook lessons. (The old word-lesson cards that used
+// to live here were removed from this page only; their words/sentences are
+// untouched and still power Flashcards, All Words and /lessons/practice.)
 export default function LessonsPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("lessons");
-  const tMatch = useT("match");
-  const tSentence = useT("sentence");
-
-  const [lessons, setLessons] = useState<Lesson[] | null>(null);
+  const tb = useT("textbook");
+  const { locale } = useLocale();
+  const [lessons, setLessons] = useState<TextbookLessonSummary[] | null>(null);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
   }, [ready, user, router]);
 
   useEffect(() => {
-    apiFetch<{ lessons: Lesson[] }>("/lessons").then((res) => setLessons(res.lessons));
-  }, []);
+    if (!ready || !user) return;
+    apiFetch<{ lessons: TextbookLessonSummary[] }>("/textbook/lessons")
+      .then((res) => setLessons(res.lessons))
+      .catch(() => setLessons([]));
+  }, [ready, user]);
 
   if (!ready || !user) return null;
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-10">
       <div className="mx-auto max-w-3xl">
-        <PageHeader
-          title={t.pageTitle}
-          subtitle={t.pageSubtitle}
-          count={lessons?.length}
-          countLabel={t.lessonsSuffix}
-        />
+        <PageHeader title={t.pageTitle} subtitle={tb.listSubtitle} count={lessons?.length} countLabel={tb.lessonsSuffix} />
 
-        <div className="mb-8 flex justify-center">
-          <Link href="/all-words">
-            <Button variant="secondary">{t.allWordsCta}</Button>
-          </Link>
+        {lessons && lessons.length === 0 && <p className="text-center text-foreground/60">{tb.empty}</p>}
+
+        <div className="grid gap-4">
+          {lessons?.map((l, i) => {
+            const total = l.puzzleTotal + l.storyTotal;
+            const done = l.puzzleDone + l.storyDone;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            return (
+              <motion.div
+                key={l._id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Link
+                  href={`/lessons/${l.lessonNumber}`}
+                  className="group relative flex items-center gap-4 overflow-hidden rounded-3xl border border-border bg-surface card-shadow p-5 sm:p-6 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-soft)]"
+                >
+                  <Asterisk
+                    size={120}
+                    outline
+                    color="color-mix(in srgb, var(--brand) 10%, transparent)"
+                    className="absolute -right-6 -bottom-8 transition-transform duration-500 group-hover:rotate-45"
+                  />
+                  <div className="relative shrink-0 flex h-16 w-16 flex-col items-center justify-center rounded-2xl bg-ink text-on-ink">
+                    <span className="font-serif text-2xl font-bold leading-none text-gold">{l.lessonNumber}</span>
+                    <span className="text-[10px] font-bold opacity-70 mt-0.5">
+                      {tb.lessonPrefix}
+                      {tb.lessonSuffix.replace(/^-/, "")}
+                    </span>
+                  </div>
+                  <div className="relative flex-1 min-w-0">
+                    <p className="font-serif text-xl font-bold leading-tight">{l.title}</p>
+                    <p className="text-sm text-foreground/60">{pick(locale, l.titleKo, l.titleUz)}</p>
+                    <div className="mt-3 h-2 rounded-full bg-surface-muted overflow-hidden">
+                      <div className="h-full gradient-primary rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="mt-1.5 text-xs text-foreground/55">
+                      {l.keywordCount} {tb.keywordsCount} · {tb.puzzleProgress} {l.puzzleDone}/{l.puzzleTotal} · {tb.storyProgress}{" "}
+                      {l.storyDone}/{l.storyTotal}
+                    </p>
+                  </div>
+                  <span className="relative hidden sm:flex shrink-0 rounded-xl bg-ink text-on-ink px-4 py-2 text-sm font-bold">
+                    {done > 0 ? tb.continue : tb.start} →
+                  </span>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
-
-        {!lessons ? (
-          <div className="flex justify-center py-20">
-            <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          </div>
-        ) : lessons.length === 0 ? (
-          <p className="text-center py-20 text-foreground/60">{t.empty}</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {lessons.map((lesson) => {
-              const lessonsParam = lessonsQueryParam(lesson);
-              const label = `${formatLessonRange(lesson.lessonNumber, lesson.lessonNumberEnd)}${t.lessonSuffix}`;
-              return (
-                <motion.div key={`${lesson.lessonNumber}-${lesson.lessonNumberEnd}`} whileTap={{ scale: 0.97 }}>
-                  <Card className="p-5 h-full flex flex-col">
-                    <Link
-                      href={`/lessons/practice?lessons=${lessonsParam}&mode=match`}
-                      className="flex-1 block"
-                      title={tMatch.title}
-                    >
-                      <span className="font-extrabold text-lg block mb-2">
-                        {t.lessonPrefix}
-                        {label}
-                      </span>
-                      <p className="text-sm text-foreground/60">
-                        {lesson.wordCount} {t.wordsSuffix}
-                        {lesson.sentenceCount > 0 && (
-                          <>
-                            {" · "}
-                            {lesson.sentenceCount} {t.sentencesSuffix}
-                          </>
-                        )}
-                      </p>
-                    </Link>
-                    {/* Curated Sentence-collection entries (role-tagged, richer) take
-                        priority where they exist; otherwise every word already carries
-                        its own example sentence, so this link is never dead. */}
-                    <Link
-                      href={`/lessons/practice?lessons=${lessonsParam}&mode=${lesson.sentenceCount > 0 ? "sentence" : "word-sentences"}`}
-                      className="mt-3 pt-3 border-t border-border text-xs font-semibold text-primary hover:underline"
-                    >
-                      {tSentence.title} →
-                    </Link>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

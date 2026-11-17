@@ -19,6 +19,8 @@ import memoryAnchorsRoutes from "./routes/memoryAnchors.routes";
 import memoryJourneysRoutes from "./routes/memoryJourneys.routes";
 import pushRoutes from "./routes/push.routes";
 import shadowingRoutes from "./routes/shadowing.routes";
+import textbookRoutes from "./routes/textbook.routes";
+import userRoutes from "./routes/user.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -61,6 +63,8 @@ app.use("/api/memory-anchors", memoryAnchorsRoutes);
 app.use("/api/memory-journeys", memoryJourneysRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/shadowing", shadowingRoutes);
+app.use("/api/textbook", textbookRoutes);
+app.use("/api/user", userRoutes);
 
 app.use(errorHandler);
 
