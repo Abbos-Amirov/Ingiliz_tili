@@ -135,11 +135,75 @@ export default function Home() {
   return (
     <div className="flex-1 bg-lavender/60">
       {/* ───────── Hero ─────────
-          Desktop: photo fills the right ~60%, fading into lavender on the
-          left where the copy sits. Phones: compact copy first, then the photo
-          directly under it (in normal flow, so it never drifts down the
-          screen), with only a thin fade at its top edge. */}
+          Desktop: photo fills the right ~60%, fading into lavender where the
+          copy sits. Phones/tablets: one immersive photo card — headline on a
+          soft ink fade at the top (over the ceiling/painting), students left
+          clear in the middle, buttons on a fade at the bottom. */}
       <section className="relative overflow-hidden bg-lavender">
+        {/* ── phones & tablets ── */}
+        <div className="px-3 pt-3 sm:px-6 sm:pt-6 lg:hidden">
+          <div className="relative h-[min(82svh,700px)] min-h-[540px] overflow-hidden rounded-[28px] bg-ink shadow-[0_30px_60px_-28px_rgba(27,16,53,0.7)]">
+            <motion.div
+              initial={{ scale: 1.08 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0"
+            >
+              <Image
+                src="/images/pallo-hall.jpg"
+                alt="Pallo! o'quv markazi zalida talabalar ingliz tilini o'rganmoqda"
+                fill
+                priority
+                unoptimized
+                sizes="100vw"
+                className="object-cover object-[center_45%]"
+              />
+            </motion.div>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(22,11,44,0.92)_0%,rgba(22,11,44,0.78)_24%,rgba(22,11,44,0.45)_38%,rgba(22,11,44,0)_56%,rgba(22,11,44,0)_68%,rgba(22,11,44,0.82)_100%)]" />
+
+            <div className="relative flex h-full flex-col justify-between p-5 sm:p-8">
+              <div>
+                <motion.span
+                  {...fadeUp(0.05)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                  {t.centerName}
+                </motion.span>
+                <motion.h1
+                  {...fadeUp(0.15)}
+                  className="mt-3 font-sans text-[2.35rem] leading-[1.02] sm:text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.35)]"
+                >
+                  Learn English.
+                  <br />
+                  Grow <span className="text-gold">Together.</span>
+                </motion.h1>
+                <motion.p {...fadeUp(0.25)} className="mt-2.5 text-sm sm:text-base font-medium text-white/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">
+                  {t.tagline}
+                </motion.p>
+              </div>
+
+              <motion.div {...fadeUp(0.35)} className="flex flex-wrap items-center gap-2.5">
+                <Link
+                  href={startHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#55199e] shadow-[0_10px_24px_-10px_rgba(0,0,0,0.6)] active:scale-95 transition-transform"
+                >
+                  {t.startLearning} <Icon name="arrow" className="h-4 w-4" />
+                </Link>
+                {!loggedIn && ready && (
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-md active:scale-95 transition-transform"
+                  >
+                    {t.login}
+                  </Link>
+                )}
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── desktop ── */}
         <div className="absolute inset-y-0 right-0 hidden w-[62%] lg:block">
           <Image
             src="/images/pallo-hall.jpg"
@@ -154,15 +218,15 @@ export default function Home() {
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-lavender/70 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 pt-7 sm:pt-10 lg:pt-20 lg:pb-40 lg:min-h-[600px]">
+        <div className="relative mx-auto hidden max-w-6xl px-8 pt-20 pb-40 min-h-[600px] lg:block">
           <div className="max-w-xl">
             {/* small burst doodle, as in the mockup */}
-            <svg viewBox="0 0 40 40" className="hidden lg:block h-9 w-9 -ml-8 mb-1 text-brand dark:text-primary" aria-hidden>
+            <svg viewBox="0 0 40 40" className="h-9 w-9 -ml-8 mb-1 text-brand dark:text-primary" aria-hidden>
               <path d="M8 30 L2 22 M14 24 L10 12 M22 22 L22 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" />
             </svg>
             <motion.h1
               {...fadeUp(0)}
-              className="font-sans text-[2.15rem] leading-[1.05] sm:text-5xl lg:text-[4.2rem] font-extrabold tracking-tight text-foreground"
+              className="font-sans text-[4.2rem] leading-[1.05] font-extrabold tracking-tight text-foreground"
             >
               Learn English.
               <br />
@@ -171,41 +235,27 @@ export default function Home() {
                 Together.
               </span>
             </motion.h1>
-            <motion.p {...fadeUp(0.1)} className="mt-3 lg:mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-foreground/75">
+            <motion.p {...fadeUp(0.1)} className="mt-5 text-lg leading-relaxed text-foreground/75">
               {t.centerName}
               <br />
               {t.tagline}
             </motion.p>
-            <motion.div {...fadeUp(0.2)} className="mt-5 lg:mt-7 flex flex-wrap items-center gap-2.5 lg:gap-3">
-              <PillLink href={startHref} className="px-5 py-2.5 lg:px-6 lg:py-3">
+            <motion.div {...fadeUp(0.2)} className="mt-7 flex flex-wrap items-center gap-3">
+              <PillLink href={startHref}>
                 {t.startLearning} <Icon name="arrow" className="h-4 w-4" />
               </PillLink>
               {!loggedIn && ready && (
-                <PillLink href="/login" variant="outline" className="px-5 py-2.5 lg:px-6 lg:py-3">
+                <PillLink href="/login" variant="outline">
                   {t.login}
                 </PillLink>
               )}
             </motion.div>
           </div>
         </div>
-
-        {/* phone / tablet photo, right under the copy */}
-        <div className="relative mt-5 aspect-[4/3] w-full sm:aspect-[16/10] lg:hidden">
-          <Image
-            src="/images/pallo-hall.jpg"
-            alt="Pallo! o'quv markazi zalida talabalar ingliz tilini o'rganmoqda"
-            fill
-            priority
-            unoptimized
-            sizes="100vw"
-            className="object-cover object-[center_62%]"
-          />
-          <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-lavender to-transparent" />
-        </div>
       </section>
 
       {/* ───────── Stats (overlaps the hero) ───────── */}
-      <section className="relative z-10 -mt-9 sm:-mt-14 lg:-mt-16 px-4 sm:px-8">
+      <section className="relative z-10 mt-3 sm:mt-5 lg:-mt-16 px-3 sm:px-8">
         <motion.div
           {...fadeUp(0.3)}
           className="mx-auto grid max-w-5xl grid-cols-3 lg:grid-cols-4 gap-1 sm:gap-2 rounded-2xl sm:rounded-3xl bg-surface px-2 py-2.5 sm:px-8 sm:py-6 shadow-[0_24px_50px_-24px_rgba(27,16,53,0.35)] ring-1 ring-border"
