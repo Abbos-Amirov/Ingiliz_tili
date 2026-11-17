@@ -12,6 +12,8 @@ export interface TransformCardSeed {
 }
 
 export interface TextbookLessonSeed {
+  // Book level (Lv.0, Lv.1, ...) — see books.ts. Lesson numbers restart per book.
+  level: number;
   lessonNumber: number;
   title: string;
   titleKo: string;

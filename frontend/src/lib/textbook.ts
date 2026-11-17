@@ -91,6 +91,7 @@ export interface VerbQuizItem {
 
 export interface TextbookLesson {
   _id: string;
+  level: number;
   lessonNumber: number;
   title: string;
   titleKo: string;
@@ -157,11 +158,27 @@ export interface TextbookLessonResponse {
 
 export interface TextbookLessonSummary extends ProgressCounts {
   _id: string;
+  level: number;
   lessonNumber: number;
   title: string;
   titleKo: string;
   titleUz: string;
   keywordCount: number;
+}
+
+// One book of the series (Lv.0, Lv.1, ...) — see backend data/textbook/books.ts.
+export interface TextbookBook {
+  level: number;
+  title: string;
+  subtitle: string;
+  coverUrl: string | null;
+}
+
+export interface TextbookBookSummary extends TextbookBook {
+  lessonCount: number;
+  available: boolean;
+  done: number;
+  total: number;
 }
 
 export interface StoryGrade {

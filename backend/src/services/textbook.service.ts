@@ -11,17 +11,25 @@ import { synthesizeSpeechBuffer } from "./tts.service";
 
 // ─── Content sync ──────────────────────────────────────────────────────────
 
-// Upserts every authored lesson (src/data/textbook) by lessonNumber. Runs on
-// server start; the _id of an existing lesson is kept, and exercises are
-// keyed by stable strings, so learner progress survives content edits.
+// Upserts every authored lesson (src/data/textbook) by (level, lessonNumber).
+// Runs on server start; the _id of an existing lesson is kept, and exercises
+// are keyed by stable strings, so learner progress survives content edits.
 export async function syncTextbookLessons(): Promise<void> {
+  // One-time migration from the single-book version: lessons saved before
+  // books existed have no `level` (they're Lv.0), and the old unique index on
+  // lessonNumber alone would block a Lv.1 "lesson 1". Both steps are no-ops
+  // once applied.
+  await TextbookLesson.updateMany({ level: { $exists: false } }, { $set: { level: 0 } });
+  await TextbookLesson.collection.dropIndex("lessonNumber_1").catch(() => undefined);
+
   for (const seed of TEXTBOOK_LESSONS) {
     await TextbookLesson.findOneAndUpdate(
-      { lessonNumber: seed.lessonNumber },
+      { level: seed.level, lessonNumber: seed.lessonNumber },
       { ...seed, updatedAt: new Date() },
       { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true },
     );
   }
+  await TextbookLesson.syncIndexes();
   console.log(`Textbook: synced ${TEXTBOOK_LESSONS.length} lesson(s)`);
 }
 

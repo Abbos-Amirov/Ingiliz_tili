@@ -24,7 +24,8 @@ function shuffled<T>(items: T[], seed: number): T[] {
 
 // Be동사 / 일반동사 / 조동사 ajratish testi. Each pick is checked (and a wrong
 // one logged as a mistake) server-side; the card advances after 1 second.
-export function VerbClassificationQuiz({ lessonNumber, quiz }: { lessonNumber: number; quiz: VerbQuizItem[] }) {
+// `lessonPath` is the lesson's API path, e.g. /textbook/books/0/lessons/1.
+export function VerbClassificationQuiz({ lessonPath, quiz }: { lessonPath: string; quiz: VerbQuizItem[] }) {
   const t = useT("textbook");
   const [round, setRound] = useState(1);
   const items = useMemo(() => shuffled(quiz, round * 7919 + quiz.length), [quiz, round]);
@@ -40,7 +41,7 @@ export function VerbClassificationQuiz({ lessonNumber, quiz }: { lessonNumber: n
     let correct = selected === item.correctType;
     try {
       const res = await apiFetch<{ isCorrect: boolean; correctType: VerbType }>(
-        `/textbook/lessons/${lessonNumber}/verb-quiz`,
+        `${lessonPath}/verb-quiz`,
         { method: "POST", body: JSON.stringify({ itemKey: item.key, selectedType: selected }) },
       );
       correct = res.isCorrect;

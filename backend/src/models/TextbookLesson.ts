@@ -104,7 +104,10 @@ const verbQuizItemSchema = new Schema(
 );
 
 const textbookLessonSchema = new Schema({
-  lessonNumber: { type: Number, required: true, unique: true },
+  // Book level (Lv.0, Lv.1, ...). Lesson numbers restart in every book, so
+  // (level, lessonNumber) is the unique key — see the index below.
+  level: { type: Number, required: true, default: 0 },
+  lessonNumber: { type: Number, required: true },
   title: { type: String, required: true },
   titleKo: { type: String, default: "" },
   titleUz: { type: String, default: "" },
@@ -141,6 +144,8 @@ const textbookLessonSchema = new Schema({
   verbClassificationQuiz: { type: [verbQuizItemSchema], default: [] },
   updatedAt: { type: Date, default: Date.now },
 });
+
+textbookLessonSchema.index({ level: 1, lessonNumber: 1 }, { unique: true });
 
 export type TextbookLessonDoc = InferSchemaType<typeof textbookLessonSchema> & { _id: Types.ObjectId };
 

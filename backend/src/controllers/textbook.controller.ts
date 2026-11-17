@@ -7,6 +7,7 @@ import { UserLessonProgress } from "../models/UserLessonProgress";
 import { UserMistake } from "../models/UserMistake";
 import { Word } from "../models/Word";
 import { gradeStoryAnswer } from "../services/ai.service";
+import { TEXTBOOK_BOOKS } from "../data/textbook/books";
 import {
   computeChecklist,
   fillPrompt,
@@ -38,10 +39,16 @@ const GRAMMAR_FOCUS_LABEL: Record<GrammarType, string> = {
   continuous: "the present continuous (be + verb-ing)",
 };
 
-async function findLesson(lessonNumberParam: unknown) {
+function parseLevel(levelParam: unknown): number | null {
+  const level = Number(levelParam);
+  return Number.isInteger(level) && level >= 0 ? level : null;
+}
+
+async function findLesson(levelParam: unknown, lessonNumberParam: unknown) {
+  const level = parseLevel(levelParam);
   const n = Number(lessonNumberParam);
-  if (!Number.isInteger(n) || n < 1) return null;
-  return TextbookLesson.findOne({ lessonNumber: n });
+  if (level === null || !Number.isInteger(n) || n < 1) return null;
+  return TextbookLesson.findOne({ level, lessonNumber: n });
 }
 
 function escapeRegex(s: string): string {
@@ -70,6 +77,7 @@ export async function findWordsForKeywords(words: string[]) {
 function publicLesson(lesson: TextbookLessonDoc) {
   return {
     _id: lesson._id,
+    level: lesson.level,
     lessonNumber: lesson.lessonNumber,
     title: lesson.title,
     titleKo: lesson.titleKo,
@@ -109,16 +117,51 @@ function progressSummary(
   };
 }
 
-// GET /api/textbook/lessons
+async function userProgressByLesson(userId: string, lessonIds: Types.ObjectId[]) {
+  const progresses = await UserLessonProgress.find({ userId, lessonId: { $in: lessonIds } }).lean();
+  return new Map(progresses.map((p) => [String(p.lessonId), p]));
+}
+
+// GET /api/textbook/books — the shelf: every book with its lesson count and
+// this learner's overall progress in it.
+export const listTextbookBooks: RequestHandler = async (req, res, next) => {
+  try {
+    const lessons = await TextbookLesson.find().select("level puzzles.rows.key storyQuestions.key").lean();
+    const byLesson = await userProgressByLesson(req.user!.id, lessons.map((l) => l._id));
+    res.json({
+      books: TEXTBOOK_BOOKS.map((book) => {
+        const own = lessons.filter((l) => l.level === book.level);
+        const totals = own.reduce(
+          (acc, l) => {
+            const p = progressSummary(l, byLesson.get(String(l._id)) ?? null);
+            return { done: acc.done + p.puzzleDone + p.storyDone, total: acc.total + p.puzzleTotal + p.storyTotal };
+          },
+          { done: 0, total: 0 },
+        );
+        return { ...book, lessonCount: own.length, available: own.length > 0, ...totals };
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/textbook/books/:level/lessons
 export const listTextbookLessons: RequestHandler = async (req, res, next) => {
   try {
-    const userId = req.user!.id;
-    const lessons = await TextbookLesson.find().sort({ lessonNumber: 1 });
-    const progresses = await UserLessonProgress.find({ userId, lessonId: { $in: lessons.map((l) => l._id) } }).lean();
-    const byLesson = new Map(progresses.map((p) => [String(p.lessonId), p]));
+    const level = parseLevel(req.params.level);
+    const book = TEXTBOOK_BOOKS.find((b) => b.level === level);
+    if (level === null || !book) {
+      res.status(404).json({ error: "Book not found" });
+      return;
+    }
+    const lessons = await TextbookLesson.find({ level }).sort({ lessonNumber: 1 });
+    const byLesson = await userProgressByLesson(req.user!.id, lessons.map((l) => l._id));
     res.json({
+      book,
       lessons: lessons.map((l) => ({
         _id: l._id,
+        level: l.level,
         lessonNumber: l.lessonNumber,
         title: l.title,
         titleKo: l.titleKo,
@@ -132,11 +175,11 @@ export const listTextbookLessons: RequestHandler = async (req, res, next) => {
   }
 };
 
-// GET /api/textbook/lessons/:lessonNumber
+// GET /api/textbook/books/:level/lessons/:lessonNumber
 export const getTextbookLesson: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const lesson = await findLesson(req.params.lessonNumber);
+    const lesson = await findLesson(req.params.level, req.params.lessonNumber);
     if (!lesson) {
       res.status(404).json({ error: "Lesson not found" });
       return;
@@ -171,7 +214,7 @@ export const getTextbookLesson: RequestHandler = async (req, res, next) => {
   }
 };
 
-// POST /api/textbook/lessons/:lessonNumber/puzzle-check  { rowKey, answer, reveal? }
+// POST /api/textbook/books/:level/lessons/:lessonNumber/puzzle-check  { rowKey, answer, reveal? }
 // Checks one 오늘의 퍼즐 blank. A correct answer marks the row completed; a
 // wrong one is logged as a UserMistake. `reveal: true` just returns the
 // answer (a "show answer" button) without completing or logging anything.
@@ -179,7 +222,7 @@ export const checkPuzzle: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const { rowKey, answer, reveal } = req.body ?? {};
-    const lesson = await findLesson(req.params.lessonNumber);
+    const lesson = await findLesson(req.params.level, req.params.lessonNumber);
     if (!lesson) {
       res.status(404).json({ error: "Lesson not found" });
       return;
@@ -232,12 +275,12 @@ export const checkPuzzle: RequestHandler = async (req, res, next) => {
   }
 };
 
-// POST /api/textbook/lessons/:lessonNumber/verb-quiz  { itemKey, selectedType }
+// POST /api/textbook/books/:level/lessons/:lessonNumber/verb-quiz  { itemKey, selectedType }
 export const checkVerbQuiz: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const { itemKey, selectedType } = req.body ?? {};
-    const lesson = await findLesson(req.params.lessonNumber);
+    const lesson = await findLesson(req.params.level, req.params.lessonNumber);
     if (!lesson) {
       res.status(404).json({ error: "Lesson not found" });
       return;
@@ -266,19 +309,19 @@ export const checkVerbQuiz: RequestHandler = async (req, res, next) => {
 };
 
 // POST /api/textbook/check-answer
-//   { lessonNumber (or lessonId), questionKey, round: 1|2|3, answer, koreanDraft? }
+//   { lessonId (or level + lessonNumber), questionKey, round: 1|2|3, answer, koreanDraft? }
 // AI-grades one Our Story answer, stores it as the latest answer for that
 // (question, round) — which drives the auto checklist and round comparison —
 // and logs a UserMistake when it's wrong.
 export const checkStoryAnswer: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const { lessonNumber, lessonId, questionKey, round, answer, koreanDraft } = req.body ?? {};
+    const { level, lessonNumber, lessonId, questionKey, round, answer, koreanDraft } = req.body ?? {};
 
     const lesson =
       lessonId && Types.ObjectId.isValid(lessonId)
         ? await TextbookLesson.findById(lessonId)
-        : await findLesson(lessonNumber);
+        : await findLesson(level ?? 0, lessonNumber);
     if (!lesson) {
       res.status(404).json({ error: "Lesson not found" });
       return;

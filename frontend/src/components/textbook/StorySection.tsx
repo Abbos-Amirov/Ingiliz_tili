@@ -38,14 +38,14 @@ function HighlightedAnswer({ answer, errorLocation }: { answer: string; errorLoc
 
 function QuestionCard({
   index,
-  lessonNumber,
+  lessonId,
   question,
   round,
   saved,
   onGraded,
 }: {
   index: number;
-  lessonNumber: number;
+  lessonId: string;
   question: StoryQuestion;
   round: Round;
   saved: StoryAnswer | undefined;
@@ -65,7 +65,7 @@ function QuestionCard({
     try {
       const res = await apiFetch<{ result: StoryGrade; checklist: Checklist } & ProgressCounts>("/textbook/check-answer", {
         method: "POST",
-        body: JSON.stringify({ lessonNumber, questionKey: question.key, round, answer, koreanDraft: draft }),
+        body: JSON.stringify({ lessonId, questionKey: question.key, round, answer, koreanDraft: draft }),
       });
       onGraded(
         {
@@ -275,13 +275,13 @@ export function RoundComparison({ questions, answers }: { questions: StoryQuesti
 
 // Our Story — round tabs, question cards, auto checklist, comparison.
 export function StorySection({
-  lessonNumber,
+  lessonId,
   questions,
   answers,
   checklist,
   onGraded,
 }: {
-  lessonNumber: number;
+  lessonId: string;
   questions: StoryQuestion[];
   answers: StoryAnswer[];
   checklist: Checklist;
@@ -318,7 +318,7 @@ export function StorySection({
           <QuestionCard
             key={`${q.key}-${round}`}
             index={i}
-            lessonNumber={lessonNumber}
+            lessonId={lessonId}
             question={q}
             round={round}
             saved={answers.find((a) => a.questionKey === q.key && a.round === round)}

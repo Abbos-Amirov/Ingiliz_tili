@@ -57,8 +57,10 @@ function Section({
 }
 
 export default function TextbookLessonPage() {
-  const params = useParams<{ lessonNumber: string }>();
+  const params = useParams<{ level: string; lessonNumber: string }>();
+  const level = Number(params.level);
   const lessonNumber = Number(params.lessonNumber);
+  const lessonPath = `/textbook/books/${level}/lessons/${lessonNumber}`;
   const { user, ready } = useAuth();
   const router = useRouter();
   const t = useT("textbook");
@@ -72,11 +74,11 @@ export default function TextbookLessonPage() {
   }, [ready, user, router]);
 
   useEffect(() => {
-    if (!ready || !user || !Number.isInteger(lessonNumber)) return;
-    apiFetch<TextbookLessonResponse>(`/textbook/lessons/${lessonNumber}`)
+    if (!ready || !user || !Number.isInteger(level) || !Number.isInteger(lessonNumber)) return;
+    apiFetch<TextbookLessonResponse>(lessonPath)
       .then(setData)
       .catch(() => setFailed(true));
-  }, [ready, user, lessonNumber]);
+  }, [ready, user, level, lessonNumber, lessonPath]);
 
   if (!ready || !user) return null;
 
@@ -84,7 +86,7 @@ export default function TextbookLessonPage() {
     return (
       <div className="flex-1 px-4 py-16 text-center">
         <p className="text-foreground/60">{t.loadError}</p>
-        <Link href="/lessons" className="mt-4 inline-block text-primary font-semibold">
+        <Link href={`/lessons/${level}`} className="mt-4 inline-block text-primary font-semibold">
           {t.backToLessons}
         </Link>
       </div>
@@ -108,7 +110,7 @@ export default function TextbookLessonPage() {
       <div className="flex-1 px-3 sm:px-6 py-6 sm:py-8">
         <div className="mx-auto max-w-5xl space-y-12">
           <div>
-            <Link href="/lessons" className="text-sm font-semibold text-foreground/55 hover:text-foreground">
+            <Link href={`/lessons/${level}`} className="text-sm font-semibold text-foreground/55 hover:text-foreground">
               {t.backToLessons}
             </Link>
 
@@ -121,9 +123,14 @@ export default function TextbookLessonPage() {
               <Asterisk size={140} outline color="rgba(255,255,255,0.08)" className="absolute -right-6 -top-8" />
               <Ring size={70} stroke={6} color="rgba(233,168,35,0.45)" className="absolute right-24 bottom-6 hidden sm:block" />
               <DotGrid cols={5} rows={3} gap={12} color="rgba(255,255,255,0.18)" className="absolute left-6 bottom-5 hidden sm:block" />
-              <span className="relative inline-flex rounded-xl bg-gold px-3 py-1 font-serif text-lg font-bold text-[#1b1035]">
-                {lessonLabel}
-              </span>
+              <div className="relative flex items-center gap-2">
+                <span className="inline-flex rounded-xl bg-gold px-3 py-1 font-serif text-lg font-bold text-[#1b1035]">
+                  {lessonLabel}
+                </span>
+                <span className="rounded-full border border-white/25 px-2.5 py-0.5 text-xs font-bold text-on-ink/80">
+                  Lv.{lesson.level}
+                </span>
+              </div>
               <h1 className="relative mt-3 text-4xl sm:text-5xl font-bold text-on-ink">{lesson.title}</h1>
               <p className="relative mt-1 text-on-ink/70">{pick(locale, lesson.titleKo, lesson.titleUz)}</p>
               <div className="relative mt-5 flex flex-wrap gap-2 text-xs font-bold">
@@ -185,7 +192,7 @@ export default function TextbookLessonPage() {
 
             <div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr] items-start">
               <VerbOverview lesson={lesson} />
-              <VerbClassificationQuiz lessonNumber={lesson.lessonNumber} quiz={lesson.verbClassificationQuiz} />
+              <VerbClassificationQuiz lessonPath={lessonPath} quiz={lesson.verbClassificationQuiz} />
             </div>
           </Section>
 
@@ -197,7 +204,7 @@ export default function TextbookLessonPage() {
           {/* 1. 오늘의 퍼즐 */}
           <Section id="puzzle" number="1" title={t.puzzleTitle} subtitle={t.puzzleSubtitle}>
             <PuzzleSection
-              lessonNumber={lesson.lessonNumber}
+              lessonPath={lessonPath}
               puzzles={lesson.puzzles}
               completed={progress.completedExercises}
               onRowDone={(key) => {
@@ -220,7 +227,7 @@ export default function TextbookLessonPage() {
           {/* 2. Our Story */}
           <Section id="story" number="2" title={t.storyTitle} subtitle={t.storySubtitle}>
             <StorySection
-              lessonNumber={lesson.lessonNumber}
+              lessonId={lesson._id}
               questions={lesson.storyQuestions}
               answers={progress.storyAnswers}
               checklist={progress.checklist}

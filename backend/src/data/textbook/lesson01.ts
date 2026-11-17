@@ -1,8 +1,10 @@
 import type { TextbookLessonSeed } from "./types";
 
-// 1과 "Nice to meet you" — transcribed from the Pallo! textbook, pages 8–11.
+// Lv.0 "Hello English", 1과 "Nice to meet you" — transcribed from the Pallo!
+// textbook, pages 8–11.
 // Korean text is the book's; Uzbek text is this app's translation.
 export const lesson01: TextbookLessonSeed = {
+  level: 0,
   lessonNumber: 1,
   title: "Nice to meet you",
   titleKo: "처음 만나서 반가워요",

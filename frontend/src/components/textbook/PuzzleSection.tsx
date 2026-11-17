@@ -10,12 +10,12 @@ import { VERB_TYPE_STYLE } from "./VerbOverview";
 type RowState = { status: "idle" | "wrong" | "done" | "revealed"; sentence?: string; answer?: string };
 
 function PuzzleRowItem({
-  lessonNumber,
+  lessonPath,
   row,
   initiallyDone,
   onDone,
 }: {
-  lessonNumber: number;
+  lessonPath: string;
   row: PuzzleRow;
   initiallyDone: boolean;
   onDone: () => void;
@@ -33,7 +33,7 @@ function PuzzleRowItem({
     setBusy(true);
     try {
       const res = await apiFetch<{ isCorrect: boolean; correctAnswer: string | null; sentence: string | null }>(
-        `/textbook/lessons/${lessonNumber}/puzzle-check`,
+        `${lessonPath}/puzzle-check`,
         { method: "POST", body: JSON.stringify({ rowKey: row.key, answer: value, reveal }) },
       );
       if (reveal) {
@@ -131,12 +131,12 @@ function PuzzleRowItem({
 
 // 오늘의 퍼즐 — one table per verb type, blanks checked server-side.
 export function PuzzleSection({
-  lessonNumber,
+  lessonPath,
   puzzles,
   completed,
   onRowDone,
 }: {
-  lessonNumber: number;
+  lessonPath: string;
   puzzles: Puzzle[];
   completed: string[];
   onRowDone: (key: string) => void;
@@ -163,7 +163,7 @@ export function PuzzleSection({
             {p.rows.map((row) => (
               <PuzzleRowItem
                 key={row.key}
-                lessonNumber={lessonNumber}
+                lessonPath={lessonPath}
                 row={row}
                 initiallyDone={done.has(row.key)}
                 onDone={() => onRowDone(row.key)}
