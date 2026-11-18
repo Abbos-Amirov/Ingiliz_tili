@@ -5,6 +5,7 @@ import {
   aiAssistIrregularVerb,
   unsplashSearch,
 } from "../controllers/admin.controller";
+import { adminDashboard, adminStudents } from "../controllers/adminDashboard.controller";
 import { authMiddleware } from "../middleware/auth";
 import { requireAdmin } from "../middleware/requireAdmin";
 
@@ -14,5 +15,7 @@ router.post("/ai-assist/translate", authMiddleware, requireAdmin, aiAssistTransl
 router.post("/ai-assist/sentence-roles", authMiddleware, requireAdmin, aiAssistSentenceRoles);
 router.post("/ai-assist/irregular-verb", authMiddleware, requireAdmin, aiAssistIrregularVerb);
 router.get("/unsplash-search", authMiddleware, requireAdmin, unsplashSearch);
+router.get("/dashboard", authMiddleware, requireAdmin, adminDashboard);
+router.get("/students", authMiddleware, requireAdmin, adminStudents);
 
 export default router;

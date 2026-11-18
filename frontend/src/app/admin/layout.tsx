@@ -1,95 +1,281 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { AdminIcon, type AdminIconName } from "@/components/admin/AdminIcons";
+import { Asterisk } from "@/components/ui/Shapes";
 
-const navLinks = [
-  { href: "/admin/words", label: "So'zlar", emoji: "📘" },
-  { href: "/admin/words/upload", label: "CSV yuklash", emoji: "📤" },
-  { href: "/admin/sentences", label: "Gaplar", emoji: "✏️" },
-  { href: "/admin/irregular-verbs", label: "Irregular Verbs", emoji: "🔄" },
-  { href: "/admin/grammar", label: "Grammatika", emoji: "📐" },
-  { href: "/admin/function-words", label: "Kichik so'zlar", emoji: "🔤" },
-  { href: "/admin/questions-answers", label: "Savol-Javob", emoji: "❓" },
-  { href: "/admin/shadowing", label: "Shadowing", emoji: "🎬" },
+// Admin shell, following the Pallo! admin mockup: purple sidebar + light
+// content area on desktop; top bar + bottom tab bar + slide-up "more" sheet
+// on phones.
+
+const navLinks: { href: string; label: string; icon: AdminIconName }[] = [
+  { href: "/admin", label: "Bosh sahifa", icon: "home" },
+  { href: "/admin/students", label: "O'quvchilar", icon: "users" },
+  { href: "/admin/words", label: "So'zlar", icon: "book" },
+  { href: "/admin/words/upload", label: "CSV yuklash", icon: "upload" },
+  { href: "/admin/sentences", label: "Gaplar", icon: "pen" },
+  { href: "/admin/irregular-verbs", label: "Irregular Verbs", icon: "repeat" },
+  { href: "/admin/grammar", label: "Grammatika", icon: "ruler" },
+  { href: "/admin/function-words", label: "Kichik so'zlar", icon: "type" },
+  { href: "/admin/questions-answers", label: "Savol-Javob", icon: "chat" },
+  { href: "/admin/shadowing", label: "Shadowing", icon: "video" },
 ];
+
+// Phone bottom bar: the most-used four + "Yana" (opens the full list).
+const mobileTabs = ["/admin", "/admin/students", "/admin/words", "/admin/sentences"];
+
+function isActiveHref(pathname: string, href: string): boolean {
+  if (href === "/admin") return pathname === "/admin";
+  if (pathname === href) return true;
+  // a deeper nav entry (e.g. /admin/words/upload) wins over its parent
+  const deeper = navLinks.some((l) => l.href !== href && l.href.startsWith(`${href}/`) && pathname.startsWith(l.href));
+  return !deeper && pathname.startsWith(`${href}/`);
+}
+
+function initials(name: string | undefined, email: string | undefined): string {
+  const src = (name || email || "A").trim();
+  return src.slice(0, 1).toUpperCase();
+}
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, ready, logout } = useAdminAuth();
   const isLoginPage = pathname === "/admin/login";
+  const [collapsed, setCollapsed] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (ready && !user && !isLoginPage) router.replace("/admin/login");
   }, [ready, user, isLoginPage, router]);
 
+  useEffect(() => {
+    // close overlays on navigation
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMoreOpen(false);
+    setMenuOpen(false);
+  }, [pathname]);
+
   if (isLoginPage) return <>{children}</>;
   if (!ready || !user) return null;
 
-  return (
-    <div className="min-h-screen bg-background flex">
-      <aside className="hidden sm:flex w-56 flex-col border-r border-border bg-surface p-4">
-        <Link href="/admin/words" className="font-extrabold text-lg gradient-text mb-8 px-2">
-          Admin panel
-        </Link>
-        <nav className="flex-1 space-y-1">
-          {navLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                pathname === l.href
-                  ? "bg-surface-muted text-primary"
-                  : "text-foreground/70 hover:bg-surface-muted hover:text-foreground"
-              }`}
-            >
-              <span>{l.emoji}</span>
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-        <button
-          onClick={() => {
-            logout();
-            router.push("/admin/login");
-          }}
-          className="text-sm font-medium text-foreground/60 hover:text-foreground px-3 py-2 text-left"
-        >
-          Chiqish
-        </button>
-      </aside>
+  function handleLogout() {
+    logout();
+    router.push("/admin/login");
+  }
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sm:hidden sticky top-0 z-30 bg-surface border-b border-border px-4 py-3 flex items-center justify-between">
-          <span className="font-extrabold gradient-text">Admin panel</span>
-          <button
-            onClick={() => {
-              logout();
-              router.push("/admin/login");
-            }}
-            className="text-sm text-foreground/60"
-          >
-            Chiqish
-          </button>
-        </header>
-        <nav className="sm:hidden flex border-b border-border bg-surface">
-          {navLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`flex-1 text-center py-2.5 text-xs font-medium ${
-                pathname === l.href ? "text-primary" : "text-foreground/60"
+  function onSearch(e: FormEvent) {
+    e.preventDefault();
+    const q = search.trim();
+    router.push(q ? `/admin/students?search=${encodeURIComponent(q)}` : "/admin/students");
+  }
+
+  const avatar = (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] text-sm font-bold text-white ring-2 ring-white">
+      {initials(user.displayName, user.email)}
+    </span>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#f3effd] dark:bg-background lg:p-4">
+      <div className="flex min-h-screen lg:min-h-[calc(100vh-2rem)] lg:overflow-hidden lg:rounded-[28px] lg:shadow-[0_30px_80px_-40px_rgba(76,29,149,0.45)]">
+        {/* ───────── Desktop sidebar ───────── */}
+        <aside
+          className={`relative hidden shrink-0 flex-col bg-gradient-to-b from-[#4c1d95] to-[#6d28d9] text-white transition-[width] duration-300 lg:flex ${
+            collapsed ? "w-[84px]" : "w-60"
+          }`}
+        >
+          <Link href="/admin" className="flex flex-col items-center gap-1.5 px-4 pt-8 pb-7" aria-label="PALLO! admin">
+            <Asterisk size={collapsed ? 34 : 46} color="#ffffff" />
+            {!collapsed && <span className="text-xl font-extrabold tracking-tight">PALLO!</span>}
+          </Link>
+
+          <nav className="flex-1 space-y-1 px-3">
+            {navLinks.map((l) => {
+              const active = isActiveHref(pathname, l.href);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  title={collapsed ? l.label : undefined}
+                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors ${
+                    active ? "bg-white/15 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]" : "text-white/75 hover:bg-white/10 hover:text-white"
+                  } ${collapsed ? "justify-center" : ""}`}
+                >
+                  <AdminIcon name={l.icon} className="h-5 w-5 shrink-0" />
+                  {!collapsed && <span className="truncate">{l.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="px-3 pt-4">
+            <button
+              onClick={handleLogout}
+              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/10 hover:text-white ${
+                collapsed ? "justify-center" : ""
               }`}
             >
-              {l.emoji} {l.label}
+              <AdminIcon name="logout" />
+              {!collapsed && "Chiqish"}
+            </button>
+          </div>
+
+          {!collapsed && (
+            <div className="relative m-3 mt-5 h-44 overflow-hidden rounded-2xl">
+              <Image src="/images/pallo-classroom.jpg" alt="" fill unoptimized sizes="216px" className="object-cover object-[48%_center]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#4c1d95]/90 via-[#4c1d95]/30 to-transparent" />
+              <p className="absolute bottom-3 left-3 right-3 font-serif text-lg font-bold italic leading-tight text-white">
+                Dream Bigger,
+                <br />
+                Speak Better
+              </p>
+            </div>
+          )}
+        </aside>
+
+        {/* ───────── Content column ───────── */}
+        <div className="flex min-w-0 flex-1 flex-col bg-[#f8f6fe] dark:bg-background">
+          {/* desktop top bar */}
+          <header className="sticky top-0 z-30 hidden items-center gap-4 border-b border-[#ebe4fb] bg-white/80 px-6 py-3.5 backdrop-blur-md dark:border-border dark:bg-surface/80 lg:flex">
+            <button
+              onClick={() => setCollapsed((c) => !c)}
+              aria-label="Menyuni yig'ish"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground/70 hover:bg-[#f3effd] dark:hover:bg-surface-muted"
+            >
+              <AdminIcon name="menu" />
+            </button>
+            <form onSubmit={onSearch} className="relative w-full max-w-md">
+              <AdminIcon name="search" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="O'quvchini qidirish (ism yoki email)…"
+                className="w-full rounded-full bg-[#f3effd] py-2.5 pl-11 pr-4 text-sm outline-none ring-[#7c3aed]/30 focus:ring-2 dark:bg-surface-muted"
+              />
+            </form>
+            <div className="relative ml-auto">
+              <button onClick={() => setMenuOpen((v) => !v)} className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 hover:bg-[#f3effd] dark:hover:bg-surface-muted">
+                {avatar}
+                <span className="text-sm font-bold">{user.displayName || "Admin"}</span>
+                <AdminIcon name="chevronDown" className="h-4 w-4 text-foreground/50" />
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-surface p-1.5 shadow-xl"
+                  >
+                    <p className="truncate px-3 py-2 text-xs text-foreground/50">{user.email}</p>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft"
+                    >
+                      <AdminIcon name="logout" className="h-4 w-4" /> Chiqish
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </header>
+
+          {/* phone top bar */}
+          <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#ebe4fb] bg-white/90 px-4 py-3 backdrop-blur-md dark:border-border dark:bg-surface/90 lg:hidden">
+            <Link href="/admin" className="flex items-center gap-2">
+              <Asterisk size={30} color="#5b21b6" />
+              <span className="text-xl font-extrabold tracking-tight text-[#5b21b6] dark:text-primary">PALLO!</span>
             </Link>
-          ))}
-        </nav>
-        <main className="flex-1 p-4 sm:p-8">{children}</main>
+            {avatar}
+          </header>
+
+          <main className="flex-1 p-4 pb-28 sm:p-6 lg:p-8 lg:pb-8">{children}</main>
+        </div>
       </div>
+
+      {/* ───────── Phone bottom tab bar ───────── */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#ebe4fb] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-border dark:bg-surface/95 lg:hidden">
+        <div className="grid grid-cols-5">
+          {mobileTabs.map((href) => {
+            const l = navLinks.find((n) => n.href === href)!;
+            const active = isActiveHref(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold ${active ? "text-[#5b21b6] dark:text-primary" : "text-foreground/55"}`}
+              >
+                <AdminIcon name={l.icon} className="h-5 w-5" />
+                {l.label}
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold ${
+              !mobileTabs.some((h) => isActiveHref(pathname, h)) ? "text-[#5b21b6] dark:text-primary" : "text-foreground/55"
+            }`}
+          >
+            <AdminIcon name="grid" className="h-5 w-5" />
+            Yana
+          </button>
+        </div>
+      </nav>
+
+      {/* phone "more" sheet */}
+      <AnimatePresence>
+        {moreOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMoreOpen(false)}
+              className="fixed inset-0 z-50 bg-[#120b24]/45 backdrop-blur-[2px] lg:hidden"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 320 }}
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden"
+            >
+              <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-border" />
+              <div className="grid grid-cols-2 gap-2">
+                {navLinks.map((l) => {
+                  const active = isActiveHref(pathname, l.href);
+                  return (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className={`flex items-center gap-2.5 rounded-2xl px-3.5 py-3 text-sm font-semibold ${
+                        active ? "bg-[#5b21b6] text-white" : "bg-[#f3effd] text-foreground/80 dark:bg-surface-muted"
+                      }`}
+                    >
+                      <AdminIcon name={l.icon} className="h-5 w-5 shrink-0" />
+                      <span className="truncate">{l.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-semibold text-danger"
+              >
+                <AdminIcon name="logout" className="h-4 w-4" /> Chiqish
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

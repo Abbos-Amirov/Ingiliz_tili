@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/admin/words");
+      router.push("/admin");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Kirishda xatolik yuz berdi");
     } finally {
