@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdminT } from "@/hooks/useAdminT";
 import { FormEvent, useEffect, useState } from "react";
 import type { Difficulty, Sentence, RoleWord, GrammarRole, SentenceDeepExplanation } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -29,6 +30,7 @@ function RoleWordChips({
   onRoleChange: (index: number, role: GrammarRole) => void;
   onRemove: (index: number) => void;
 }) {
+  const tc = useAdminT("common");
   if (words.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2">
@@ -60,7 +62,7 @@ function RoleWordChips({
               onClick={() => onRemove(i)}
               className="text-sm leading-none px-1 opacity-60 hover:opacity-100"
               style={{ color: color.text }}
-              title="O'chirish"
+              title={tc.delete}
             >
               ×
             </button>
@@ -95,6 +97,11 @@ export function SentenceForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = useAdminT("sentenceForm");
+  const tc = useAdminT("common");
+  const tfm = useAdminT("form");
+  const tl = useAdminT("levels");
+  const ta = useAdminT("ai");
   const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
@@ -134,7 +141,7 @@ export function SentenceForm({
 
   async function handleTranslate() {
     if (!englishText.trim()) {
-      setError("Avval ingliz gapni kiriting");
+      setError(t.needEnglish);
       return;
     }
     setTranslating(true);
@@ -148,7 +155,7 @@ export function SentenceForm({
       setKorean(res.suggestion.ko);
       setUzbek(res.suggestion.uz);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : t.aiError);
     } finally {
       setTranslating(false);
     }
@@ -156,7 +163,7 @@ export function SentenceForm({
 
   async function handleAiAssist() {
     if (!englishText.trim() || !korean.trim()) {
-      setError("AI ishlashi uchun avval koreys va ingliz gapni kiriting");
+      setError(t.needKoEn);
       return;
     }
     setAiLoading(true);
@@ -174,7 +181,7 @@ export function SentenceForm({
       setFormula(res.suggestion.formula);
       setEnglishText(res.suggestion.words.map((w) => w.text).join(" "));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : t.aiError);
     } finally {
       setAiLoading(false);
     }
@@ -183,12 +190,12 @@ export function SentenceForm({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (words.length === 0) {
-      setError("Avval ingliz gapni so'zlarga bo'ling yoki AI yordamidan foydalaning");
+      setError(t.needSplit);
       return;
     }
     const lessonRange = parseLessonRangeText(lessonRangeText);
     if (!lessonRange) {
-      setError("Dars raqami noto'g'ri. Masalan: 7 yoki 34-37");
+      setError(tfm.lessonInvalid);
       return;
     }
     setSaving(true);
@@ -210,7 +217,7 @@ export function SentenceForm({
       }
       onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Saqlashda xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : tfm.saveErrorFull);
     } finally {
       setSaving(false);
     }
@@ -221,7 +228,7 @@ export function SentenceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">To&apos;g&apos;ri ingliz gap</span>
+        <span className="block text-sm font-medium mb-1.5">{t.correctEnglish}</span>
         <div className="flex gap-2">
           <input
             value={englishText}
@@ -230,7 +237,7 @@ export function SentenceForm({
             className="flex-1 rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           />
           <Button type="button" size="sm" variant="secondary" onClick={splitEnglish}>
-            So&apos;zlarga bo&apos;lish
+            {t.splitWords}
           </Button>
         </div>
       </label>
@@ -242,11 +249,11 @@ export function SentenceForm({
         disabled={translating}
         className="!bg-accent-soft !text-accent shadow-none"
       >
-        {translating ? "AI tarjima qilmoqda..." : "🌐 AI bilan tarjima qilish (koreys + o'zbek)"}
+        {translating ? t.translating : t.translate}
       </Button>
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Koreys gap</span>
+        <span className="block text-sm font-medium mb-1.5">{t.korean}</span>
         <input
           required
           value={korean}
@@ -256,7 +263,7 @@ export function SentenceForm({
       </label>
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">O&apos;zbek gap</span>
+        <span className="block text-sm font-medium mb-1.5">{t.uzbek}</span>
         <input
           required
           value={uzbek}
@@ -266,20 +273,20 @@ export function SentenceForm({
       </label>
 
       <Button type="button" size="sm" onClick={handleAiAssist} disabled={aiLoading} className="!bg-accent-soft !text-accent shadow-none">
-        {aiLoading ? "AI o'ylayapti..." : "✨ AI bilan avtomatik ajratish"}
+        {aiLoading ? ta.thinking : ta.autoSplit}
       </Button>
 
       {words.length > 0 && (
         <div>
           <span className="block text-xs font-medium text-foreground/50 mb-1.5">
-            Har so&apos;zning grammatik rolini tekshiring/o&apos;zgartiring:
+            {t.checkRoles}
           </span>
           <RoleWordChips words={words} variant="correct" onRoleChange={updateWordRole} onRemove={removeWord} />
         </div>
       )}
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Chalg&apos;ituvchi so&apos;zlar (ixtiyoriy)</span>
+        <span className="block text-sm font-medium mb-1.5">{t.distractors}</span>
         <div className="flex gap-2">
           <input
             value={distractorText}
@@ -288,7 +295,7 @@ export function SentenceForm({
             className="flex-1 rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           />
           <Button type="button" size="sm" variant="secondary" onClick={addDistractor}>
-            Qo&apos;shish
+            {t.add}
           </Button>
         </div>
       </label>
@@ -301,7 +308,7 @@ export function SentenceForm({
       />
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Formula</span>
+        <span className="block text-sm font-medium mb-1.5">{t.formula}</span>
         <div className="flex gap-2">
           <input
             value={formula}
@@ -317,7 +324,7 @@ export function SentenceForm({
               }}
               className="rounded-xl border border-border bg-surface-muted px-2 outline-none focus:ring-2 focus:ring-primary text-sm max-w-[9rem]"
             >
-              <option value="">Tayyor...</option>
+              <option value="">{t.presets}</option>
               {formulaPresets.map((f) => (
                 <option key={f} value={f}>
                   {f}
@@ -330,7 +337,7 @@ export function SentenceForm({
 
       <div className="rounded-xl border border-border p-4 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">
-          Chuqur tushuntirish (ixtiyoriy)
+          {t.deep}
         </p>
         <AiDeepExplanationAssistButton
           korean={korean}
@@ -365,7 +372,7 @@ export function SentenceForm({
                           : prev,
                       )
                     }
-                    placeholder="Oddiy tushuntirish"
+                    placeholder={t.simple}
                   />
                   <div className="flex gap-2">
                     <input
@@ -390,7 +397,7 @@ export function SentenceForm({
                             : prev,
                         )
                       }
-                      placeholder="Qo'shimcha misollar (; bilan ajrating)"
+                      placeholder={t.moreExamples}
                       className="flex-1 rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary"
                     />
                     <input
@@ -407,7 +414,7 @@ export function SentenceForm({
                             : prev,
                         )
                       }
-                      placeholder="Kichik so'z havolasi (masalan: to)"
+                      placeholder={t.fwRef}
                       className="w-44 rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -416,7 +423,7 @@ export function SentenceForm({
             })}
 
             <div>
-              <span className="block text-xs font-medium mb-1">Umumiy qoida</span>
+              <span className="block text-xs font-medium mb-1">{t.generalRule}</span>
               <TrilingualTextarea
                 value={deepExplanation.generalRule}
                 onChange={(v) => setDeepExplanation((prev) => (prev ? { ...prev, generalRule: v } : prev))}
@@ -424,7 +431,7 @@ export function SentenceForm({
             </div>
 
             <div>
-              <span className="block text-xs font-medium mb-1">Mustaqil mashq gaplari</span>
+              <span className="block text-xs font-medium mb-1">{t.practice}</span>
               <div className="space-y-1.5">
                 {deepExplanation.practiceExamples.map((ex, i) => (
                   <div key={i} className="flex items-center gap-2">
@@ -463,7 +470,7 @@ export function SentenceForm({
                 }
                 className="mt-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
               >
-                + Misol qo&apos;shish
+                {t.addExample}
               </button>
             </div>
 
@@ -472,32 +479,32 @@ export function SentenceForm({
               onClick={() => setDeepExplanation(null)}
               className="text-xs font-medium text-danger hover:underline"
             >
-              Tushuntirishni o&apos;chirish
+              {t.removeDeep}
             </button>
           </div>
         )}
       </div>
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Daraja</span>
+        <span className="block text-sm font-medium mb-1.5">{tfm.level}</span>
         <select
           value={level}
           onChange={(e) => setLevel(e.target.value as Difficulty)}
           className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="beginner">Boshlang&apos;ich</option>
-          <option value="intermediate">O&apos;rta</option>
-          <option value="advanced">Murakkab</option>
+          <option value="beginner">{tl.beginner}</option>
+          <option value="intermediate">{tl.intermediate}</option>
+          <option value="advanced">{tl.advanced}</option>
         </select>
       </label>
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Dars raqami (masalan: 7 yoki 34-37)</span>
+        <span className="block text-sm font-medium mb-1.5">{tfm.lessonLabel}</span>
         <input
           required
           value={lessonRangeText}
           onChange={(e) => setLessonRangeText(e.target.value)}
-          placeholder="7 yoki 34-37"
+          placeholder={tfm.lessonPlaceholder}
           className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
         />
       </label>
@@ -505,7 +512,7 @@ export function SentenceForm({
       {error && <p className="text-danger text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Qo'shish"}
+        {saving ? tc.saving : initial ? tfm.update : tfm.add}
       </Button>
     </form>
   );

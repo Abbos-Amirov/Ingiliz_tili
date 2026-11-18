@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { AdminIcon } from "@/components/admin/AdminIcons";
+import { tf, useAdminT } from "@/hooks/useAdminT";
 
 interface Student {
   id: string;
@@ -40,13 +41,14 @@ function Avatar({ s }: { s: Student }) {
 }
 
 function StatusBadge({ s }: { s: Student }) {
+  const t = useAdminT("students");
   return (
     <span
       className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-bold ${
         s.active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : "bg-[#f3effd] text-foreground/50 dark:bg-surface-muted"
       }`}
     >
-      {s.active ? "Faol" : "Nofaol"}
+      {s.active ? t.active : t.inactive}
     </span>
   );
 }
@@ -59,6 +61,7 @@ function StudentsContent() {
   const [input, setInput] = useState(search);
   const [data, setData] = useState<StudentsResponse | null>(null);
   const [error, setError] = useState(false);
+  const t = useAdminT("students");
 
   useEffect(() => {
     const q = new URLSearchParams({ page: String(page) });
@@ -90,34 +93,34 @@ function StudentsContent() {
     <div className="mx-auto max-w-[1180px] space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-sans text-2xl font-extrabold tracking-tight sm:text-3xl">O&apos;quvchilar</h1>
-          <p className="text-sm text-foreground/60">{data ? `${data.total} ta o'quvchi` : "…"}</p>
+          <h1 className="font-sans text-2xl font-extrabold tracking-tight sm:text-3xl">{t.title}</h1>
+          <p className="text-sm text-foreground/60">{data ? tf(t.count, { n: data.total }) : "…"}</p>
         </div>
         <form onSubmit={onSubmit} className="relative w-full sm:w-80">
           <AdminIcon name="search" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ism yoki email…"
+            placeholder={t.searchPlaceholder}
             className="w-full rounded-full bg-white py-2.5 pl-11 pr-4 text-sm shadow-[0_8px_20px_-16px_rgba(76,29,149,0.5)] outline-none ring-[#7c3aed]/30 focus:ring-2 dark:bg-surface"
           />
         </form>
       </div>
 
-      {error && <p className="rounded-2xl bg-danger-soft p-4 text-sm text-danger">Ro&apos;yxatni yuklab bo&apos;lmadi.</p>}
+      {error && <p className="rounded-2xl bg-danger-soft p-4 text-sm text-danger">{t.loadError}</p>}
 
       {/* desktop table */}
       <div className="hidden overflow-hidden rounded-3xl bg-white shadow-[0_10px_30px_-18px_rgba(76,29,149,0.35)] dark:bg-surface md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#f6f2fe] text-left text-xs font-bold text-foreground/70 dark:bg-surface-muted">
-              <th className="px-5 py-3">O&apos;quvchi</th>
-              <th className="px-4 py-3">Qo&apos;shilgan</th>
-              <th className="px-4 py-3">Oxirgi faollik</th>
-              <th className="px-4 py-3 text-right">Streak</th>
-              <th className="px-4 py-3 text-right">So&apos;zlar</th>
-              <th className="px-4 py-3 text-right">Darslik</th>
-              <th className="px-5 py-3">Holat</th>
+              <th className="px-5 py-3">{t.colStudent}</th>
+              <th className="px-4 py-3">{t.colJoined}</th>
+              <th className="px-4 py-3">{t.colLastActive}</th>
+              <th className="px-4 py-3 text-right">{t.colStreak}</th>
+              <th className="px-4 py-3 text-right">{t.colWords}</th>
+              <th className="px-4 py-3 text-right">{t.colTextbook}</th>
+              <th className="px-5 py-3">{t.colStatus}</th>
             </tr>
           </thead>
           <tbody>
@@ -149,7 +152,7 @@ function StudentsContent() {
             ))}
           </tbody>
         </table>
-        {data && data.students.length === 0 && <p className="py-10 text-center text-foreground/50">Hech kim topilmadi</p>}
+        {data && data.students.length === 0 && <p className="py-10 text-center text-foreground/50">{t.noneFound}</p>}
       </div>
 
       {/* phone cards */}
@@ -167,21 +170,21 @@ function StudentsContent() {
             <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
               <div className="rounded-xl bg-[#f6f2fe] py-2 dark:bg-surface-muted">
                 <p className="font-extrabold">{s.currentStreak} 🔥</p>
-                <p className="text-foreground/55">Streak</p>
+                <p className="text-foreground/55">{t.colStreak}</p>
               </div>
               <div className="rounded-xl bg-[#f6f2fe] py-2 dark:bg-surface-muted">
                 <p className="font-extrabold">{s.totalWordsLearned}</p>
-                <p className="text-foreground/55">So&apos;zlar</p>
+                <p className="text-foreground/55">{t.colWords}</p>
               </div>
               <div className="rounded-xl bg-[#f6f2fe] py-2 dark:bg-surface-muted">
                 <p className="font-extrabold">{s.textbookAnswers + s.textbookExercises}</p>
-                <p className="text-foreground/55">Darslik</p>
+                <p className="text-foreground/55">{t.colTextbook}</p>
               </div>
             </div>
-            <p className="mt-2 text-[11px] text-foreground/50">Qo&apos;shilgan: {fmtDate(s.createdAt)}</p>
+            <p className="mt-2 text-[11px] text-foreground/50">{tf(t.joined, { date: fmtDate(s.createdAt) })}</p>
           </div>
         ))}
-        {data && data.students.length === 0 && <p className="py-10 text-center text-foreground/50">Hech kim topilmadi</p>}
+        {data && data.students.length === 0 && <p className="py-10 text-center text-foreground/50">{t.noneFound}</p>}
       </div>
 
       {pages > 1 && (

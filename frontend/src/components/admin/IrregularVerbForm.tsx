@@ -1,11 +1,12 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { FormEvent, useEffect, useState } from "react";
 import type { IrregularVerb, IrregularVerbCategory } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { AiIrregularVerbAssistButton } from "./AiAssistPanel";
-import { IRREGULAR_VERB_CATEGORIES, IRREGULAR_VERB_CATEGORY_LABELS } from "@/lib/irregularVerbCategories";
+import { IRREGULAR_VERB_CATEGORIES } from "@/lib/irregularVerbCategories";
 
 interface FormValues {
   base: string;
@@ -51,6 +52,10 @@ export function IrregularVerbForm({
   const [saving, setSaving] = useState(false);
   const [dupMatch, setDupMatch] = useState<IrregularVerb | null>(null);
   const [checking, setChecking] = useState(false);
+  const t = useAdminT("irregularForm");
+  const tfm = useAdminT("form");
+  const tc = useAdminT("common");
+  const ti = useAdminT("irregular");
 
   useEffect(() => {
     const base = values.base.trim();
@@ -108,9 +113,9 @@ export function IrregularVerbForm({
       onSaved();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setError("Bu fe'l allaqachon bazada mavjud.");
+        setError(t.duplicate);
       } else {
-        setError(err instanceof ApiError ? err.message : "Saqlashda xatolik yuz berdi");
+        setError(err instanceof ApiError ? err.message : tfm.saveErrorFull);
       }
     } finally {
       setSaving(false);
@@ -136,12 +141,12 @@ export function IrregularVerbForm({
         </Field>
       </div>
 
-      {checking && <p className="text-xs text-foreground/40 -mt-2">Tekshirilmoqda...</p>}
+      {checking && <p className="text-xs text-foreground/40 -mt-2">{tfm.checking}</p>}
 
       {dupMatch && (
         <div className="rounded-xl bg-danger-soft border border-danger/30 p-3 text-sm -mt-2">
           <p className="text-danger font-semibold">
-            Bu fe&apos;l allaqachon bazada mavjud: {dupMatch.base} — {dupMatch.past} — {dupMatch.participle}
+            {tf(t.duplicateWith, { forms: `${dupMatch.base} — ${dupMatch.past} — ${dupMatch.participle}` })}
           </p>
         </div>
       )}
@@ -161,16 +166,16 @@ export function IrregularVerbForm({
       />
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Koreys tarjimasi">
+        <Field label={t.korean}>
           <input required value={values.korean} onChange={(e) => update("korean", e.target.value)} className="input" />
         </Field>
-        <Field label="O'zbekcha tarjimasi">
+        <Field label={t.uzbek}>
           <input required value={values.uzbek} onChange={(e) => update("uzbek", e.target.value)} className="input" />
         </Field>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Kategoriya">
+        <Field label={t.category}>
           <select
             value={values.category}
             onChange={(e) => update("category", e.target.value as IrregularVerbCategory)}
@@ -178,14 +183,14 @@ export function IrregularVerbForm({
           >
             {IRREGULAR_VERB_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {IRREGULAR_VERB_CATEGORY_LABELS[c]}
+                {ti[`cat_${c}`]}
               </option>
             ))}
           </select>
         </Field>
       </div>
 
-      <Field label="Chastota (ixtiyoriy, 1 = eng ko'p ishlatiladigan)">
+      <Field label={t.frequency}>
         <input
           type="number"
           min="1"
@@ -198,7 +203,7 @@ export function IrregularVerbForm({
       {error && <p className="text-danger text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={saving || Boolean(dupMatch)}>
-        {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Qo'shish"}
+        {saving ? tc.saving : initial ? tfm.update : tfm.add}
       </Button>
 
       <style jsx>{`

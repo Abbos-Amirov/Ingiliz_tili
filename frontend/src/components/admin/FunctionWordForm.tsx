@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { FormEvent, useEffect, useState } from "react";
 import type {
   FunctionWord,
@@ -14,13 +15,13 @@ import { Button } from "@/components/ui/Button";
 import { AiFunctionWordAssistButton } from "./AiAssistPanel";
 import { TrilingualInput, TrilingualTextarea } from "./TrilingualField";
 
-const CATEGORY_LABELS: Record<FunctionWordCategory, string> = {
-  preposition: "Predlog",
-  article: "Artikl",
-  question_word: "So'roq so'zi",
-  infinitive_marker: "Infinitive belgisi",
-  question_auxiliary: "Savol yordamchisi",
-};
+const CATEGORIES: FunctionWordCategory[] = [
+  "preposition",
+  "article",
+  "question_word",
+  "infinitive_marker",
+  "question_auxiliary",
+];
 
 const emptyTrilingual: Trilingual = { uz: "", en: "", ko: "" };
 
@@ -75,6 +76,9 @@ export function FunctionWordForm({
   const [values, setValues] = useState<FormValues>(initial ? fromWord(initial) : emptyValues);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = useAdminT("functionWordForm");
+  const tc = useAdminT("common");
+  const tfm = useAdminT("form");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -116,9 +120,9 @@ export function FunctionWordForm({
       onSaved();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setError("Bu so'z allaqachon mavjud.");
+        setError(t.duplicate);
       } else {
-        setError(err instanceof ApiError ? err.message : "Saqlashda xatolik yuz berdi");
+        setError(err instanceof ApiError ? err.message : tfm.saveErrorFull);
       }
     } finally {
       setSaving(false);
@@ -129,7 +133,7 @@ export function FunctionWordForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">So&apos;z</span>
+          <span className="block text-sm font-medium mb-1.5">{t.word}</span>
           <input
             required
             value={values.word}
@@ -139,15 +143,15 @@ export function FunctionWordForm({
           />
         </label>
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">Kategoriya</span>
+          <span className="block text-sm font-medium mb-1.5">{t.category}</span>
           <select
             value={values.category}
             onChange={(e) => update("category", e.target.value as FunctionWordCategory)}
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           >
-            {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+            {CATEGORIES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t[`cat_${value}`]}
               </option>
             ))}
           </select>
@@ -156,7 +160,7 @@ export function FunctionWordForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">Koreys tarjimasi</span>
+          <span className="block text-sm font-medium mb-1.5">{t.korean}</span>
           <input
             value={values.korean}
             onChange={(e) => update("korean", e.target.value)}
@@ -164,7 +168,7 @@ export function FunctionWordForm({
           />
         </label>
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">O&apos;zbekcha tarjimasi</span>
+          <span className="block text-sm font-medium mb-1.5">{t.uzbek}</span>
           <input
             value={values.uzbek}
             onChange={(e) => update("uzbek", e.target.value)}
@@ -176,16 +180,16 @@ export function FunctionWordForm({
       <AiFunctionWordAssistButton word={values.word} category={values.category} onSuggestion={applyAiSuggestion} />
 
       <div>
-        <span className="block text-sm font-medium mb-1.5">Oddiy tushuntirish (uz / en / ko)</span>
+        <span className="block text-sm font-medium mb-1.5">{t.simple}</span>
         <TrilingualTextarea value={values.simpleExplanation} onChange={(v) => update("simpleExplanation", v)} />
       </div>
 
       <div className="rounded-xl border border-border p-4 space-y-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">Ishlatilish turlari</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">{t.usageTypes}</p>
         {values.usageTypes.map((ut, i) => (
           <div key={i} className="rounded-lg border border-border p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground/50">Tur #{i + 1}</span>
+              <span className="text-xs font-semibold text-foreground/50">{tf(t.type, { n: i + 1 })}</span>
               <button
                 type="button"
                 onClick={() => update("usageTypes", values.usageTypes.filter((_, j) => j !== i))}
@@ -195,14 +199,14 @@ export function FunctionWordForm({
               </button>
             </div>
             <div>
-              <span className="block text-xs font-medium mb-1">Ma&apos;no</span>
+              <span className="block text-xs font-medium mb-1">{t.meaning}</span>
               <TrilingualInput
                 value={ut.meaning}
                 onChange={(v) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, meaning: v } : x)))}
               />
             </div>
             <div>
-              <span className="block text-xs font-medium mb-1">Misol (en)</span>
+              <span className="block text-xs font-medium mb-1">{t.exampleEn}</span>
               <input
                 value={ut.example}
                 onChange={(e) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, example: e.target.value } : x)))}
@@ -210,7 +214,7 @@ export function FunctionWordForm({
               />
             </div>
             <div>
-              <span className="block text-xs font-medium mb-1">Izoh</span>
+              <span className="block text-xs font-medium mb-1">{t.note}</span>
               <TrilingualInput
                 value={ut.note}
                 onChange={(v) => update("usageTypes", values.usageTypes.map((x, j) => (j === i ? { ...x, note: v } : x)))}
@@ -225,16 +229,16 @@ export function FunctionWordForm({
           }
           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
         >
-          + Tur qo&apos;shish
+          {t.addType}
         </button>
       </div>
 
       <div className="rounded-xl border border-border p-4 space-y-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">Tez-tez uchraydigan xatolar</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">{t.mistakes}</p>
         {values.commonMistakes.map((cm, i) => (
           <div key={i} className="rounded-lg border border-border p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground/50">Xato #{i + 1}</span>
+              <span className="text-xs font-semibold text-foreground/50">{tf(t.mistake, { n: i + 1 })}</span>
               <button
                 type="button"
                 onClick={() => update("commonMistakes", values.commonMistakes.filter((_, j) => j !== i))}
@@ -247,18 +251,18 @@ export function FunctionWordForm({
               <input
                 value={cm.wrong}
                 onChange={(e) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, wrong: e.target.value } : x)))}
-                placeholder="✗ Noto'g'ri (en)"
+                placeholder={t.wrongEn}
                 className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
               />
               <input
                 value={cm.correct}
                 onChange={(e) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, correct: e.target.value } : x)))}
-                placeholder="✓ To'g'ri (en)"
+                placeholder={t.correctEn}
                 className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <span className="block text-xs font-medium mb-1">Tushuntirish</span>
+              <span className="block text-xs font-medium mb-1">{t.explanation}</span>
               <TrilingualInput
                 value={cm.explanation}
                 onChange={(v) => update("commonMistakes", values.commonMistakes.map((x, j) => (j === i ? { ...x, explanation: v } : x)))}
@@ -273,14 +277,14 @@ export function FunctionWordForm({
           }
           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
         >
-          + Xato qo&apos;shish
+          {t.addMistake}
         </button>
       </div>
 
       <div className="rounded-xl border border-border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">
-            Taqqoslash kartasi (masalan &quot;Do vs Does&quot;)
+            {t.comparison}
           </p>
           <label className="flex items-center gap-2 text-xs font-medium">
             <input
@@ -288,7 +292,7 @@ export function FunctionWordForm({
               checked={values.comparisonNote !== null}
               onChange={(e) => update("comparisonNote", e.target.checked ? emptyTrilingual : null)}
             />
-            Yoqish
+            {t.enable}
           </label>
         </div>
 
@@ -308,7 +312,7 @@ export function FunctionWordForm({
                     onChange={(e) =>
                       update("comparisonExamples", values.comparisonExamples.map((x, j) => (j === i ? { ...x, correct: e.target.value } : x)))
                     }
-                    placeholder="✓ To'g'ri"
+                    placeholder={t.correct}
                     className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
                   />
                   <input
@@ -319,7 +323,7 @@ export function FunctionWordForm({
                         values.comparisonExamples.map((x, j) => (j === i ? { ...x, wrong: e.target.value || null } : x)),
                       )
                     }
-                    placeholder="✗ Noto'g'ri (ixtiyoriy)"
+                    placeholder={t.wrongOptional}
                     className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -337,14 +341,14 @@ export function FunctionWordForm({
               onClick={() => update("comparisonExamples", [...values.comparisonExamples, { correct: "", wrong: null }])}
               className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
             >
-              + Misol qo&apos;shish
+              {t.addExample}
             </button>
           </>
         )}
       </div>
 
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Tartib raqami</span>
+        <span className="block text-sm font-medium mb-1.5">{t.order}</span>
         <input
           type="number"
           value={values.order}
@@ -356,7 +360,7 @@ export function FunctionWordForm({
       {error && <p className="text-danger text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Qo'shish"}
+        {saving ? tc.saving : initial ? tfm.update : tfm.add}
       </Button>
     </form>
   );

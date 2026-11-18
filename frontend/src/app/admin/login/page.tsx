@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ApiError } from "@/lib/api";
+import { useAdminT } from "@/hooks/useAdminT";
+import { AdminLangToggle } from "@/components/admin/AdminLangToggle";
 
 export default function AdminLoginPage() {
   const { login } = useAdminAuth();
@@ -15,6 +17,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const t = useAdminT("login");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -24,7 +27,7 @@ export default function AdminLoginPage() {
       await login(email, password);
       router.push("/admin");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Kirishda xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : t.error);
     } finally {
       setLoading(false);
     }
@@ -38,15 +41,18 @@ export default function AdminLoginPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-sm"
       >
+        <div className="mb-3 flex justify-end">
+          <AdminLangToggle />
+        </div>
         <Card className="p-7">
           <div className="text-center mb-6">
             <div className="text-3xl mb-2">🔐</div>
-            <h1 className="text-xl font-extrabold">Admin panel</h1>
-            <p className="text-foreground/60 text-sm mt-1">Kontentni boshqarish uchun kiring</p>
+            <h1 className="text-xl font-extrabold">{t.title}</h1>
+            <p className="text-foreground/60 text-sm mt-1">{t.subtitle}</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1.5">Email</label>
+              <label className="block text-sm font-medium mb-1.5">{t.email}</label>
               <input
                 type="email"
                 required
@@ -56,7 +62,7 @@ export default function AdminLoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1.5">Parol</label>
+              <label className="block text-sm font-medium mb-1.5">{t.password}</label>
               <input
                 type="password"
                 required
@@ -67,7 +73,7 @@ export default function AdminLoginPage() {
             </div>
             {error && <p className="text-danger text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Kirilmoqda..." : "Kirish"}
+              {loading ? t.signingIn : t.signIn}
             </Button>
           </form>
         </Card>

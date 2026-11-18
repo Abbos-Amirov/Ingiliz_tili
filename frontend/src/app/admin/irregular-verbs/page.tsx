@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { IrregularVerbForm } from "@/components/admin/IrregularVerbForm";
-import { IRREGULAR_VERB_CATEGORIES, IRREGULAR_VERB_CATEGORY_LABELS } from "@/lib/irregularVerbCategories";
+import { IRREGULAR_VERB_CATEGORIES } from "@/lib/irregularVerbCategories";
 
 export default function AdminIrregularVerbsPage() {
   const [verbs, setVerbs] = useState<IrregularVerb[]>([]);
@@ -16,6 +17,8 @@ export default function AdminIrregularVerbsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<IrregularVerb | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("irregular");
+  const tc = useAdminT("common");
   const [categoryFilter, setCategoryFilter] = useState<IrregularVerbCategory | "">("");
   const [search, setSearch] = useState("");
 
@@ -55,13 +58,13 @@ export default function AdminIrregularVerbsPage() {
   }
 
   async function handleDelete(v: IrregularVerb) {
-    if (!confirm(`"${v.base}" fe'lini o'chirishni tasdiqlaysizmi?`)) return;
+    if (!confirm(tf(t.confirmDelete, { verb: v.base }))) return;
     setError(null);
     try {
       await apiFetch(`/irregular-verbs/${v._id}`, { method: "DELETE", admin: true });
       setVerbs((prev) => prev.filter((x) => x._id !== v._id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.deleteError);
     }
   }
 
@@ -69,14 +72,14 @@ export default function AdminIrregularVerbsPage() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold">Irregular Verbs</h1>
-          <p className="text-foreground/60 text-sm mt-1">Jami {verbs.length} ta fe&apos;l</p>
+          <h1 className="text-2xl font-extrabold">{t.title}</h1>
+          <p className="text-foreground/60 text-sm mt-1">{tf(t.total, { n: verbs.length })}</p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/irregular-verbs/upload">
-            <Button variant="secondary">📤 CSV yuklash</Button>
+            <Button variant="secondary">{t.csvUpload}</Button>
           </Link>
-          <Button onClick={openCreate}>+ Fe&apos;l qo&apos;shish</Button>
+          <Button onClick={openCreate}>{t.add}</Button>
         </div>
       </div>
 
@@ -84,7 +87,7 @@ export default function AdminIrregularVerbsPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Qidirish (base/past/participle)..."
+          placeholder={t.searchPlaceholder}
           className="rounded-xl border border-border bg-surface-muted px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-primary min-w-[220px]"
         />
         <select
@@ -92,10 +95,10 @@ export default function AdminIrregularVerbsPage() {
           onChange={(e) => setCategoryFilter(e.target.value as IrregularVerbCategory | "")}
           className="rounded-xl border border-border bg-surface-muted px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">Barcha kategoriyalar</option>
+          <option value="">{t.allCategories}</option>
           {IRREGULAR_VERB_CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {IRREGULAR_VERB_CATEGORY_LABELS[c]}
+              {t[`cat_${c}`]}
             </option>
           ))}
         </select>
@@ -115,9 +118,9 @@ export default function AdminIrregularVerbsPage() {
                 <th className="px-4 py-3 font-medium">Base</th>
                 <th className="px-4 py-3 font-medium">Past</th>
                 <th className="px-4 py-3 font-medium">Participle</th>
-                <th className="px-4 py-3 font-medium">Koreys</th>
-                <th className="px-4 py-3 font-medium">Kategoriya</th>
-                <th className="px-4 py-3 font-medium text-right">Amallar</th>
+                <th className="px-4 py-3 font-medium">{tc.korean}</th>
+                <th className="px-4 py-3 font-medium">{t.colCategory}</th>
+                <th className="px-4 py-3 font-medium text-right">{tc.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -127,13 +130,13 @@ export default function AdminIrregularVerbsPage() {
                   <td className="px-4 py-3">{v.past}</td>
                   <td className="px-4 py-3">{v.participle}</td>
                   <td className="px-4 py-3">{v.korean}</td>
-                  <td className="px-4 py-3 text-foreground/60">{IRREGULAR_VERB_CATEGORY_LABELS[v.category]}</td>
+                  <td className="px-4 py-3 text-foreground/60">{t[`cat_${v.category}`]}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <button onClick={() => openEdit(v)} className="text-primary font-medium hover:underline">
-                      Tahrirlash
+                      {tc.edit}
                     </button>
                     <button onClick={() => handleDelete(v)} className="text-danger font-medium hover:underline">
-                      O&apos;chirish
+                      {tc.delete}
                     </button>
                   </td>
                 </tr>
@@ -141,7 +144,7 @@ export default function AdminIrregularVerbsPage() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-foreground/50">
-                    Hech narsa topilmadi
+                    {tc.nothingFound}
                   </td>
                 </tr>
               )}
@@ -153,7 +156,7 @@ export default function AdminIrregularVerbsPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Fe'lni tahrirlash" : "Yangi irregular verb"}
+        title={editing ? t.editTitle : t.newTitle}
       >
         <IrregularVerbForm
           initial={editing}

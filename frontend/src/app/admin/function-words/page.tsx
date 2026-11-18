@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { FunctionWord, FunctionWordCategory } from "@/lib/types";
@@ -7,14 +8,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { FunctionWordForm } from "@/components/admin/FunctionWordForm";
-
-const CATEGORY_LABELS: Record<FunctionWordCategory, string> = {
-  preposition: "Predloglar",
-  article: "Artikllar",
-  question_word: "So'roq so'zlari",
-  infinitive_marker: "Infinitive belgisi",
-  question_auxiliary: "Savol yordamchilari",
-};
 
 const CATEGORY_ORDER: FunctionWordCategory[] = [
   "preposition",
@@ -40,6 +33,8 @@ export default function AdminFunctionWordsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<FunctionWord | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("functionWords");
+  const tc = useAdminT("common");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,13 +52,13 @@ export default function AdminFunctionWordsPage() {
   }, [load]);
 
   async function handleDelete(word: FunctionWord) {
-    if (!confirm("Bu so'zni o'chirishni tasdiqlaysizmi?")) return;
+    if (!confirm(t.confirmDelete)) return;
     setError(null);
     try {
       await apiFetch(`/function-words/${word._id}`, { method: "DELETE", admin: true });
       setWords((prev) => prev.filter((w) => w._id !== word._id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.deleteError);
     }
   }
 
@@ -71,8 +66,8 @@ export default function AdminFunctionWordsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold">Kichik so&apos;zlar</h1>
-          <p className="text-foreground/60 text-sm mt-1">Jami {words.length} ta so&apos;z</p>
+          <h1 className="text-2xl font-extrabold">{t.title}</h1>
+          <p className="text-foreground/60 text-sm mt-1">{tf(t.total, { n: words.length })}</p>
         </div>
         <Button
           onClick={() => {
@@ -80,7 +75,7 @@ export default function AdminFunctionWordsPage() {
             setModalOpen(true);
           }}
         >
-          + So&apos;z qo&apos;shish
+          {t.add}
         </Button>
       </div>
 
@@ -95,7 +90,7 @@ export default function AdminFunctionWordsPage() {
           {groupByCategory(words).map(([category, categoryWords]) => (
             <div key={category}>
               <h2 className="font-bold text-sm text-foreground/60 mb-2 uppercase tracking-wide">
-                {CATEGORY_LABELS[category]} ({categoryWords.length})
+                {t[`cat_${category}`]} ({categoryWords.length})
               </h2>
               <div className="space-y-3">
                 {categoryWords.map((w) => (
@@ -120,10 +115,10 @@ export default function AdminFunctionWordsPage() {
                         }}
                         className="text-primary font-medium hover:underline"
                       >
-                        Tahrirlash
+                        {tc.edit}
                       </button>
                       <button onClick={() => handleDelete(w)} className="text-danger font-medium hover:underline">
-                        O&apos;chirish
+                        {tc.delete}
                       </button>
                     </div>
                   </Card>
@@ -134,7 +129,7 @@ export default function AdminFunctionWordsPage() {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "So'zni tahrirlash" : "Yangi so'z"}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? t.editTitle : t.newTitle}>
         <FunctionWordForm
           initial={editing}
           onSaved={() => {

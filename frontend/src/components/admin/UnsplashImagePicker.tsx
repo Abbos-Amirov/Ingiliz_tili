@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdminT } from "@/hooks/useAdminT";
 import { useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { UnsplashPhoto, ImageAttribution } from "@/lib/types";
@@ -24,6 +25,7 @@ export function UnsplashImagePicker({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const t = useAdminT("unsplash");
 
   async function handleSearch() {
     const q = query.trim();
@@ -37,7 +39,7 @@ export function UnsplashImagePicker({
       setPhotos(res.photos);
       setSearched(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Unsplash qidiruvida xatolik");
+      setError(err instanceof ApiError ? err.message : t.error);
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export function UnsplashImagePicker({
 
   return (
     <div className="space-y-2">
-      <span className="block text-sm font-medium">Rasm (Unsplash)</span>
+      <span className="block text-sm font-medium">{t.label}</span>
 
       {selectedImageUrl && (
         <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-muted p-2">
@@ -56,7 +58,7 @@ export function UnsplashImagePicker({
             onClick={onClear}
             className="text-xs font-semibold text-danger hover:underline"
           >
-            Rasmni olib tashlash
+            {t.remove}
           </button>
         </div>
       )}
@@ -71,7 +73,7 @@ export function UnsplashImagePicker({
               handleSearch();
             }
           }}
-          placeholder="masalan: go, walking person"
+          placeholder={t.placeholder}
           className="flex-1 rounded-xl border border-border bg-surface-muted px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
         />
         <button
@@ -80,14 +82,14 @@ export function UnsplashImagePicker({
           disabled={loading || !query.trim()}
           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60 shrink-0"
         >
-          {loading ? "Qidirilmoqda..." : "🔍 Mos rasmlarni qidirish"}
+          {loading ? t.searching : t.search}
         </button>
       </div>
 
       {error && <p className="text-xs text-danger">{error}</p>}
 
       {searched && !loading && photos.length === 0 && !error && (
-        <p className="text-xs text-foreground/50">Hech qanday rasm topilmadi.</p>
+        <p className="text-xs text-foreground/50">{t.none}</p>
       )}
 
       {photos.length > 0 && (

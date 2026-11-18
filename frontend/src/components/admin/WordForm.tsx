@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { AiAssistButton } from "./AiAssistPanel";
 import { UnsplashImagePicker } from "./UnsplashImagePicker";
 import { parseLessonRangeText, formatLessonRange } from "@/lib/lessonRange";
-import { PARTS_OF_SPEECH, PARTS_OF_SPEECH_LABELS } from "@/lib/partsOfSpeech";
+import { PARTS_OF_SPEECH } from "@/lib/partsOfSpeech";
+import { tf, useAdminT } from "@/hooks/useAdminT";
 
 interface WordFormValues {
   english: string;
@@ -68,6 +69,11 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
   const [checkingLive, setCheckingLive] = useState(false);
   const [irregularMatch, setIrregularMatch] = useState<IrregularVerb | null>(null);
   const [dismissIrregularWarning, setDismissIrregularWarning] = useState(false);
+  const t = useAdminT("wordForm");
+  const tf_ = useAdminT("form");
+  const tc = useAdminT("common");
+  const tl = useAdminT("levels");
+  const tp = useAdminT("pos");
 
   useEffect(() => {
     const english = values.english.trim();
@@ -129,7 +135,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
   async function save(force = false) {
     const lessonRange = parseLessonRangeText(lessonRangeText);
     if (!lessonRange) {
-      setError("Dars raqami noto'g'ri. Masalan: 7 yoki 34-37");
+      setError(tf_.lessonInvalid);
       return;
     }
     setSaving(true);
@@ -154,7 +160,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
       if (err instanceof ApiError && err.status === 409) {
         setDupWarning(true);
       } else {
-        setError(err instanceof ApiError ? err.message : "Saqlashda xatolik yuz berdi");
+        setError(err instanceof ApiError ? err.message : tf_.saveErrorFull);
       }
     } finally {
       setSaving(false);
@@ -169,7 +175,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Ingliz so'z">
+        <Field label={t.english}>
           <input
             required
             value={values.english}
@@ -177,7 +183,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
             className="input"
           />
         </Field>
-        <Field label="Koreys so'z">
+        <Field label={t.korean}>
           <input
             required
             value={values.korean}
@@ -185,7 +191,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
             className="input"
           />
         </Field>
-        <Field label="O'zbekcha so'z">
+        <Field label={t.uzbek}>
           <input
             required
             value={values.uzbek}
@@ -195,17 +201,21 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
         </Field>
       </div>
 
-      {checkingLive && <p className="text-xs text-foreground/40 -mt-2">Tekshirilmoqda...</p>}
+      {checkingLive && <p className="text-xs text-foreground/40 -mt-2">{tf_.checking}</p>}
 
       {showLiveWarning && (
         <div className="rounded-xl bg-accent-soft border border-accent/30 p-3 text-sm -mt-2">
           <p className="text-accent font-semibold">
-            &quot;{values.english.trim()}&quot; so&apos;zi bazada allaqachon mavjud:
+            {tf(t.existsTitle, { word: values.english.trim() })}
           </p>
           <ul className="mt-1 space-y-0.5 text-accent/90">
             {liveMatches.map((w) => (
               <li key={w._id}>
-                {w.english} — {w.korean} ({w.lessonNumber === w.lessonNumberEnd ? `${w.lessonNumber}-dars` : `${w.lessonNumber}-${w.lessonNumberEnd}-dars`})
+                {w.english} — {w.korean} (
+                {tf(tc.lesson, {
+                  n: w.lessonNumber === w.lessonNumberEnd ? String(w.lessonNumber) : `${w.lessonNumber}-${w.lessonNumberEnd}`,
+                })}
+                )
               </li>
             ))}
           </ul>
@@ -215,15 +225,17 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
       {showIrregularWarning && irregularMatch && (
         <div className="rounded-xl bg-accent-soft border border-accent/30 p-3 text-sm -mt-2 space-y-2">
           <p className="text-accent font-semibold">
-            ⚠️ &quot;{values.english.trim()}&quot; — bu irregular verb ({irregularMatch.base} → {irregularMatch.past} →{" "}
-            {irregularMatch.participle}). Bu so&apos;z allaqachon Irregular Verbs bazasida mavjud.
+            {tf(t.irregularWarning, {
+              word: values.english.trim(),
+              forms: `${irregularMatch.base} → ${irregularMatch.past} → ${irregularMatch.participle}`,
+            })}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" onClick={() => router.push("/admin/irregular-verbs")}>
-              Irregular Verbs bo&apos;limiga o&apos;t
+              {t.goIrregular}
             </Button>
             <Button type="button" size="sm" variant="secondary" onClick={() => setDismissIrregularWarning(true)}>
-              Baribir oddiy so&apos;z sifatida qo&apos;sh
+              {t.addAsWord}
             </Button>
           </div>
         </div>
@@ -251,21 +263,21 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
         onClear={() => setValues((prev) => ({ ...prev, imageUrl: null, imageAttribution: null }))}
       />
 
-      <Field label="Misol gap (ingliz)">
+      <Field label={t.exampleEn}>
         <input
           value={values.exampleSentenceEn}
           onChange={(e) => update("exampleSentenceEn", e.target.value)}
           className="input"
         />
       </Field>
-      <Field label="Misol gap (koreys)">
+      <Field label={t.exampleKo}>
         <input
           value={values.exampleSentenceKo}
           onChange={(e) => update("exampleSentenceKo", e.target.value)}
           className="input"
         />
       </Field>
-      <Field label="Misol gap (o'zbekcha)">
+      <Field label={t.exampleUz}>
         <input
           value={values.exampleSentenceUz}
           onChange={(e) => update("exampleSentenceUz", e.target.value)}
@@ -274,7 +286,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Kategoriya">
+        <Field label={t.category}>
           <input
             value={values.category}
             onChange={(e) => update("category", e.target.value)}
@@ -282,40 +294,40 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
             placeholder="motion-verbs, food..."
           />
         </Field>
-        <Field label="Daraja">
+        <Field label={tf_.level}>
           <select
             value={values.difficulty}
             onChange={(e) => update("difficulty", e.target.value as Difficulty)}
             className="input"
           >
-            <option value="beginner">Boshlang&apos;ich</option>
-            <option value="intermediate">O&apos;rta</option>
-            <option value="advanced">Murakkab</option>
+            <option value="beginner">{tl.beginner}</option>
+            <option value="intermediate">{tl.intermediate}</option>
+            <option value="advanced">{tl.advanced}</option>
           </select>
         </Field>
       </div>
 
-      <Field label="So'z turkumi (grammatik)">
+      <Field label={t.pos}>
         <select
           value={values.partOfSpeech}
           onChange={(e) => update("partOfSpeech", e.target.value as PartOfSpeech | "")}
           className="input"
         >
-          <option value="">— tanlanmagan —</option>
+          <option value="">{tf_.notSelected}</option>
           {PARTS_OF_SPEECH.map((pos) => (
             <option key={pos} value={pos}>
-              {PARTS_OF_SPEECH_LABELS[pos]}
+              {tp[pos]}
             </option>
           ))}
         </select>
       </Field>
 
-      <Field label="Dars raqami (masalan: 7 yoki 34-37)">
+      <Field label={tf_.lessonLabel}>
         <input
           required
           value={lessonRangeText}
           onChange={(e) => setLessonRangeText(e.target.value)}
-          placeholder="7 yoki 34-37"
+          placeholder={tf_.lessonPlaceholder}
           className="input"
         />
       </Field>
@@ -323,10 +335,10 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
       {dupWarning && (
         <div className="rounded-xl bg-accent-soft border border-accent/30 p-3 text-sm">
           <p className="text-accent font-semibold mb-2">
-            Bu so&apos;z juftligi (english+korean) allaqachon mavjud.
+            {t.duplicate}
           </p>
           <Button type="button" size="sm" variant="secondary" onClick={() => save(true)}>
-            Baribir qo&apos;shish
+            {tf_.addAnyway}
           </Button>
         </div>
       )}
@@ -334,7 +346,7 @@ export function WordForm({ initial, onSaved }: { initial?: Word | null; onSaved:
       {error && <p className="text-danger text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Qo'shish"}
+        {saving ? tc.saving : initial ? tf_.update : tf_.add}
       </Button>
 
       <style jsx>{`

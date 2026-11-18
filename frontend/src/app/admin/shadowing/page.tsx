@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { ShadowingVideo } from "@/lib/types";
@@ -14,6 +15,8 @@ export default function AdminShadowingPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ShadowingVideo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("shadowing");
+  const tc = useAdminT("common");
   const [translatingId, setTranslatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -45,7 +48,7 @@ export default function AdminShadowingPage() {
       setEditing(res.video);
       setModalOpen(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Videoni yuklashda xatolik");
+      setError(err instanceof ApiError ? err.message : t.loadVideoError);
     }
   }
 
@@ -55,20 +58,20 @@ export default function AdminShadowingPage() {
     try {
       await apiFetch(`/shadowing/${video._id}/translate-sentences`, { method: "POST", admin: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Tarjima qilishda xatolik");
+      setError(err instanceof ApiError ? err.message : t.translateError);
     } finally {
       setTranslatingId(null);
     }
   }
 
   async function handleDelete(video: ShadowingVideo) {
-    if (!confirm(`"${video.title}" videosini o'chirishni tasdiqlaysizmi?`)) return;
+    if (!confirm(tf(t.confirmDelete, { title: video.title }))) return;
     setError(null);
     try {
       await apiFetch(`/shadowing/${video._id}`, { method: "DELETE", admin: true });
       setVideos((prev) => prev.filter((v) => v._id !== video._id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.deleteError);
     }
   }
 
@@ -82,10 +85,10 @@ export default function AdminShadowingPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold">Shadowing videolar</h1>
-          <p className="text-foreground/60 text-sm mt-1">Jami {videos.length} ta video</p>
+          <h1 className="text-2xl font-extrabold">{t.title}</h1>
+          <p className="text-foreground/60 text-sm mt-1">{tf(t.total, { n: videos.length })}</p>
         </div>
-        <Button onClick={openCreate}>+ Video qo&apos;shish</Button>
+        <Button onClick={openCreate}>{t.add}</Button>
       </div>
 
       {error && <p className="text-danger text-sm mb-4">{error}</p>}
@@ -95,7 +98,7 @@ export default function AdminShadowingPage() {
           <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
         </div>
       ) : videos.length === 0 ? (
-        <p className="text-center py-16 text-foreground/60">Hali video qo&apos;shilmagan.</p>
+        <p className="text-center py-16 text-foreground/60">{t.empty}</p>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {videos.map((v) => (
@@ -115,13 +118,13 @@ export default function AdminShadowingPage() {
                   disabled={translatingId === v._id}
                   className="text-primary font-medium hover:underline disabled:opacity-50"
                 >
-                  {translatingId === v._id ? "Tarjima qilinmoqda..." : "🤖 AI bilan tarjima qilish"}
+                  {translatingId === v._id ? t.translating : t.translate}
                 </button>
                 <button onClick={() => openEdit(v)} className="text-primary font-medium hover:underline">
-                  Tahrirlash
+                  {tc.edit}
                 </button>
                 <button onClick={() => handleDelete(v)} className="text-danger font-medium hover:underline">
-                  O&apos;chirish
+                  {tc.delete}
                 </button>
               </div>
             </Card>
@@ -132,7 +135,7 @@ export default function AdminShadowingPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Videoni tahrirlash" : "Yangi Shadowing video"}
+        title={editing ? t.editTitle : t.newTitle}
       >
         <ShadowingVideoForm
           initial={editing}

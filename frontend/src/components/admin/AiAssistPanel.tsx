@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdminT } from "@/hooks/useAdminT";
 import { useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type {
@@ -36,10 +37,11 @@ export function AiAssistButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ta = useAdminT("ai");
 
   async function handleClick() {
     if (!english.trim()) {
-      setError("Avval inglizcha so'zni kiriting");
+      setError(ta.needEnglish);
       return;
     }
     setError(null);
@@ -52,7 +54,7 @@ export function AiAssistButton({
       });
       onSuggestion(res.suggestion);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+      setError(err instanceof ApiError ? err.message : ta.error);
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export function AiAssistButton({
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
-        {loading ? "AI o'ylayapti..." : "✨ AI bilan taklif olish"}
+        {loading ? ta.thinking : ta.suggest}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
@@ -94,10 +96,11 @@ export function AiGrammarAssistButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ta = useAdminT("ai");
 
   async function handleClick() {
     if (!title.trim() || !formula.trim()) {
-      setError("Avval Nomi va Formula maydonlarini kiriting");
+      setError(ta.needTitleFormula);
       return;
     }
     setError(null);
@@ -110,7 +113,7 @@ export function AiGrammarAssistButton({
       });
       onSuggestion(res.suggestion);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+      setError(err instanceof ApiError ? err.message : ta.error);
     } finally {
       setLoading(false);
     }
@@ -124,7 +127,7 @@ export function AiGrammarAssistButton({
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
-        {loading ? "AI o'ylayapti..." : "✨ AI bilan avtomatik yozish"}
+        {loading ? ta.thinking : ta.autoWrite}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
@@ -150,10 +153,11 @@ export function AiDeepExplanationAssistButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ta = useAdminT("ai");
 
   async function handleClick() {
     if (!korean.trim() || words.length === 0) {
-      setError("Avval koreys gap va so'zlarni kiriting");
+      setError(ta.needSentence);
       return;
     }
     setError(null);
@@ -166,7 +170,7 @@ export function AiDeepExplanationAssistButton({
       });
       onSuggestion(res.suggestion);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+      setError(err instanceof ApiError ? err.message : ta.error);
     } finally {
       setLoading(false);
     }
@@ -180,7 +184,7 @@ export function AiDeepExplanationAssistButton({
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
-        {loading ? "AI o'ylayapti..." : "✨ AI bilan chuqur tushuntirish yaratish"}
+        {loading ? ta.thinking : ta.deepExplain}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
@@ -204,10 +208,11 @@ export function AiFunctionWordAssistButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ta = useAdminT("ai");
 
   async function handleClick() {
     if (!word.trim()) {
-      setError("Avval so'zni kiriting");
+      setError(ta.needWord);
       return;
     }
     setError(null);
@@ -220,7 +225,7 @@ export function AiFunctionWordAssistButton({
       });
       onSuggestion(res.suggestion);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+      setError(err instanceof ApiError ? err.message : ta.error);
     } finally {
       setLoading(false);
     }
@@ -234,7 +239,7 @@ export function AiFunctionWordAssistButton({
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
-        {loading ? "AI o'ylayapti..." : "✨ AI bilan to'ldirish"}
+        {loading ? ta.thinking : ta.fill}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
@@ -262,10 +267,11 @@ export function AiQuestionAnswerAssistButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ta = useAdminT("ai");
 
   async function handleClick() {
     if (!questionEnglish.trim() || !questionKorean.trim() || !answerEnglish.trim() || !answerKorean.trim()) {
-      setError("Avval savol va javobning koreys/ingliz matnlarini kiriting");
+      setError(ta.needQa);
       return;
     }
     setError(null);
@@ -283,7 +289,7 @@ export function AiQuestionAnswerAssistButton({
       });
       onSuggestion(res);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+      setError(err instanceof ApiError ? err.message : ta.error);
     } finally {
       setLoading(false);
     }
@@ -297,7 +303,7 @@ export function AiQuestionAnswerAssistButton({
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
-        {loading ? "AI o'ylayapti..." : "✨ AI bilan avtomatik ajratish"}
+        {loading ? ta.thinking : ta.autoSplit}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>
@@ -321,10 +327,11 @@ export function AiIrregularVerbAssistButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ta = useAdminT("ai");
 
   async function handleClick() {
     if (!base.trim()) {
-      setError("Avval Base (V1) so'zini kiriting");
+      setError(ta.needBase);
       return;
     }
     setError(null);
@@ -337,7 +344,7 @@ export function AiIrregularVerbAssistButton({
       });
       onSuggestion(res.suggestion);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "AI xizmatida xatolik");
+      setError(err instanceof ApiError ? err.message : ta.error);
     } finally {
       setLoading(false);
     }
@@ -351,7 +358,7 @@ export function AiIrregularVerbAssistButton({
         disabled={loading}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-soft text-accent hover:brightness-95 disabled:opacity-60"
       >
-        {loading ? "AI o'ylayapti..." : "✨ AI bilan to'ldirish"}
+        {loading ? ta.thinking : ta.fill}
       </button>
       {error && <p className="text-xs text-danger mt-1">{error}</p>}
     </div>

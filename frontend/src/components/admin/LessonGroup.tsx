@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useState } from "react";
+import { tf, useAdminT } from "@/hooks/useAdminT";
 
 interface LessonGroupProps {
   label: string;
@@ -20,6 +21,7 @@ interface LessonGroupProps {
 // looking for instead of opening lessons one by one.
 export function LessonGroup({ label, count, previewLabel, children }: LessonGroupProps) {
   const [open, setOpen] = useState(false);
+  const tc = useAdminT("common");
 
   return (
     <div>
@@ -39,7 +41,7 @@ export function LessonGroup({ label, count, previewLabel, children }: LessonGrou
           <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <h2 className="font-bold text-sm text-foreground/60 uppercase tracking-wide group-hover:text-foreground transition-colors">
-          {label}-dars ({count})
+          {tf(tc.lesson, { n: label })} ({count})
           {!open && previewLabel && (
             <span className="ml-2 normal-case font-normal text-foreground/40">— {previewLabel}</span>
           )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useCallback, useEffect, useState } from "react";
 import type { Difficulty, GrammarTopic } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -8,11 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { GrammarTopicForm } from "@/components/admin/GrammarTopicForm";
 
-const LEVELS: { value: Difficulty; label: string }[] = [
-  { value: "beginner", label: "Boshlang'ich" },
-  { value: "intermediate", label: "O'rta" },
-  { value: "advanced", label: "Murakkab" },
-];
+const LEVELS: Difficulty[] = ["beginner", "intermediate", "advanced"];
 
 export default function AdminGrammarPage() {
   const [topics, setTopics] = useState<GrammarTopic[]>([]);
@@ -21,6 +18,9 @@ export default function AdminGrammarPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<GrammarTopic | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const tx = useAdminT("grammar");
+  const tc = useAdminT("common");
+  const tl = useAdminT("levels");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,13 +49,13 @@ export default function AdminGrammarPage() {
   }
 
   async function handleDelete(t: GrammarTopic) {
-    if (!confirm(`"${t.title.uz}" mavzusini o'chirishni tasdiqlaysizmi?`)) return;
+    if (!confirm(tf(tx.confirmDelete, { title: t.title.uz }))) return;
     setError(null);
     try {
       await apiFetch(`/grammar-topics/${t._id}`, { method: "DELETE", admin: true });
       setTopics((prev) => prev.filter((x) => x._id !== t._id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.deleteError);
     }
   }
 
@@ -65,22 +65,22 @@ export default function AdminGrammarPage() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold">Grammatika</h1>
-          <p className="text-foreground/60 text-sm mt-1">Jami {topics.length} ta mavzu</p>
+          <h1 className="text-2xl font-extrabold">{tx.title}</h1>
+          <p className="text-foreground/60 text-sm mt-1">{tf(tx.total, { n: topics.length })}</p>
         </div>
-        <Button onClick={openCreate}>+ Mavzu qo&apos;shish</Button>
+        <Button onClick={openCreate}>{tx.add}</Button>
       </div>
 
       <div className="flex gap-2 mb-5">
         {LEVELS.map((l) => (
           <button
-            key={l.value}
-            onClick={() => setLevel(l.value)}
+            key={l}
+            onClick={() => setLevel(l)}
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-              level === l.value ? "gradient-primary text-white" : "bg-surface-muted text-foreground/70 hover:text-foreground"
+              level === l ? "gradient-primary text-white" : "bg-surface-muted text-foreground/70 hover:text-foreground"
             }`}
           >
-            {l.label} ({topics.filter((t) => t.level === l.value).length})
+            {tl[l]} ({topics.filter((t) => t.level === l).length})
           </button>
         ))}
       </div>
@@ -97,9 +97,9 @@ export default function AdminGrammarPage() {
             <thead>
               <tr className="text-left text-foreground/50 border-b border-border">
                 <th className="px-4 py-3 font-medium w-12">#</th>
-                <th className="px-4 py-3 font-medium">Nomi</th>
-                <th className="px-4 py-3 font-medium">Formula</th>
-                <th className="px-4 py-3 font-medium text-right">Amallar</th>
+                <th className="px-4 py-3 font-medium">{tx.colName}</th>
+                <th className="px-4 py-3 font-medium">{tx.colFormula}</th>
+                <th className="px-4 py-3 font-medium text-right">{tc.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -110,10 +110,10 @@ export default function AdminGrammarPage() {
                   <td className="px-4 py-3 font-mono text-xs text-foreground/70">{t.formula}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <button onClick={() => openEdit(t)} className="text-primary font-medium hover:underline">
-                      Tahrirlash
+                      {tc.edit}
                     </button>
                     <button onClick={() => handleDelete(t)} className="text-danger font-medium hover:underline">
-                      O&apos;chirish
+                      {tc.delete}
                     </button>
                   </td>
                 </tr>
@@ -121,7 +121,7 @@ export default function AdminGrammarPage() {
               {levelTopics.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-8 text-center text-foreground/50">
-                    Bu darajada mavzu yo&apos;q
+                    {tx.emptyLevel}
                   </td>
                 </tr>
               )}
@@ -133,7 +133,7 @@ export default function AdminGrammarPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Mavzuni tahrirlash" : "Yangi grammatika mavzusi"}
+        title={editing ? tx.editTitle : tx.newTitle}
       >
         <div className="max-h-[70vh] overflow-y-auto pr-1">
           <GrammarTopicForm

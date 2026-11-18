@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,10 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
   const [transcribing, setTranscribing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("shadowingForm");
+  const tc = useAdminT("common");
+  const tfm = useAdminT("form");
+  const tl = useAdminT("levels");
 
   function resetVideo(f: File | null) {
     setFile(f);
@@ -45,7 +50,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
       setVideoUrl(res.videoUrl);
       setFilename(res.filename);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Video yuklashda xatolik");
+      setError(err instanceof ApiError ? err.message : t.uploadError);
     } finally {
       setUploading(false);
     }
@@ -66,7 +71,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
       // A video over 25MB can't go through AI transcription (see
       // transcription.service.ts) — the editable table below still lets an
       // admin type the transcript by hand as a fallback.
-      setError(err instanceof ApiError ? err.message : "Transkripsiyada xatolik. So'zlarni qo'lda kiriting.");
+      setError(err instanceof ApiError ? err.message : t.transcribeError);
     } finally {
       setTranscribing(false);
     }
@@ -97,7 +102,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
     // empty row left behind by "+ So'z qo'shish" on a long transcript.
     const emptyIndex = words.findIndex((w) => !w.word.trim());
     if (emptyIndex !== -1) {
-      setError(`${emptyIndex + 1}-qatordagi so'z bo'sh — to'ldiring yoki ✕ bilan o'chiring.`);
+      setError(tf(t.emptyRow, { n: emptyIndex + 1 }));
       return;
     }
     setSaving(true);
@@ -111,7 +116,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
       }
       onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Saqlashda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.saveError);
     } finally {
       setSaving(false);
     }
@@ -121,17 +126,17 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
     <div className="space-y-5">
       <Card className="p-6 space-y-4">
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">Sarlavha</span>
+          <span className="block text-sm font-medium mb-1.5">{t.title}</span>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="masalan: Kung Fu Panda - Secret Ingredient"
+            placeholder={t.titlePlaceholder}
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           />
         </label>
 
         <div>
-          <span className="block text-sm font-medium mb-1.5">Daraja</span>
+          <span className="block text-sm font-medium mb-1.5">{tfm.level}</span>
           <div className="flex gap-2">
             {LEVELS.map((l) => (
               <button
@@ -142,7 +147,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
                   level === l ? "gradient-primary text-white" : "bg-surface-muted text-foreground/70"
                 }`}
               >
-                {l}
+                {tl[l]}
               </button>
             ))}
           </div>
@@ -158,7 +163,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
             />
             {file && !videoUrl && (
               <Button onClick={handleUpload} disabled={uploading} className="mt-3">
-                {uploading ? "Yuklanmoqda..." : "Videoni yuklash"}
+                {uploading ? t.uploading : t.uploadVideo}
               </Button>
             )}
           </div>
@@ -179,7 +184,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
             </div>
             {words.length === 0 && (
               <Button onClick={handleTranscribe} disabled={transcribing}>
-                {transcribing ? "Transkripsiya qilinmoqda..." : "🤖 AI bilan transkripsiya qilish"}
+                {transcribing ? t.transcribing : t.transcribe}
               </Button>
             )}
           </div>
@@ -192,16 +197,15 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-foreground/60">
-              Transkripsiya {words.length > 0 && `(${words.length} so'z)`} — so&apos;zlarni va vaqtlarni (soniyada)
-              tahrirlashingiz mumkin
+              {t.transcript} {words.length > 0 && tf(t.wordCount, { n: words.length })} {t.transcriptHint}
             </p>
             <button onClick={addWord} type="button" className="text-primary text-sm font-medium hover:underline shrink-0 ml-3">
-              + So&apos;z qo&apos;shish
+              {t.addWord}
             </button>
           </div>
           {words.length === 0 ? (
             <p className="text-sm text-foreground/40 py-4 text-center">
-              Hali so&apos;z yo&apos;q — AI transkripsiyasini kuting yoki qo&apos;lda qo&apos;shing.
+              {t.noWords}
             </p>
           ) : (
             <div className="max-h-96 overflow-y-auto space-y-1.5">
@@ -210,7 +214,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
                   <input
                     value={w.word}
                     onChange={(e) => updateWord(i, "word", e.target.value)}
-                    placeholder="(bo'sh — to'ldiring)"
+                    placeholder={t.emptyPlaceholder}
                     className={`flex-1 rounded-lg border bg-surface-muted px-2.5 py-1.5 text-sm ${
                       w.word.trim() ? "border-border" : "border-danger"
                     }`}
@@ -242,7 +246,7 @@ export function ShadowingVideoForm({ initial, onSaved }: { initial?: ShadowingVi
 
       {videoUrl && words.length > 0 && (
         <Button onClick={handleSave} disabled={saving || !title.trim()}>
-          {saving ? "Saqlanmoqda..." : "Saqlash"}
+          {saving ? tc.saving : tc.save}
         </Button>
       )}
     </div>

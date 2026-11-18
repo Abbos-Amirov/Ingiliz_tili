@@ -8,25 +8,28 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminIcon, type AdminIconName } from "@/components/admin/AdminIcons";
 import { Asterisk } from "@/components/ui/Shapes";
+import { AdminLangToggle } from "@/components/admin/AdminLangToggle";
+import { useAdminT } from "@/hooks/useAdminT";
+import type { AdminDict } from "@/lib/i18n/admin";
 
 // Admin shell, following the Pallo! admin mockup: purple sidebar + light
 // content area on desktop; top bar + bottom tab bar + slide-up "more" sheet
 // on phones.
 
-const navLinks: { href: string; label: string; icon: AdminIconName }[] = [
-  { href: "/admin", label: "Bosh sahifa", icon: "home" },
-  { href: "/admin/students", label: "O'quvchilar", icon: "users" },
-  { href: "/admin/words", label: "So'zlar", icon: "book" },
-  { href: "/admin/words/upload", label: "CSV yuklash", icon: "upload" },
-  { href: "/admin/sentences", label: "Gaplar", icon: "pen" },
-  { href: "/admin/irregular-verbs", label: "Irregular Verbs", icon: "repeat" },
-  { href: "/admin/grammar", label: "Grammatika", icon: "ruler" },
-  { href: "/admin/function-words", label: "Kichik so'zlar", icon: "type" },
-  { href: "/admin/questions-answers", label: "Savol-Javob", icon: "chat" },
-  { href: "/admin/shadowing", label: "Shadowing", icon: "video" },
+const navLinks: { href: string; labelKey: keyof AdminDict["shell"]; icon: AdminIconName }[] = [
+  { href: "/admin", labelKey: "dashboard", icon: "home" },
+  { href: "/admin/students", labelKey: "students", icon: "users" },
+  { href: "/admin/words", labelKey: "words", icon: "book" },
+  { href: "/admin/words/upload", labelKey: "csvUpload", icon: "upload" },
+  { href: "/admin/sentences", labelKey: "sentences", icon: "pen" },
+  { href: "/admin/irregular-verbs", labelKey: "irregularVerbs", icon: "repeat" },
+  { href: "/admin/grammar", labelKey: "grammar", icon: "ruler" },
+  { href: "/admin/function-words", labelKey: "functionWords", icon: "type" },
+  { href: "/admin/questions-answers", labelKey: "questionsAnswers", icon: "chat" },
+  { href: "/admin/shadowing", labelKey: "shadowing", icon: "video" },
 ];
 
-// Phone bottom bar: the most-used four + "Yana" (opens the full list).
+// Phone bottom bar: the most-used four + "More" (opens the full list).
 const mobileTabs = ["/admin", "/admin/students", "/admin/words", "/admin/sentences"];
 
 function isActiveHref(pathname: string, href: string): boolean {
@@ -51,6 +54,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const t = useAdminT("shell");
+  const tc = useAdminT("common");
 
   useEffect(() => {
     if (ready && !user && !isLoginPage) router.replace("/admin/login");
@@ -104,13 +109,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <Link
                   key={l.href}
                   href={l.href}
-                  title={collapsed ? l.label : undefined}
+                  title={collapsed ? t[l.labelKey] : undefined}
                   className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors ${
                     active ? "bg-white/15 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]" : "text-white/75 hover:bg-white/10 hover:text-white"
                   } ${collapsed ? "justify-center" : ""}`}
                 >
                   <AdminIcon name={l.icon} className="h-5 w-5 shrink-0" />
-                  {!collapsed && <span className="truncate">{l.label}</span>}
+                  {!collapsed && <span className="truncate">{t[l.labelKey]}</span>}
                 </Link>
               );
             })}
@@ -124,7 +129,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               }`}
             >
               <AdminIcon name="logout" />
-              {!collapsed && "Chiqish"}
+              {!collapsed && tc.logout}
             </button>
           </div>
 
@@ -147,7 +152,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <header className="sticky top-0 z-30 hidden items-center gap-4 border-b border-[#ebe4fb] bg-white/80 px-6 py-3.5 backdrop-blur-md dark:border-border dark:bg-surface/80 lg:flex">
             <button
               onClick={() => setCollapsed((c) => !c)}
-              aria-label="Menyuni yig'ish"
+              aria-label={t.collapseMenu}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground/70 hover:bg-[#f3effd] dark:hover:bg-surface-muted"
             >
               <AdminIcon name="menu" />
@@ -157,11 +162,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="O'quvchini qidirish (ism yoki email)…"
+                placeholder={t.searchStudents}
                 className="w-full rounded-full bg-[#f3effd] py-2.5 pl-11 pr-4 text-sm outline-none ring-[#7c3aed]/30 focus:ring-2 dark:bg-surface-muted"
               />
             </form>
-            <div className="relative ml-auto">
+            <AdminLangToggle className="ml-auto" />
+            <div className="relative">
               <button onClick={() => setMenuOpen((v) => !v)} className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 hover:bg-[#f3effd] dark:hover:bg-surface-muted">
                 {avatar}
                 <span className="text-sm font-bold">{user.displayName || "Admin"}</span>
@@ -180,7 +186,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       onClick={handleLogout}
                       className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft"
                     >
-                      <AdminIcon name="logout" className="h-4 w-4" /> Chiqish
+                      <AdminIcon name="logout" className="h-4 w-4" /> {tc.logout}
                     </button>
                   </motion.div>
                 )}
@@ -194,7 +200,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <Asterisk size={30} color="#5b21b6" />
               <span className="text-xl font-extrabold tracking-tight text-[#5b21b6] dark:text-primary">PALLO!</span>
             </Link>
-            {avatar}
+            <div className="flex items-center gap-2">
+              <AdminLangToggle />
+              {avatar}
+            </div>
           </header>
 
           <main className="flex-1 p-4 pb-28 sm:p-6 lg:p-8 lg:pb-8">{children}</main>
@@ -214,7 +223,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold ${active ? "text-[#5b21b6] dark:text-primary" : "text-foreground/55"}`}
               >
                 <AdminIcon name={l.icon} className="h-5 w-5" />
-                {l.label}
+                {t[l.labelKey]}
               </Link>
             );
           })}
@@ -225,7 +234,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             }`}
           >
             <AdminIcon name="grid" className="h-5 w-5" />
-            Yana
+            {t.more}
           </button>
         </div>
       </nav>
@@ -261,7 +270,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       }`}
                     >
                       <AdminIcon name={l.icon} className="h-5 w-5 shrink-0" />
-                      <span className="truncate">{l.label}</span>
+                      <span className="truncate">{t[l.labelKey]}</span>
                     </Link>
                   );
                 })}
@@ -270,7 +279,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 onClick={handleLogout}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-semibold text-danger"
               >
-                <AdminIcon name="logout" className="h-4 w-4" /> Chiqish
+                <AdminIcon name="logout" className="h-4 w-4" /> {tc.logout}
               </button>
             </motion.div>
           </>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdminT } from "@/hooks/useAdminT";
 import { FormEvent, useEffect, useState } from "react";
 import type {
   Difficulty,
@@ -65,6 +66,10 @@ export function GrammarTopicForm({
   const [values, setValues] = useState<FormValues>(initial ? fromTopic(initial) : emptyValues);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = useAdminT("grammarForm");
+  const tc = useAdminT("common");
+  const tfm = useAdminT("form");
+  const tl = useAdminT("levels");
 
   useEffect(() => {
     // Reset the form when the modal is reused for a different topic (no remount).
@@ -115,9 +120,9 @@ export function GrammarTopicForm({
       onSaved();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setError("Bu nomdagi grammatika mavzusi allaqachon mavjud.");
+        setError(t.duplicate);
       } else {
-        setError(err instanceof ApiError ? err.message : "Saqlashda xatolik yuz berdi");
+        setError(err instanceof ApiError ? err.message : tfm.saveErrorFull);
       }
     } finally {
       setSaving(false);
@@ -129,20 +134,20 @@ export function GrammarTopicForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <Field label="Daraja">
+      <Field label={tfm.level}>
         <select
           value={values.level}
           onChange={(e) => update("level", e.target.value as Difficulty)}
           className="input max-w-xs"
         >
-          <option value="beginner">Boshlang&apos;ich</option>
-          <option value="intermediate">O&apos;rta</option>
-          <option value="advanced">Murakkab</option>
+          <option value="beginner">{tl.beginner}</option>
+          <option value="intermediate">{tl.intermediate}</option>
+          <option value="advanced">{tl.advanced}</option>
         </select>
       </Field>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Field label="Nomi (o'zbekcha)">
+        <Field label={t.titleUz}>
           <input
             required
             value={values.title.uz}
@@ -150,7 +155,7 @@ export function GrammarTopicForm({
             className="input"
           />
         </Field>
-        <Field label="Nomi (inglizcha)">
+        <Field label={t.titleEn}>
           <input
             required
             value={values.title.en}
@@ -158,7 +163,7 @@ export function GrammarTopicForm({
             className="input"
           />
         </Field>
-        <Field label="Nomi (koreyscha)">
+        <Field label={t.titleKo}>
           <input
             required
             value={values.title.ko}
@@ -168,7 +173,7 @@ export function GrammarTopicForm({
         </Field>
       </div>
 
-      <Field label="Formula">
+      <Field label={t.formula}>
         <div className="flex gap-2">
           <input
             required
@@ -185,7 +190,7 @@ export function GrammarTopicForm({
               }}
               className="input max-w-[9rem]"
             >
-              <option value="">Tayyor...</option>
+              <option value="">{t.presets}</option>
               {formulaPresets.map((f) => (
                 <option key={f} value={f}>
                   {f}
@@ -196,7 +201,7 @@ export function GrammarTopicForm({
         </div>
       </Field>
 
-      <Field label="Tartib raqami (shu daraja ichida)">
+      <Field label={t.order}>
         <input
           type="number"
           value={values.order}
@@ -212,22 +217,22 @@ export function GrammarTopicForm({
         onSuggestion={applyAiSuggestion}
       />
 
-      <Section title="Qoida tushuntirish">
-        <Field label="O'zbekcha">
+      <Section title={t.rule}>
+        <Field label={t.uz}>
           <textarea
             value={values.ruleExplanation.uz}
             onChange={(e) => update("ruleExplanation", { ...values.ruleExplanation, uz: e.target.value })}
             className="input min-h-20"
           />
         </Field>
-        <Field label="Inglizcha">
+        <Field label={t.en}>
           <textarea
             value={values.ruleExplanation.en}
             onChange={(e) => update("ruleExplanation", { ...values.ruleExplanation, en: e.target.value })}
             className="input min-h-20"
           />
         </Field>
-        <Field label="Koreyscha">
+        <Field label={t.ko}>
           <textarea
             value={values.ruleExplanation.ko}
             onChange={(e) => update("ruleExplanation", { ...values.ruleExplanation, ko: e.target.value })}
@@ -236,7 +241,7 @@ export function GrammarTopicForm({
         </Field>
       </Section>
 
-      <Section title="Ishlatilish holatlari">
+      <Section title={t.usage}>
         {values.usageCases.map((uc, i) => (
           <ArrayRow key={i} onRemove={() => update("usageCases", values.usageCases.filter((_, j) => j !== i))}>
             <input
@@ -247,7 +252,7 @@ export function GrammarTopicForm({
                   values.usageCases.map((x, j) => (j === i ? { ...x, uz: e.target.value } : x)),
                 )
               }
-              placeholder="Tavsif (uz)"
+              placeholder={t.usageDesc}
               className="input"
             />
             <input
@@ -258,17 +263,17 @@ export function GrammarTopicForm({
                   values.usageCases.map((x, j) => (j === i ? { ...x, example: e.target.value } : x)),
                 )
               }
-              placeholder="Misol (en)"
+              placeholder={t.usageExample}
               className="input"
             />
           </ArrayRow>
         ))}
         <AddButton onClick={() => update("usageCases", [...values.usageCases, { uz: "", example: "" }])}>
-          + Holat qo&apos;shish
+          {t.addUsage}
         </AddButton>
       </Section>
 
-      <Section title="Bog'liq grammatikalar">
+      <Section title={t.related}>
         {values.relatedFormulas.map((rf, i) => (
           <ArrayRow
             key={i}
@@ -287,7 +292,7 @@ export function GrammarTopicForm({
               }}
               className="input"
             >
-              <option value="">— mavzu tanlang —</option>
+              <option value="">{t.chooseTopic}</option>
               {otherTopics.map((t) => (
                 <option key={t._id} value={t._id}>
                   {t.title.uz}
@@ -302,7 +307,7 @@ export function GrammarTopicForm({
                   values.relatedFormulas.map((x, j) => (j === i ? { ...x, difference: e.target.value } : x)),
                 )
               }
-              placeholder="Farqi (uz)"
+              placeholder={t.difference}
               className="input"
             />
           </ArrayRow>
@@ -312,11 +317,11 @@ export function GrammarTopicForm({
             update("relatedFormulas", [...values.relatedFormulas, { relatedTopicId: "", title: "", difference: "" }])
           }
         >
-          + Bog&apos;liq mavzu qo&apos;shish
+          {t.addRelated}
         </AddButton>
       </Section>
 
-      <Section title="Tez-tez uchraydigan xatolar">
+      <Section title={t.mistakes}>
         {values.commonMistakes.map((cm, i) => (
           <ArrayRow
             key={i}
@@ -330,7 +335,7 @@ export function GrammarTopicForm({
                   values.commonMistakes.map((x, j) => (j === i ? { ...x, wrong: e.target.value } : x)),
                 )
               }
-              placeholder="✗ Noto'g'ri"
+              placeholder={t.wrong}
               className="input"
             />
             <input
@@ -341,7 +346,7 @@ export function GrammarTopicForm({
                   values.commonMistakes.map((x, j) => (j === i ? { ...x, correct: e.target.value } : x)),
                 )
               }
-              placeholder="✓ To'g'ri"
+              placeholder={t.correct}
               className="input"
             />
             <input
@@ -352,7 +357,7 @@ export function GrammarTopicForm({
                   values.commonMistakes.map((x, j) => (j === i ? { ...x, explanation: e.target.value } : x)),
                 )
               }
-              placeholder="Tushuntirish"
+              placeholder={t.explanation}
               className="input"
             />
           </ArrayRow>
@@ -362,11 +367,11 @@ export function GrammarTopicForm({
             update("commonMistakes", [...values.commonMistakes, { wrong: "", correct: "", explanation: "" }])
           }
         >
-          + Xato qo&apos;shish
+          {t.addMistake}
         </AddButton>
       </Section>
 
-      <Section title="Misollar">
+      <Section title={t.examples}>
         {values.examples.map((ex, i) => (
           <ArrayRow key={i} onRemove={() => update("examples", values.examples.filter((_, j) => j !== i))}>
             <input
@@ -393,20 +398,20 @@ export function GrammarTopicForm({
               onChange={(e) =>
                 update("examples", values.examples.map((x, j) => (j === i ? { ...x, uzbek: e.target.value } : x)))
               }
-              placeholder="O'zbekcha"
+              placeholder={t.exUz}
               className="input"
             />
           </ArrayRow>
         ))}
         <AddButton onClick={() => update("examples", [...values.examples, { english: "", korean: "", uzbek: "" }])}>
-          + Misol qo&apos;shish
+          {t.addExample}
         </AddButton>
       </Section>
 
       {error && <p className="text-danger text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Qo'shish"}
+        {saving ? tc.saving : initial ? tfm.update : tfm.add}
       </Button>
 
       <style jsx>{`
@@ -446,6 +451,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function ArrayRow({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
+  const tc = useAdminT("common");
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">{children}</div>
@@ -453,7 +459,7 @@ function ArrayRow({ children, onRemove }: { children: React.ReactNode; onRemove:
         type="button"
         onClick={onRemove}
         className="shrink-0 text-danger text-lg leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-danger-soft"
-        title="O'chirish"
+        title={tc.delete}
       >
         ×
       </button>

@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminIcon, type AdminIconName } from "@/components/admin/AdminIcons";
+import { tf, useAdminT } from "@/hooks/useAdminT";
+import type { AdminDict } from "@/lib/i18n/admin";
 
 // Admin dashboard (layout from the Pallo! admin mockup). Every figure comes
 // from GET /api/admin/dashboard — real data only; the mockup's revenue,
@@ -37,11 +39,11 @@ const RANGES = [
   { key: "1Y", days: 365 },
 ] as const;
 
-const ACTIVITY_META: Record<Dashboard["activity"][number]["key"], { label: string; color: string }> = {
-  words: { label: "So'z mashqlari", color: "#4c1d95" },
-  textbook: { label: "Darslik", color: "#8b5cf6" },
-  grammar: { label: "Grammatika", color: "#c4b5fd" },
-  palace: { label: "Xotira Saroyi", color: "#e9d5ff" },
+const ACTIVITY_META: Record<Dashboard["activity"][number]["key"], { labelKey: keyof AdminDict["dashboard"]; color: string }> = {
+  words: { labelKey: "actWords", color: "#4c1d95" },
+  textbook: { labelKey: "actTextbook", color: "#8b5cf6" },
+  grammar: { labelKey: "actGrammar", color: "#c4b5fd" },
+  palace: { labelKey: "actPalace", color: "#e9d5ff" },
 };
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -101,6 +103,7 @@ function StatCard({
 }
 
 function GrowthChart({ data }: { data: { date: string; total: number }[] }) {
+  const t = useAdminT("dashboard");
   // Down-sample to ≤ 30 points so the line stays smooth on long ranges.
   const pts = useMemo(() => {
     if (data.length <= 30) return data;
@@ -162,7 +165,7 @@ function GrowthChart({ data }: { data: { date: string; total: number }[] }) {
                 style={{ left: `${(last[0] / W) * 100}%`, top: `${(last[1] / H) * 100}%` }}
               >
                 <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-[#6d28d9]" />
-                {fmt.format(pts[pts.length - 1].total)} o&apos;quvchi
+                {tf(t.studentsCount, { n: fmt.format(pts[pts.length - 1].total) })}
               </span>
             </>
           )}
@@ -178,6 +181,7 @@ function GrowthChart({ data }: { data: { date: string; total: number }[] }) {
 }
 
 function Donut({ activity }: { activity: Dashboard["activity"] }) {
+  const t = useAdminT("dashboard");
   const total = activity.reduce((s, a) => s + a.count, 0);
   const R = 52;
   const C = 2 * Math.PI * R;
@@ -211,14 +215,14 @@ function Donut({ activity }: { activity: Dashboard["activity"] }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-2xl font-extrabold">{top ? pct(top.count) : 0}%</span>
-          <span className="text-[11px] text-foreground/60">{top ? ACTIVITY_META[top.key].label : "—"}</span>
+          <span className="text-[11px] text-foreground/60">{top ? t[ACTIVITY_META[top.key].labelKey] : "—"}</span>
         </div>
       </div>
       <ul className="w-full space-y-2.5">
         {activity.map((a) => (
           <li key={a.key} className="flex items-center gap-2.5 text-sm">
             <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: ACTIVITY_META[a.key].color }} />
-            <span className="flex-1 text-foreground/75">{ACTIVITY_META[a.key].label}</span>
+            <span className="flex-1 text-foreground/75">{t[ACTIVITY_META[a.key].labelKey]}</span>
             <span className="font-bold">{pct(a.count)}%</span>
           </li>
         ))}
@@ -253,14 +257,19 @@ function Avatar({ name, email }: { name: string; email: string }) {
   );
 }
 
-const viewAll = (href: string) => (
-  <Link href={href} className="flex items-center gap-1 text-sm font-bold text-[#6d28d9] hover:underline dark:text-primary">
-    Barchasi <AdminIcon name="arrowRight" className="h-4 w-4" />
-  </Link>
-);
+function ViewAll({ href }: { href: string }) {
+  const tc = useAdminT("common");
+  return (
+    <Link href={href} className="flex items-center gap-1 text-sm font-bold text-[#6d28d9] hover:underline dark:text-primary">
+      {tc.viewAll} <AdminIcon name="arrowRight" className="h-4 w-4" />
+    </Link>
+  );
+}
 
 export default function AdminDashboardPage() {
   const { user } = useAdminAuth();
+  const t = useAdminT("dashboard");
+  const tc = useAdminT("common");
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState(false);
   const [range, setRange] = useState<(typeof RANGES)[number]["key"]>("1M");
@@ -284,8 +293,8 @@ export default function AdminDashboardPage() {
       {/* Welcome — plain on desktop, purple card on phones (as in the mockup) */}
       <div className="flex items-start justify-between gap-4">
         <div className="hidden lg:block">
-          <h1 className="font-sans text-3xl font-extrabold tracking-tight">Xush kelibsiz, {name}! 👋</h1>
-          <p className="mt-1 text-foreground/60">PALLO&apos;da bugun nimalar bo&apos;layotganini ko&apos;ring.</p>
+          <h1 className="font-sans text-3xl font-extrabold tracking-tight">{tf(t.welcome, { name })}</h1>
+          <p className="mt-1 text-foreground/60">{t.subtitle}</p>
         </div>
         <span className="hidden items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold shadow-[0_8px_20px_-14px_rgba(76,29,149,0.5)] dark:bg-surface lg:inline-flex">
           <AdminIcon name="calendar" className="h-4 w-4 text-foreground/60" />
@@ -300,11 +309,11 @@ export default function AdminDashboardPage() {
             <line x1="70" y1="24" x2="30" y2="76" />
           </g>
         </svg>
-        <h1 className="relative font-sans text-2xl font-extrabold leading-tight text-white">Xush kelibsiz, {name}! 👋</h1>
-        <p className="relative mt-1 text-sm text-white/80">Bugun nimalar bo&apos;layotganini ko&apos;ring.</p>
+        <h1 className="relative font-sans text-2xl font-extrabold leading-tight text-white">{tf(t.welcome, { name })}</h1>
+        <p className="relative mt-1 text-sm text-white/80">{t.subtitleShort}</p>
       </div>
 
-      {error && <p className="rounded-2xl bg-danger-soft p-4 text-sm text-danger">Ma&apos;lumotlarni yuklab bo&apos;lmadi.</p>}
+      {error && <p className="rounded-2xl bg-danger-soft p-4 text-sm text-danger">{tc.loadError}</p>}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -313,32 +322,34 @@ export default function AdminDashboardPage() {
           delay={0}
           icon="users"
           value={data ? fmt.format(data.totals.students) : "…"}
-          label="Jami o'quvchilar"
-          foot={data && <span className="text-xs font-bold">+{data.totals.newThisMonth} bu oy</span>}
+          label={t.totalStudents}
+          foot={data && <span className="text-xs font-bold">{tf(t.thisMonth, { n: data.totals.newThisMonth })}</span>}
         />
         <StatCard
           delay={0.05}
           icon="activity"
           value={data ? fmt.format(data.totals.activeWeek) : "…"}
-          label="Shu hafta faol"
+          label={t.activeWeek}
           foot={data && <Change value={data.totals.activeWeekChange} />}
         />
         <StatCard
           delay={0.1}
           icon="book"
           value={data ? fmt.format(data.totals.wordsLearned) : "…"}
-          label="O'rganilgan so'zlar"
-          foot={data && <span className="text-xs font-semibold text-foreground/50">bugun faol: {data.totals.activeToday}</span>}
+          label={t.wordsLearned}
+          foot={data && <span className="text-xs font-semibold text-foreground/50">{tf(t.activeToday, { n: data.totals.activeToday })}</span>}
         />
         <StatCard
           delay={0.15}
           icon="check"
           value={data ? fmt.format(data.totals.textbookAnswers) : "…"}
-          label="Darslik javoblari"
+          label={t.textbookAnswers}
           foot={
             data && (
               <span className="text-xs font-bold text-emerald-500">
-                {data.totals.textbookAnswers ? Math.round((data.totals.textbookCorrect / data.totals.textbookAnswers) * 100) : 0}% to&apos;g&apos;ri
+                {tf(t.correctPct, {
+                  n: data.totals.textbookAnswers ? Math.round((data.totals.textbookCorrect / data.totals.textbookAnswers) * 100) : 0,
+                })}
               </span>
             )
           }
@@ -348,7 +359,7 @@ export default function AdminDashboardPage() {
       {/* Growth + activity */}
       <div className="grid gap-5 xl:grid-cols-[1.55fr_1fr]">
         <Panel
-          title="O'quvchilar o'sishi"
+          title={t.growth}
           icon="trend"
           action={
             <div className="flex gap-1">
@@ -368,23 +379,23 @@ export default function AdminDashboardPage() {
         >
           {data ? <GrowthChart data={growth} /> : <div className="h-[240px] animate-pulse rounded-2xl bg-[#f3effd] dark:bg-surface-muted" />}
         </Panel>
-        <Panel title="Faollik bo'limlari" icon="grid">
+        <Panel title={t.activityTitle} icon="grid">
           {data ? <Donut activity={data.activity} /> : <div className="h-40 animate-pulse rounded-2xl bg-[#f3effd] dark:bg-surface-muted" />}
         </Panel>
       </div>
 
       {/* Recent students + top learners */}
       <div className="grid gap-5 xl:grid-cols-[1.55fr_1fr]">
-        <Panel title="Yangi o'quvchilar" icon="users" action={viewAll("/admin/students")}>
+        <Panel title={t.recentStudents} icon="users" action={<ViewAll href="/admin/students" />}>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
                 <tr className="bg-[#f6f2fe] text-left text-xs font-bold text-foreground/70 dark:bg-surface-muted">
                   <th className="rounded-l-xl px-3 py-2.5">#</th>
-                  <th className="px-3 py-2.5">Ism</th>
-                  <th className="px-3 py-2.5">Email</th>
-                  <th className="px-3 py-2.5">Qo&apos;shilgan</th>
-                  <th className="rounded-r-xl px-3 py-2.5">Holat</th>
+                  <th className="px-3 py-2.5">{t.colName}</th>
+                  <th className="px-3 py-2.5">{t.colEmail}</th>
+                  <th className="px-3 py-2.5">{t.colJoined}</th>
+                  <th className="rounded-r-xl px-3 py-2.5">{t.colStatus}</th>
                 </tr>
               </thead>
               <tbody>
@@ -405,7 +416,7 @@ export default function AdminDashboardPage() {
                           s.active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : "bg-[#f3effd] text-foreground/50 dark:bg-surface-muted"
                         }`}
                       >
-                        {s.active ? "Faol" : "Nofaol"}
+                        {s.active ? t.active : t.inactive}
                       </span>
                     </td>
                   </tr>
@@ -413,7 +424,7 @@ export default function AdminDashboardPage() {
                 {data && data.recentStudents.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-6 text-center text-foreground/50">
-                      Hali o&apos;quvchilar yo&apos;q
+                      {t.noStudents}
                     </td>
                   </tr>
                 )}
@@ -422,21 +433,21 @@ export default function AdminDashboardPage() {
           </div>
         </Panel>
 
-        <Panel title="Eng faol o'quvchilar" icon="flame" action={viewAll("/admin/students")}>
+        <Panel title={t.topLearners} icon="flame" action={<ViewAll href="/admin/students" />}>
           <ul className="space-y-2.5">
             {data?.topLearners.map((s, i) => (
               <li key={`${s.email}-${i}`} className="flex items-center gap-3 rounded-2xl border border-[#f1ebfd] p-3 dark:border-border">
                 <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[#f3effd] text-[#5b21b6] dark:bg-surface-muted dark:text-primary">
                   <span className="text-lg font-extrabold leading-none">{s.currentStreak}</span>
-                  <span className="text-[10px] font-bold">kun 🔥</span>
+                  <span className="text-[10px] font-bold">{t.days}</span>
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{s.displayName || s.email}</p>
-                  <p className="truncate text-xs text-foreground/55">{fmt.format(s.totalWordsLearned)} ta so&apos;z o&apos;rgangan</p>
+                  <p className="truncate text-xs text-foreground/55">{tf(t.wordsLearnedBy, { n: fmt.format(s.totalWordsLearned) })}</p>
                 </div>
               </li>
             ))}
-            {data && data.topLearners.length === 0 && <p className="py-6 text-center text-sm text-foreground/50">Hali faol o&apos;quvchilar yo&apos;q</p>}
+            {data && data.topLearners.length === 0 && <p className="py-6 text-center text-sm text-foreground/50">{t.noActive}</p>}
           </ul>
         </Panel>
       </div>
@@ -445,10 +456,10 @@ export default function AdminDashboardPage() {
       {data && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "So'zlar", value: data.content.words, href: "/admin/words", icon: "book" as const },
-            { label: "Gaplar", value: data.content.sentences, href: "/admin/sentences", icon: "pen" as const },
-            { label: "Darslik darslari", value: data.content.lessons, href: "/lessons", icon: "grid" as const },
-            { label: "Shadowing videolar", value: data.content.videos, href: "/admin/shadowing", icon: "video" as const },
+            { label: t.cWords, value: data.content.words, href: "/admin/words", icon: "book" as const },
+            { label: t.cSentences, value: data.content.sentences, href: "/admin/sentences", icon: "pen" as const },
+            { label: t.cLessons, value: data.content.lessons, href: "/lessons", icon: "grid" as const },
+            { label: t.cVideos, value: data.content.videos, href: "/admin/shadowing", icon: "video" as const },
           ].map((c) => (
             <Link key={c.label} href={c.href} className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_8px_24px_-18px_rgba(76,29,149,0.4)] transition-transform hover:-translate-y-0.5 dark:bg-surface">
               <AdminIcon name={c.icon} className="h-6 w-6 text-[#6d28d9] dark:text-primary" />

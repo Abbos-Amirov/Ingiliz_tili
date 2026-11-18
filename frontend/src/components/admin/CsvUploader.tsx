@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +20,8 @@ export function CsvUploader() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("csv");
+  const tfm = useAdminT("form");
 
   useEffect(() => {
     apiFetch<{ nextLessonNumber: number }>("/lessons/next-number", { admin: true })
@@ -48,7 +51,7 @@ export function CsvUploader() {
     if (!file) return;
     const lessonRange = parseLessonRangeText(lessonRangeText);
     if (!lessonRange) {
-      setError("Dars raqami noto'g'ri. Masalan: 7 yoki 34-37");
+      setError(tfm.lessonInvalid);
       return;
     }
     setUploading(true);
@@ -66,7 +69,7 @@ export function CsvUploader() {
       });
       setResult(res);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Yuklashda xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : t.uploadError);
     } finally {
       setUploading(false);
     }
@@ -76,21 +79,20 @@ export function CsvUploader() {
     <div className="space-y-5">
       <Card className="p-6">
         <p className="text-sm text-foreground/60 mb-4">
-          CSV ustunlari:{" "}
+          {t.columns}{" "}
           <code className="text-xs bg-surface-muted px-1.5 py-0.5 rounded">
-            english, korean, uzbek (ixtiyoriy), exampleSentenceEn, exampleSentenceKo, exampleSentenceUz (ixtiyoriy),
-            category, difficulty, lessonNumber (ixtiyoriy), lessonNumberEnd (ixtiyoriy)
+            {`english, korean, uzbek (${t.optional}), exampleSentenceEn, exampleSentenceKo, exampleSentenceUz (${t.optional}), category, difficulty, lessonNumber (${t.optional}), lessonNumberEnd (${t.optional})`}
           </code>
         </p>
 
         <label className="block mb-4 max-w-xs">
           <span className="block text-sm font-medium mb-1.5">
-            Dars raqami (masalan: 7 yoki 34-37 — CSV&apos;da lessonNumber bo&apos;lmasa shu ishlatiladi)
+            {t.lessonLabel}
           </span>
           <input
             value={lessonRangeText}
             onChange={(e) => setLessonRangeText(e.target.value)}
-            placeholder="7 yoki 34-37"
+            placeholder={tfm.lessonPlaceholder}
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           />
         </label>
@@ -106,7 +108,7 @@ export function CsvUploader() {
       {previewRows.length > 0 && (
         <Card className="p-4 overflow-x-auto">
           <p className="text-xs font-semibold text-foreground/50 mb-2 uppercase tracking-wide">
-            Ko&apos;rib chiqish (birinchi qatorlar)
+            {t.preview}
           </p>
           <table className="w-full text-xs">
             <tbody>
@@ -125,15 +127,15 @@ export function CsvUploader() {
       )}
 
       <Button onClick={handleUpload} disabled={!file || uploading}>
-        {uploading ? "Yuklanmoqda..." : "Yuklash"}
+        {uploading ? t.uploading : t.upload}
       </Button>
 
       {error && <p className="text-danger text-sm">{error}</p>}
 
       {result && (
         <Card className="p-5">
-          <p className="font-semibold text-success">{result.inserted} ta so&apos;z qo&apos;shildi</p>
-          <p className="text-sm text-foreground/60 mt-1">{result.skipped} ta o&apos;tkazib yuborildi (takror yoki xato)</p>
+          <p className="font-semibold text-success">{tf(t.wordsAdded, { n: result.inserted })}</p>
+          <p className="text-sm text-foreground/60 mt-1">{tf(t.skipped, { n: result.skipped })}</p>
           {result.errors.length > 0 && (
             <ul className="mt-3 space-y-1 text-xs text-danger max-h-40 overflow-y-auto">
               {result.errors.map((e, i) => (

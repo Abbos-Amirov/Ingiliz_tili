@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdminT } from "@/hooks/useAdminT";
 import { FormEvent, useState } from "react";
 import type { Difficulty, QuestionAnswerPair, QuestionCategory, RoleWord, GrammarRole } from "@/lib/types";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -25,6 +26,7 @@ function RoleWordChips({
   onRoleChange: (index: number, role: GrammarRole) => void;
   onRemove: (index: number) => void;
 }) {
+  const tc = useAdminT("common");
   if (words.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2">
@@ -56,7 +58,7 @@ function RoleWordChips({
               onClick={() => onRemove(i)}
               className="text-sm leading-none px-1 opacity-60 hover:opacity-100"
               style={{ color: color.text }}
-              title="O'chirish"
+              title={tc.delete}
             >
               ×
             </button>
@@ -90,6 +92,7 @@ function SentenceHalfFields({
   value: SentenceHalf;
   onChange: (v: SentenceHalf) => void;
 }) {
+  const t = useAdminT("qaForm");
   function splitEnglish() {
     onChange({ ...value, words: splitToRoleWords(value.englishText, "verb") });
   }
@@ -98,7 +101,7 @@ function SentenceHalfFields({
     <div className="rounded-xl border border-border p-4 space-y-3">
       <p className="text-xs font-bold uppercase tracking-wide text-foreground/50">{title}</p>
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Koreys</span>
+        <span className="block text-sm font-medium mb-1.5">{t.korean}</span>
         <input
           required
           value={value.korean}
@@ -107,7 +110,7 @@ function SentenceHalfFields({
         />
       </label>
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">O&apos;zbekcha</span>
+        <span className="block text-sm font-medium mb-1.5">{t.uzbek}</span>
         <input
           required
           value={value.uzbek}
@@ -116,7 +119,7 @@ function SentenceHalfFields({
         />
       </label>
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Ingliz</span>
+        <span className="block text-sm font-medium mb-1.5">{t.english}</span>
         <div className="flex gap-2">
           <input
             value={value.englishText}
@@ -124,7 +127,7 @@ function SentenceHalfFields({
             className="flex-1 rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           />
           <Button type="button" size="sm" variant="secondary" onClick={splitEnglish}>
-            So&apos;zlarga bo&apos;lish
+            {t.splitWords}
           </Button>
         </div>
       </label>
@@ -136,7 +139,7 @@ function SentenceHalfFields({
         />
       )}
       <label className="block">
-        <span className="block text-sm font-medium mb-1.5">Formula</span>
+        <span className="block text-sm font-medium mb-1.5">{t.formula}</span>
         <input
           value={value.formula}
           onChange={(e) => onChange({ ...value, formula: e.target.value })}
@@ -167,6 +170,11 @@ export function QuestionAnswerForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = useAdminT("qaForm");
+  const tc = useAdminT("common");
+  const tfm = useAdminT("form");
+  const tl = useAdminT("levels");
+  const tq = useAdminT("qa");
 
   function applyAiSuggestion(s: {
     question: { words: RoleWord[]; formula: string };
@@ -181,7 +189,7 @@ export function QuestionAnswerForm({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (question.words.length === 0 || answer.words.length === 0) {
-      setError("Savol va javob so'zlarga bo'lingan bo'lishi kerak (yoki AI yordamidan foydalaning)");
+      setError(t.needSplit);
       return;
     }
     setSaving(true);
@@ -209,7 +217,7 @@ export function QuestionAnswerForm({
       }
       onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Saqlashda xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : tfm.saveErrorFull);
     } finally {
       setSaving(false);
     }
@@ -222,43 +230,43 @@ export function QuestionAnswerForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">Daraja</span>
+          <span className="block text-sm font-medium mb-1.5">{tfm.level}</span>
           <select
             value={level}
             onChange={(e) => setLevel(e.target.value as Difficulty)}
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           >
-            <option value="beginner">Boshlang&apos;ich</option>
-            <option value="intermediate">O&apos;rta</option>
-            <option value="advanced">Murakkab</option>
+            <option value="beginner">{tl.beginner}</option>
+            <option value="intermediate">{tl.intermediate}</option>
+            <option value="advanced">{tl.advanced}</option>
           </select>
         </label>
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">Ichki bosqich</span>
+          <span className="block text-sm font-medium mb-1.5">{t.subLevel}</span>
           <select
             value={subLevel}
             onChange={(e) => setSubLevel(Number(e.target.value) as 1 | 2 | 3)}
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           >
-            <option value={2}>Bosqich 2 (Yes/No savollar)</option>
-            <option value={3}>Bosqich 3 (Wh- savollar)</option>
+            <option value={2}>{t.stage2}</option>
+            <option value={3}>{t.stage3}</option>
           </select>
         </label>
         <label className="block">
-          <span className="block text-sm font-medium mb-1.5">Savol turi</span>
+          <span className="block text-sm font-medium mb-1.5">{t.questionType}</span>
           <select
             value={questionCategory}
             onChange={(e) => setQuestionCategory(e.target.value as QuestionCategory)}
             className="w-full rounded-xl border border-border bg-surface-muted px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-primary"
           >
-            <option value="yes_no">Ha/Yo&apos;q savoli</option>
-            <option value="wh_question">Wh- savol</option>
+            <option value="yes_no">{tq.yesNo}</option>
+            <option value="wh_question">{tq.whQuestion}</option>
           </select>
         </label>
       </div>
 
-      <SentenceHalfFields title="SAVOL" value={question} onChange={setQuestion} />
-      <SentenceHalfFields title="JAVOB" value={answer} onChange={setAnswer} />
+      <SentenceHalfFields title={t.question} value={question} onChange={setQuestion} />
+      <SentenceHalfFields title={t.answer} value={answer} onChange={setAnswer} />
 
       <AiQuestionAnswerAssistButton
         questionEnglish={question.englishText}
@@ -271,7 +279,7 @@ export function QuestionAnswerForm({
       {error && <p className="text-danger text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={saving}>
-        {saving ? "Saqlanmoqda..." : initial ? "Yangilash" : "Juftlikni saqlash"}
+        {saving ? tc.saving : initial ? tfm.update : t.savePair}
       </Button>
     </form>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +18,7 @@ export function IrregularVerbCsvUploader() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("csv");
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
@@ -51,7 +53,7 @@ export function IrregularVerbCsvUploader() {
       });
       setResult(res);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Yuklashda xatolik yuz berdi");
+      setError(err instanceof ApiError ? err.message : t.uploadError);
     } finally {
       setUploading(false);
     }
@@ -61,9 +63,9 @@ export function IrregularVerbCsvUploader() {
     <div className="space-y-5">
       <Card className="p-6">
         <p className="text-sm text-foreground/60 mb-4">
-          CSV ustunlari:{" "}
+          {t.columns}{" "}
           <code className="text-xs bg-surface-muted px-1.5 py-0.5 rounded">
-            base, past, participle, korean, category (ixtiyoriy), frequency (ixtiyoriy)
+            {`base, past, participle, korean, category (${t.optional}), frequency (${t.optional})`}
           </code>
         </p>
 
@@ -78,7 +80,7 @@ export function IrregularVerbCsvUploader() {
       {previewRows.length > 0 && (
         <Card className="p-4 overflow-x-auto">
           <p className="text-xs font-semibold text-foreground/50 mb-2 uppercase tracking-wide">
-            Ko&apos;rib chiqish (birinchi qatorlar)
+            {t.preview}
           </p>
           <table className="w-full text-xs">
             <tbody>
@@ -97,16 +99,16 @@ export function IrregularVerbCsvUploader() {
       )}
 
       <Button onClick={handleUpload} disabled={!file || uploading}>
-        {uploading ? "Yuklanmoqda..." : "Yuklash"}
+        {uploading ? t.uploading : t.upload}
       </Button>
 
       {error && <p className="text-danger text-sm">{error}</p>}
 
       {result && (
         <Card className="p-5">
-          <p className="font-semibold text-success">{result.inserted} ta fe&apos;l qo&apos;shildi</p>
+          <p className="font-semibold text-success">{tf(t.verbsAdded, { n: result.inserted })}</p>
           <p className="text-sm text-foreground/60 mt-1">
-            {result.skipped} ta o&apos;tkazib yuborildi (takror yoki xato)
+            {tf(t.skipped, { n: result.skipped })}
           </p>
           {result.errors.length > 0 && (
             <ul className="mt-3 space-y-1 text-xs text-danger max-h-40 overflow-y-auto">

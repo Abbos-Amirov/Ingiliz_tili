@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { WordForm } from "@/components/admin/WordForm";
 import { LessonGroup } from "@/components/admin/LessonGroup";
 import { formatLessonRange } from "@/lib/lessonRange";
+import { tf, useAdminT } from "@/hooks/useAdminT";
 
 function groupByLesson(words: Word[]): [string, Word[]][] {
   const map = new Map<string, Word[]>();
@@ -32,6 +33,8 @@ export default function AdminWordsPage() {
   const [editing, setEditing] = useState<Word | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const t = useAdminT("words");
+  const tc = useAdminT("common");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,13 +72,13 @@ export default function AdminWordsPage() {
   }
 
   async function handleDelete(word: Word) {
-    if (!confirm(`"${word.english}" so'zini o'chirishni tasdiqlaysizmi?`)) return;
+    if (!confirm(tf(t.confirmDelete, { word: word.english }))) return;
     setError(null);
     try {
       await apiFetch(`/words/${word._id}`, { method: "DELETE", admin: true });
       setWords((prev) => prev.filter((w) => w._id !== word._id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.deleteError);
     }
   }
 
@@ -85,12 +88,12 @@ export default function AdminWordsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-foreground/50 border-b border-border">
-              {showLessonColumn && <th className="px-4 py-3 font-medium">Dars</th>}
-              <th className="px-4 py-3 font-medium">Ingliz</th>
-              <th className="px-4 py-3 font-medium">Koreys</th>
-              <th className="px-4 py-3 font-medium">Kategoriya</th>
-              <th className="px-4 py-3 font-medium">Daraja</th>
-              <th className="px-4 py-3 font-medium text-right">Amallar</th>
+              {showLessonColumn && <th className="px-4 py-3 font-medium">{t.colLesson}</th>}
+              <th className="px-4 py-3 font-medium">{tc.english}</th>
+              <th className="px-4 py-3 font-medium">{tc.korean}</th>
+              <th className="px-4 py-3 font-medium">{t.colCategory}</th>
+              <th className="px-4 py-3 font-medium">{t.colDifficulty}</th>
+              <th className="px-4 py-3 font-medium text-right">{tc.actions}</th>
             </tr>
           </thead>
           <tbody>
@@ -98,7 +101,7 @@ export default function AdminWordsPage() {
               <tr key={w._id} className="border-b border-border last:border-0 hover:bg-surface-muted">
                 {showLessonColumn && (
                   <td className="px-4 py-3 text-foreground/60 whitespace-nowrap">
-                    {formatLessonRange(w.lessonNumber, w.lessonNumberEnd)}-dars
+                    {tf(tc.lesson, { n: formatLessonRange(w.lessonNumber, w.lessonNumberEnd) })}
                   </td>
                 )}
                 <td className="px-4 py-3 font-semibold">{w.english}</td>
@@ -109,10 +112,10 @@ export default function AdminWordsPage() {
                 </td>
                 <td className="px-4 py-3 text-right space-x-2">
                   <button onClick={() => openEdit(w)} className="text-primary font-medium hover:underline">
-                    Tahrirlash
+                    {tc.edit}
                   </button>
                   <button onClick={() => handleDelete(w)} className="text-danger font-medium hover:underline">
-                    O&apos;chirish
+                    {tc.delete}
                   </button>
                 </td>
               </tr>
@@ -127,16 +130,16 @@ export default function AdminWordsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold">So&apos;zlar</h1>
-          <p className="text-foreground/60 text-sm mt-1">Jami {words.length} ta so&apos;z</p>
+          <h1 className="text-2xl font-extrabold">{t.title}</h1>
+          <p className="text-foreground/60 text-sm mt-1">{tf(t.total, { n: words.length })}</p>
         </div>
-        <Button onClick={openCreate}>+ So&apos;z qo&apos;shish</Button>
+        <Button onClick={openCreate}>{t.add}</Button>
       </div>
 
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="So'z qidirish (ingliz yoki koreys)..."
+        placeholder={t.searchPlaceholder}
         className="w-full rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary mb-6"
       />
 
@@ -148,7 +151,7 @@ export default function AdminWordsPage() {
         </div>
       ) : query ? (
         searchResults.length === 0 ? (
-          <p className="text-center py-16 text-foreground/60">Hech narsa topilmadi.</p>
+          <p className="text-center py-16 text-foreground/60">{tc.nothingFound}</p>
         ) : (
           renderTable(searchResults, true)
         )
@@ -162,7 +165,7 @@ export default function AdminWordsPage() {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "So'zni tahrirlash" : "Yangi so'z"}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? t.editTitle : t.newTitle}>
         <WordForm
           initial={editing}
           onSaved={() => {

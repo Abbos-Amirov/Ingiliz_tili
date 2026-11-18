@@ -1,5 +1,6 @@
 "use client";
 
+import { tf, useAdminT } from "@/hooks/useAdminT";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Sentence } from "@/lib/types";
@@ -32,6 +33,8 @@ export default function AdminSentencesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Sentence | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useAdminT("sentences");
+  const tc = useAdminT("common");
   const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
@@ -62,13 +65,13 @@ export default function AdminSentencesPage() {
   );
 
   async function handleDelete(sentence: Sentence) {
-    if (!confirm("Bu gapni o'chirishni tasdiqlaysizmi?")) return;
+    if (!confirm(t.confirmDelete)) return;
     setError(null);
     try {
       await apiFetch(`/sentences/${sentence._id}`, { method: "DELETE", admin: true });
       setSentences((prev) => prev.filter((s) => s._id !== sentence._id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "O'chirishda xatolik");
+      setError(err instanceof ApiError ? err.message : tc.deleteError);
     }
   }
 
@@ -91,7 +94,7 @@ export default function AdminSentencesPage() {
           </div>
           {s.distractorWords.length > 0 && (
             <p className="text-xs text-foreground/40 mt-1.5">
-              Chalg&apos;ituvchi: {s.distractorWords.map((w) => w.text).join(", ")}
+              {tf(t.distractors, { list: s.distractorWords.map((w) => w.text).join(", ") })}
             </p>
           )}
           {s.formula && <p className="text-xs text-foreground/40 mt-1 font-mono">{s.formula}</p>}
@@ -99,7 +102,7 @@ export default function AdminSentencesPage() {
             <span className="inline-block px-2 py-0.5 rounded-full bg-surface-muted text-xs font-medium">{s.level}</span>
             {showLessonBadge && (
               <span className="inline-block px-2 py-0.5 rounded-full bg-surface-muted text-xs font-medium">
-                {formatLessonRange(s.lessonNumber, s.lessonNumberEnd)}-dars
+                {tf(tc.lesson, { n: formatLessonRange(s.lessonNumber, s.lessonNumberEnd) })}
               </span>
             )}
           </div>
@@ -112,10 +115,10 @@ export default function AdminSentencesPage() {
             }}
             className="text-primary font-medium hover:underline"
           >
-            Tahrirlash
+            {tc.edit}
           </button>
           <button onClick={() => handleDelete(s)} className="text-danger font-medium hover:underline">
-            O&apos;chirish
+            {tc.delete}
           </button>
         </div>
       </Card>
@@ -126,8 +129,8 @@ export default function AdminSentencesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold">Gaplar</h1>
-          <p className="text-foreground/60 text-sm mt-1">Jami {sentences.length} ta gap</p>
+          <h1 className="text-2xl font-extrabold">{t.title}</h1>
+          <p className="text-foreground/60 text-sm mt-1">{tf(t.total, { n: sentences.length })}</p>
         </div>
         <Button
           onClick={() => {
@@ -135,14 +138,14 @@ export default function AdminSentencesPage() {
             setModalOpen(true);
           }}
         >
-          + Gap qo&apos;shish
+          {t.add}
         </Button>
       </div>
 
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Gap qidirish (koreys yoki ingliz so'z)..."
+        placeholder={t.searchPlaceholder}
         className="w-full rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary mb-6"
       />
 
@@ -154,7 +157,7 @@ export default function AdminSentencesPage() {
         </div>
       ) : query ? (
         searchResults.length === 0 ? (
-          <p className="text-center py-16 text-foreground/60">Hech narsa topilmadi.</p>
+          <p className="text-center py-16 text-foreground/60">{tc.nothingFound}</p>
         ) : (
           <div className="space-y-3">{searchResults.map((s) => renderCard(s, true))}</div>
         )
@@ -176,7 +179,7 @@ export default function AdminSentencesPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Gapni tahrirlash" : "Yangi gap"}
+        title={editing ? t.editTitle : t.newTitle}
       >
         <SentenceForm
           initial={editing}
