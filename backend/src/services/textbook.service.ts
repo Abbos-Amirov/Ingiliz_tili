@@ -154,7 +154,21 @@ function audioFileName(text: string): string {
 }
 
 // Every English string a learner can press 🔊 on.
-export function lessonSpeakableTexts(lesson: Pick<TextbookLessonDoc, "keywords" | "shapeTransforms" | "subjectTenseTransforms" | "imperative" | "puzzles" | "storyQuestions" | "verbTypes">): string[] {
+export function lessonSpeakableTexts(
+  lesson: Pick<
+    TextbookLessonDoc,
+    | "keywords"
+    | "shapeTransforms"
+    | "subjectTenseTransforms"
+    | "imperative"
+    | "puzzles"
+    | "storyQuestions"
+    | "verbTypes"
+    | "selfTransform"
+    | "sentencePractice"
+    | "freeTalk"
+  >,
+): string[] {
   const texts = new Set<string>();
   for (const k of lesson.keywords) texts.add(k.word);
   for (const v of lesson.verbTypes) texts.add(v.baseSentence);
@@ -176,6 +190,9 @@ export function lessonSpeakableTexts(lesson: Pick<TextbookLessonDoc, "keywords" 
       if (ex) texts.add(ex);
     }
   }
+  for (const b of lesson.selfTransform ?? []) for (const r of b.rows) if (r.answers[0]) texts.add(r.answers[0]);
+  for (const p of lesson.sentencePractice ?? []) texts.add(p.english);
+  for (const q of lesson.freeTalk ?? []) texts.add(q.question);
   return Array.from(texts).filter((t) => t.trim().length > 0);
 }
 

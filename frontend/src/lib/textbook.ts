@@ -5,7 +5,16 @@ import { isUzbekContentLocale } from "./contentLocale";
 // models/TextbookLesson.ts and controllers/textbook.controller.ts.
 
 export type VerbType = "be_verb" | "general_verb" | "modal_verb";
-export type Transform = "base" | "negative" | "question" | "wh_question" | "subject" | "past" | "future" | "continuous";
+export type Transform =
+  | "base"
+  | "negative"
+  | "question"
+  | "wh_question"
+  | "subject"
+  | "past"
+  | "future"
+  | "continuous"
+  | "imperative";
 export type GrammarType =
   | "be_verb"
   | "general_verb"
@@ -16,7 +25,8 @@ export type GrammarType =
   | "subject"
   | "past"
   | "future"
-  | "continuous";
+  | "continuous"
+  | "imperative";
 export type KeywordPos = "noun" | "verb" | "adjective";
 export type Round = 1 | 2 | 3;
 
@@ -120,6 +130,43 @@ export interface TextbookLesson {
   puzzles: Puzzle[];
   storyQuestions: StoryQuestion[];
   verbClassificationQuiz: VerbQuizItem[];
+  selfTransform: SelfTransformBlock[];
+  sentencePractice: PracticeSentence[];
+  freeTalk: FreeTalkQuestion[];
+}
+
+// 스스로 변형하기 — answers stay on the server except for the worked example.
+export interface SelfTransformRow {
+  key: string;
+  labelKo: string;
+  labelUz: string;
+  promptKo: string;
+  promptUz: string;
+  given: boolean;
+  answer: string | null;
+}
+
+export interface SelfTransformBlock {
+  key: string;
+  titleKo: string;
+  titleUz: string;
+  rows: SelfTransformRow[];
+}
+
+export interface PracticeSentence {
+  key: string;
+  english: string;
+  pronunciationKo: string;
+  korean: string;
+  uzbek: string;
+}
+
+export interface FreeTalkQuestion {
+  key: string;
+  question: string;
+  pronunciationKo: string;
+  meaningKo: string;
+  meaningUz: string;
 }
 
 export interface StoryAnswer {
@@ -139,6 +186,8 @@ export interface StoryAnswer {
 export interface ProgressCounts {
   puzzleDone: number;
   puzzleTotal: number;
+  drillDone: number;
+  drillTotal: number;
   storyDone: number;
   storyTotal: number;
 }

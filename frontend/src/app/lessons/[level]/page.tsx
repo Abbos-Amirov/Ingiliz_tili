@@ -70,8 +70,8 @@ export default function BookLessonsPage() {
 
         <div className="grid gap-4">
           {lessons?.map((l, i) => {
-            const total = l.puzzleTotal + l.storyTotal;
-            const done = l.puzzleDone + l.storyDone;
+            const total = l.puzzleTotal + l.drillTotal + l.storyTotal;
+            const done = l.puzzleDone + l.drillDone + l.storyDone;
             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
             return (
               <motion.div key={l._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -101,6 +101,7 @@ export default function BookLessonsPage() {
                     <p className="mt-1.5 text-xs text-foreground/55">
                       {l.keywordCount} {tb.keywordsCount} · {tb.puzzleProgress} {l.puzzleDone}/{l.puzzleTotal} · {tb.storyProgress}{" "}
                       {l.storyDone}/{l.storyTotal}
+                      {l.drillTotal > 0 && ` · ${tb.drillProgress} ${l.drillDone}/${l.drillTotal}`}
                     </p>
                   </div>
                   <span className="relative hidden sm:flex shrink-0 rounded-xl bg-ink text-on-ink px-4 py-2 text-sm font-bold">

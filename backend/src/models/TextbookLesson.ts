@@ -93,6 +93,57 @@ const storyQuestionSchema = new Schema(
   { _id: false },
 );
 
+// "스스로 변형하기" — the learner sees a sentence in Korean/Uzbek and writes
+// it in English. Rows are checked server-side like puzzle blanks (any of
+// `answers` is accepted); a `given` row is the printed worked example.
+const selfTransformRowSchema = new Schema(
+  {
+    key: { type: String, required: true },
+    labelKo: { type: String, required: true },
+    labelUz: { type: String, required: true },
+    promptKo: { type: String, required: true },
+    promptUz: { type: String, required: true },
+    answers: { type: [String], required: true },
+    grammarType: { type: String, enum: GRAMMAR_TYPES, required: true },
+    given: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+const selfTransformBlockSchema = new Schema(
+  {
+    key: { type: String, required: true },
+    titleKo: { type: String, required: true },
+    titleUz: { type: String, required: true },
+    rows: { type: [selfTransformRowSchema], default: [] },
+  },
+  { _id: false },
+);
+
+// "문장 연습" — read aloud, check the meaning, then say it from the meaning.
+const practiceSentenceSchema = new Schema(
+  {
+    key: { type: String, required: true },
+    english: { type: String, required: true },
+    pronunciationKo: { type: String, default: "" },
+    korean: { type: String, required: true },
+    uzbek: { type: String, required: true },
+  },
+  { _id: false },
+);
+
+// "프리토킹" — open questions on the day's topic (display only).
+const freeTalkSchema = new Schema(
+  {
+    key: { type: String, required: true },
+    question: { type: String, required: true },
+    pronunciationKo: { type: String, default: "" },
+    meaningKo: { type: String, required: true },
+    meaningUz: { type: String, required: true },
+  },
+  { _id: false },
+);
+
 const verbQuizItemSchema = new Schema(
   {
     key: { type: String, required: true },
@@ -142,6 +193,9 @@ const textbookLessonSchema = new Schema({
   puzzles: { type: [puzzleSchema], default: [] },
   storyQuestions: { type: [storyQuestionSchema], default: [] },
   verbClassificationQuiz: { type: [verbQuizItemSchema], default: [] },
+  selfTransform: { type: [selfTransformBlockSchema], default: [] },
+  sentencePractice: { type: [practiceSentenceSchema], default: [] },
+  freeTalk: { type: [freeTalkSchema], default: [] },
   updatedAt: { type: Date, default: Date.now },
 });
 

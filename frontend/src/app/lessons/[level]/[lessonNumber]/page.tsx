@@ -17,6 +17,8 @@ import { TransformOverview } from "@/components/textbook/TransformOverview";
 import { PuzzleSection } from "@/components/textbook/PuzzleSection";
 import { StorySection } from "@/components/textbook/StorySection";
 import { WeaknessInsight } from "@/components/textbook/WeaknessInsight";
+import { SelfTransformSection } from "@/components/textbook/SelfTransformSection";
+import { FreeTalkSection, SentencePracticeSection } from "@/components/textbook/SentencePracticeSection";
 
 const POS_ORDER: KeywordPos[] = ["noun", "verb", "adjective"];
 const POS_STYLE: Record<KeywordPos, string> = {
@@ -103,7 +105,25 @@ export default function TextbookLessonPage() {
     { id: "transforms", label: t.transformTitle },
     { id: "puzzle", label: `1 · ${t.puzzleTitle}` },
     { id: "story", label: `2 · ${t.storyTitle}` },
+    ...(lesson.selfTransform.length > 0 ? [{ id: "self-transform", label: `3 · ${t.selfTransformTitle}` }] : []),
+    ...(lesson.sentencePractice.length > 0 ? [{ id: "practice", label: `4 · ${t.practiceTitle}` }] : []),
   ];
+
+  // Puzzle rows and self-transform rows share completedExercises.
+  function markDone(key: string, field: "puzzleDone" | "drillDone") {
+    setData((d) =>
+      d && !d.progress.completedExercises.includes(key)
+        ? {
+            ...d,
+            progress: {
+              ...d.progress,
+              completedExercises: [...d.progress.completedExercises, key],
+              [field]: d.progress[field] + 1,
+            },
+          }
+        : d,
+    );
+  }
 
   return (
     <TextbookAudioContext.Provider value={data.audio}>
@@ -140,6 +160,11 @@ export default function TextbookLessonPage() {
                 <span className="rounded-full bg-white/10 px-3 py-1 text-on-ink">
                   {t.storyProgress} {progress.storyDone}/{progress.storyTotal}
                 </span>
+                {progress.drillTotal > 0 && (
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-on-ink">
+                    {t.drillProgress} {progress.drillDone}/{progress.drillTotal}
+                  </span>
+                )}
               </div>
             </motion.div>
 
@@ -207,20 +232,7 @@ export default function TextbookLessonPage() {
               lessonPath={lessonPath}
               puzzles={lesson.puzzles}
               completed={progress.completedExercises}
-              onRowDone={(key) => {
-                setData((d) =>
-                  d && !d.progress.completedExercises.includes(key)
-                    ? {
-                        ...d,
-                        progress: {
-                          ...d.progress,
-                          completedExercises: [...d.progress.completedExercises, key],
-                          puzzleDone: d.progress.puzzleDone + 1,
-                        },
-                      }
-                    : d,
-                );
-              }}
+              onRowDone={(key) => markDone(key, "puzzleDone")}
             />
           </Section>
 
@@ -255,6 +267,30 @@ export default function TextbookLessonPage() {
               }}
             />
           </Section>
+
+          {/* 3. 스스로 변형하기 */}
+          {lesson.selfTransform.length > 0 && (
+            <Section id="self-transform" number="3" title={t.selfTransformTitle} subtitle={t.selfTransformSubtitle}>
+              <SelfTransformSection
+                lessonPath={lessonPath}
+                blocks={lesson.selfTransform}
+                completed={progress.completedExercises}
+                onRowDone={(key) => markDone(key, "drillDone")}
+              />
+            </Section>
+          )}
+
+          {/* 4. 문장 연습 + 프리토킹 */}
+          {lesson.sentencePractice.length > 0 && (
+            <Section id="practice" number="4" title={t.practiceTitle} subtitle={t.practiceSubtitle}>
+              <SentencePracticeSection sentences={lesson.sentencePractice} />
+            </Section>
+          )}
+          {lesson.freeTalk.length > 0 && (
+            <Section id="free-talk" title={t.freeTalkTitle} subtitle={t.freeTalkSubtitle}>
+              <FreeTalkSection questions={lesson.freeTalk} />
+            </Section>
+          )}
         </div>
       </div>
     </TextbookAudioContext.Provider>

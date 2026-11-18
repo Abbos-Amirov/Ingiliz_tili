@@ -35,6 +35,7 @@ const GRAMMAR_FOCUS_LABEL: Record<GrammarType, string> = {
   past: "the simple past tense",
   future: "the future with will + base verb",
   continuous: "the present continuous (be + verb-ing)",
+  imperative: "an imperative (command) sentence",
 };
 
 function parseLevel(levelParam: unknown): number | null {
@@ -77,17 +78,42 @@ function publicLesson(lesson: TextbookLessonDoc) {
     })),
     storyQuestions: lesson.storyQuestions,
     verbClassificationQuiz: lesson.verbClassificationQuiz,
+    selfTransform: (lesson.selfTransform ?? []).map((b) => ({
+      key: b.key,
+      titleKo: b.titleKo,
+      titleUz: b.titleUz,
+      rows: b.rows.map((r) => ({
+        key: r.key,
+        labelKo: r.labelKo,
+        labelUz: r.labelUz,
+        promptKo: r.promptKo,
+        promptUz: r.promptUz,
+        given: r.given,
+        // only the printed worked example ships with its answer
+        answer: r.given ? r.answers[0] : null,
+      })),
+    })),
+    sentencePractice: lesson.sentencePractice ?? [],
+    freeTalk: lesson.freeTalk ?? [],
   };
 }
 
 function progressSummary(
-  lesson: Pick<TextbookLessonDoc, "puzzles" | "storyQuestions">,
+  lesson: Pick<TextbookLessonDoc, "puzzles" | "storyQuestions"> & {
+    selfTransform?: { rows: { key: string; given?: boolean | null }[] }[] | null;
+  },
   progress: { completedExercises: string[]; storyAnswers: { isCorrect: boolean }[] } | null,
 ) {
-  const puzzleTotal = lesson.puzzles.reduce((sum, p) => sum + p.rows.length, 0);
+  // completedExercises holds both puzzle-row and self-transform-row keys.
+  const done = new Set(progress?.completedExercises ?? []);
+  const puzzleKeys = lesson.puzzles.flatMap((p) => p.rows.map((r) => r.key));
+  const drillKeys = (lesson.selfTransform ?? []).flatMap((b) => b.rows.filter((r) => !r.given).map((r) => r.key));
+  const puzzleTotal = puzzleKeys.length;
   const storyTotal = lesson.storyQuestions.length * 3;
   return {
-    puzzleDone: progress?.completedExercises.length ?? 0,
+    puzzleDone: puzzleKeys.filter((k) => done.has(k)).length,
+    drillDone: drillKeys.filter((k) => done.has(k)).length,
+    drillTotal: drillKeys.length,
     puzzleTotal,
     storyDone: progress?.storyAnswers.filter((a) => a.isCorrect).length ?? 0,
     storyTotal,
@@ -103,7 +129,9 @@ async function userProgressByLesson(userId: string, lessonIds: Types.ObjectId[])
 // this learner's overall progress in it.
 export const listTextbookBooks: RequestHandler = async (req, res, next) => {
   try {
-    const lessons = await TextbookLesson.find().select("level puzzles.rows.key storyQuestions.key").lean();
+    const lessons = await TextbookLesson.find()
+      .select("level puzzles.rows.key storyQuestions.key selfTransform.rows.key selfTransform.rows.given")
+      .lean();
     const byLesson = await userProgressByLesson(req.user!.id, lessons.map((l) => l._id));
     res.json({
       books: TEXTBOOK_BOOKS.map((book) => {
@@ -111,7 +139,10 @@ export const listTextbookBooks: RequestHandler = async (req, res, next) => {
         const totals = own.reduce(
           (acc, l) => {
             const p = progressSummary(l, byLesson.get(String(l._id)) ?? null);
-            return { done: acc.done + p.puzzleDone + p.storyDone, total: acc.total + p.puzzleTotal + p.storyTotal };
+            return {
+              done: acc.done + p.puzzleDone + p.drillDone + p.storyDone,
+              total: acc.total + p.puzzleTotal + p.drillTotal + p.storyTotal,
+            };
           },
           { done: 0, total: 0 },
         );
@@ -234,6 +265,59 @@ export const checkPuzzle: RequestHandler = async (req, res, next) => {
       correctAnswer: matched,
       sentence: matched ? fillPrompt(row.prompt, matched) : null,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/textbook/books/:level/lessons/:lessonNumber/drill-check  { rowKey, answer, reveal? }
+// Checks one 스스로 변형하기 sentence (whole English sentence, compared
+// leniently like puzzle blanks). Same completion / mistake rules as puzzles.
+export const checkDrill: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const { rowKey, answer, reveal } = req.body ?? {};
+    const lesson = await findLesson(req.params.level, req.params.lessonNumber);
+    if (!lesson) {
+      res.status(404).json({ error: "Lesson not found" });
+      return;
+    }
+    const row = (lesson.selfTransform ?? []).flatMap((b) => b.rows).find((r) => r.key === rowKey);
+    if (!row || row.given) {
+      res.status(400).json({ error: "Unknown exercise" });
+      return;
+    }
+    if (reveal === true) {
+      res.json({ isCorrect: false, correctAnswer: row.answers[0] });
+      return;
+    }
+    if (typeof answer !== "string" || answer.trim().length === 0 || answer.length > 200) {
+      res.status(400).json({ error: "answer is required" });
+      return;
+    }
+    const isCorrect = isBlankCorrect(answer, row.answers);
+    if (isCorrect) {
+      await UserLessonProgress.findOneAndUpdate(
+        { userId, lessonId: lesson._id },
+        { $addToSet: { completedExercises: row.key }, $set: { updatedAt: new Date() } },
+        { upsert: true },
+      );
+    } else {
+      await UserMistake.create({
+        userId,
+        lessonId: lesson._id,
+        exerciseId: row.key,
+        source: "puzzle",
+        grammarType: row.grammarType,
+        answer: answer.trim(),
+        errorLocation: answer.trim(),
+        errorExplanation: row.promptKo,
+        errorExplanationUz: row.promptUz,
+      });
+    }
+    // Show the book's spelling of the accepted answer that matched.
+    const matched = isCorrect ? row.answers.find((a) => isBlankCorrect(answer, [a])) ?? row.answers[0] : null;
+    res.json({ isCorrect, correctAnswer: matched });
   } catch (err) {
     next(err);
   }

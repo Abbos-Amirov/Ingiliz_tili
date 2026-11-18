@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  checkDrill,
   checkPuzzle,
   checkStoryAnswer,
   checkVerbQuiz,
@@ -18,6 +19,7 @@ router.get("/books/:level/lessons", listTextbookLessons);
 router.get("/books/:level/lessons/:lessonNumber", getTextbookLesson);
 router.post("/books/:level/lessons/:lessonNumber/puzzle-check", checkPuzzle);
 router.post("/books/:level/lessons/:lessonNumber/verb-quiz", checkVerbQuiz);
+router.post("/books/:level/lessons/:lessonNumber/drill-check", checkDrill);
 router.post("/check-answer", checkStoryAnswer);
 
 export default router;

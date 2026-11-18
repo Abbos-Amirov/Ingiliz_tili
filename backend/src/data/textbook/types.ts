@@ -57,4 +57,22 @@ export interface TextbookLessonSeed {
     examples: { 1: string; 2: string; 3: string };
   }[];
   verbClassificationQuiz: { key: string; word: string; correctType: VerbType; exampleSentence: string }[];
+  // Sections that not every lesson's pages have been provided for yet.
+  selfTransform?: {
+    key: string;
+    titleKo: string;
+    titleUz: string;
+    rows: {
+      key: string;
+      labelKo: string;
+      labelUz: string;
+      promptKo: string;
+      promptUz: string;
+      answers: string[];
+      grammarType: GrammarType;
+      given?: boolean;
+    }[];
+  }[];
+  sentencePractice?: { key: string; english: string; pronunciationKo: string; korean: string; uzbek: string }[];
+  freeTalk?: { key: string; question: string; pronunciationKo: string; meaningKo: string; meaningUz: string }[];
 }

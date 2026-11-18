@@ -16,6 +16,7 @@ export const TRANSFORMS = [
   "past",
   "future",
   "continuous",
+  "imperative",
 ] as const;
 export type Transform = (typeof TRANSFORMS)[number];
 
@@ -32,6 +33,7 @@ export const GRAMMAR_TYPES = [
   "past",
   "future",
   "continuous",
+  "imperative",
 ] as const;
 export type GrammarType = (typeof GRAMMAR_TYPES)[number];
 
