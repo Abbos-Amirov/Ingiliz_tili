@@ -5,6 +5,8 @@ import path from "path";
 import { OPENAI_API_KEY, PUBLIC_BASE_URL } from "../config/env";
 import { CHECKLIST_COLUMNS, ChecklistColumn } from "../config/textbook";
 import { TEXTBOOK_LESSONS } from "../data/textbook";
+import { TEXTBOOK_BOOKS } from "../data/textbook/books";
+import { TextbookBook } from "../models/TextbookBook";
 import { TextbookLesson, TextbookLessonDoc } from "../models/TextbookLesson";
 import type { UserLessonProgressDoc } from "../models/UserLessonProgress";
 import { Word } from "../models/Word";
@@ -12,26 +14,37 @@ import { generateWordAudio, synthesizeSpeechBuffer } from "./tts.service";
 
 // ─── Content sync ──────────────────────────────────────────────────────────
 
-// Upserts every authored lesson (src/data/textbook) by (level, lessonNumber).
-// Runs on server start; the _id of an existing lesson is kept, and exercises
-// are keyed by stable strings, so learner progress survives content edits.
+// Seeds the lessons and books authored in code (src/data/textbook) on server
+// start — insert-only: once a lesson/book exists in the database it is owned
+// by the admin (Textbooks page) and never overwritten from code again.
 export async function syncTextbookLessons(): Promise<void> {
-  // One-time migration from the single-book version: lessons saved before
-  // books existed have no `level` (they're Lv.0), and the old unique index on
-  // lessonNumber alone would block a Lv.1 "lesson 1". Both steps are no-ops
-  // once applied.
+  // One-time migrations from earlier versions: lessons saved before books
+  // existed have no `level` (they're Lv.0), the old unique index on
+  // lessonNumber alone would block a Lv.1 "lesson 1", and lessons saved
+  // before drafts existed are published seed lessons. All no-ops once applied.
   await TextbookLesson.updateMany({ level: { $exists: false } }, { $set: { level: 0 } });
   await TextbookLesson.collection.dropIndex("lessonNumber_1").catch(() => undefined);
+  await TextbookLesson.updateMany({ status: { $exists: false } }, { $set: { status: "published", source: "seed" } });
 
+  let inserted = 0;
   for (const seed of TEXTBOOK_LESSONS) {
-    await TextbookLesson.findOneAndUpdate(
+    const res = await TextbookLesson.updateOne(
       { level: seed.level, lessonNumber: seed.lessonNumber },
-      { ...seed, updatedAt: new Date() },
-      { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true },
+      { $setOnInsert: { ...seed, status: "published", source: "seed", updatedAt: new Date() } },
+      { upsert: true, runValidators: true },
     );
+    inserted += res.upsertedCount;
   }
   await TextbookLesson.syncIndexes();
-  console.log(`Textbook: synced ${TEXTBOOK_LESSONS.length} lesson(s)`);
+
+  for (const book of TEXTBOOK_BOOKS) {
+    await TextbookBook.updateOne(
+      { level: book.level },
+      { $setOnInsert: { ...book, updatedAt: new Date() } },
+      { upsert: true },
+    );
+  }
+  console.log(`Textbook: ${TEXTBOOK_LESSONS.length} seed lesson(s) checked, ${inserted} inserted`);
   await ensureKeywordWords();
 }
 
@@ -47,8 +60,9 @@ function escapeRegex(s: string): string {
 // see lessons.controller.ts), and get pronunciation clips in the background.
 export async function ensureKeywordWords(): Promise<void> {
   const keywords = new Map<string, { word: string; korean: string; uzbek: string; partOfSpeech: string }>();
-  for (const seed of TEXTBOOK_LESSONS) {
-    for (const k of seed.keywords) keywords.set(k.word.trim().toLowerCase(), k);
+  const lessons = await TextbookLesson.find({ status: "published" }).select("keywords").lean();
+  for (const l of lessons) {
+    for (const k of l.keywords) if (k.word?.trim()) keywords.set(k.word.trim().toLowerCase(), k);
   }
   if (keywords.size === 0) return;
 
@@ -237,4 +251,60 @@ export async function generateMissingLessonAudio(): Promise<void> {
     );
   }
   console.log(`Textbook audio: done (${missing.length - failed} ok, ${failed} failed)`);
+}
+
+// ─── Stable exercise keys ──────────────────────────────────────────────────
+
+type Keyed = { key?: string | null };
+
+// Gives every exercise row a stable key (learner progress points at keys).
+// Existing keys are kept; new rows (AI import or added in the admin editor)
+// get `${prefix}-<section><n>` keys that don't collide with existing ones.
+export function ensureLessonKeys(
+  lesson: {
+    puzzles?: { rows?: Keyed[] }[];
+    storyQuestions?: Keyed[];
+    verbClassificationQuiz?: Keyed[];
+    selfTransform?: (Keyed & { rows?: Keyed[] })[];
+    sentencePractice?: Keyed[];
+    freeTalk?: Keyed[];
+  },
+  prefix: string,
+): void {
+  const used = new Set<string>();
+  const all: Keyed[] = [
+    ...(lesson.puzzles ?? []).flatMap((p) => p.rows ?? []),
+    ...(lesson.storyQuestions ?? []),
+    ...(lesson.verbClassificationQuiz ?? []),
+    ...(lesson.selfTransform ?? []),
+    ...(lesson.selfTransform ?? []).flatMap((b) => b.rows ?? []),
+    ...(lesson.sentencePractice ?? []),
+    ...(lesson.freeTalk ?? []),
+  ];
+  for (const item of all) if (item.key) used.add(item.key);
+  let n = 0;
+  const next = (section: string) => {
+    let k: string;
+    do k = `${prefix}-${section}${++n}`;
+    while (used.has(k));
+    used.add(k);
+    return k;
+  };
+  (lesson.puzzles ?? []).forEach((p) => (p.rows ?? []).forEach((r) => (r.key ||= next("P"))));
+  (lesson.storyQuestions ?? []).forEach((q) => (q.key ||= next("Q")));
+  (lesson.verbClassificationQuiz ?? []).forEach((v) => (v.key ||= next("V")));
+  (lesson.selfTransform ?? []).forEach((b) => {
+    b.key ||= next("S");
+    (b.rows ?? []).forEach((r) => (r.key ||= next("SR")));
+  });
+  (lesson.sentencePractice ?? []).forEach((s) => (s.key ||= next("SP")));
+  (lesson.freeTalk ?? []).forEach((f) => (f.key ||= next("FT")));
+}
+
+// Fire-and-forget after a lesson is published or a published lesson is
+// edited: add new keywords to the vocabulary and voice any new text.
+export function refreshLessonSideEffects(): void {
+  ensureKeywordWords()
+    .then(() => generateMissingLessonAudio())
+    .catch((err) => console.error("Textbook side effects failed:", (err as Error).message));
 }

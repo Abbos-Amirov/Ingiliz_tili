@@ -52,3 +52,18 @@ export const videoUpload = multer({
     cb(null, true);
   },
 });
+
+// Textbook page photos for the admin AI import and book covers — kept in
+// memory (they're sent straight on to the AI / stored in the book document).
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+export const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 12 },
+  fileFilter: (_req, file, cb) => {
+    if (!IMAGE_TYPES.includes(file.mimetype)) {
+      cb(Object.assign(new Error("Only JPG, PNG, WEBP or GIF images are allowed"), { status: 400 }));
+      return;
+    }
+    cb(null, true);
+  },
+});

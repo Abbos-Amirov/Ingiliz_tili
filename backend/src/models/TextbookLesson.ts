@@ -1,9 +1,10 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
 import { GRAMMAR_TYPES, KEYWORD_POS, TRANSFORMS, VERB_TYPES } from "../config/textbook";
 
-// One lesson (과) of the Pallo! textbook. Content is authored in
-// src/data/textbook/*.ts and upserted on server start (see
-// textbook.service.ts syncTextbookLessons) — there is no admin editor yet.
+// One lesson (과) of the Pallo! textbook. Lessons 1–2 of Lv.0 are seeded
+// from src/data/textbook/*.ts on first start (insert-only, see
+// textbook.service.ts syncTextbookLessons); everything else is created in
+// the admin "Textbooks" page — by AI import from page photos, then reviewed.
 //
 // Every exercise carries a stable string `key` (e.g. "L1-Q3") instead of
 // relying on Mongo _ids, so re-syncing edited content never orphans a
@@ -196,6 +197,27 @@ const textbookLessonSchema = new Schema({
   selfTransform: { type: [selfTransformBlockSchema], default: [] },
   sentencePractice: { type: [practiceSentenceSchema], default: [] },
   freeTalk: { type: [freeTalkSchema], default: [] },
+  // Lifecycle: AI-imported lessons start as "draft" and are only visible to
+  // learners once an admin publishes them. Lessons that predate this field
+  // are treated as published (see syncTextbookLessons migration).
+  status: { type: String, enum: ["draft", "published"], default: "published" },
+  // Where the content came from: authored in code (src/data/textbook), built
+  // by the admin AI import, or created/edited by hand in the admin.
+  source: { type: String, enum: ["seed", "ai", "admin"], default: "seed" },
+  // Things the AI import was unsure about, shown to the admin as review
+  // hints ({ path: "keywords.3.uzbek", note: "blurry" }). Cleared by the admin.
+  aiWarnings: {
+    type: [new Schema({ path: { type: String, default: "" }, note: { type: String, required: true } }, { _id: false })],
+    default: [],
+  },
+  // Token usage + estimated USD of the AI import that produced this lesson.
+  aiUsage: {
+    type: new Schema(
+      { model: String, inputTokens: Number, outputTokens: Number, usd: Number, createdAt: Date },
+      { _id: false },
+    ),
+    default: null,
+  },
   updatedAt: { type: Date, default: Date.now },
 });
 

@@ -5,7 +5,11 @@ import { TextbookLesson, TextbookLessonDoc } from "../models/TextbookLesson";
 import { UserLessonProgress } from "../models/UserLessonProgress";
 import { UserMistake } from "../models/UserMistake";
 import { gradeStoryAnswer } from "../services/ai.service";
-import { TEXTBOOK_BOOKS } from "../data/textbook/books";
+import { PUBLIC_BASE_URL } from "../config/env";
+import { TextbookBook } from "../models/TextbookBook";
+
+// Book fields for listings — the cover bytes themselves are only read by bookCover.
+export const BOOK_LIST_FIELDS = "level title subtitle coverUrl updatedAt coverImage.contentType";
 import {
   computeChecklist,
   fillPrompt,
@@ -47,7 +51,23 @@ async function findLesson(levelParam: unknown, lessonNumberParam: unknown) {
   const level = parseLevel(levelParam);
   const n = Number(lessonNumberParam);
   if (level === null || !Number.isInteger(n) || n < 1) return null;
-  return TextbookLesson.findOne({ level, lessonNumber: n });
+  return TextbookLesson.findOne({ level, lessonNumber: n, status: "published" });
+}
+
+// Public book shape: an uploaded cover is served by GET /books/:level/cover
+// (cache-busted by updatedAt); otherwise the bundled frontend image path.
+export function publicBook(b: {
+  level: number;
+  title: string;
+  subtitle?: string | null;
+  coverUrl?: string | null;
+  coverImage?: { contentType?: string | null } | null;
+  updatedAt?: Date | null;
+}) {
+  const cover = b.coverImage?.contentType
+    ? `${PUBLIC_BASE_URL}/api/textbook/books/${b.level}/cover?v=${new Date(b.updatedAt ?? 0).getTime()}`
+    : b.coverUrl ?? null;
+  return { level: b.level, title: b.title, subtitle: b.subtitle ?? "", coverUrl: cover };
 }
 
 // The lesson as sent to learners: puzzle answers are stripped (blanks are
@@ -129,12 +149,13 @@ async function userProgressByLesson(userId: string, lessonIds: Types.ObjectId[])
 // this learner's overall progress in it.
 export const listTextbookBooks: RequestHandler = async (req, res, next) => {
   try {
-    const lessons = await TextbookLesson.find()
+    const books = await TextbookBook.find().select(BOOK_LIST_FIELDS).sort({ level: 1 }).lean();
+    const lessons = await TextbookLesson.find({ status: "published" })
       .select("level puzzles.rows.key storyQuestions.key selfTransform.rows.key selfTransform.rows.given")
       .lean();
     const byLesson = await userProgressByLesson(req.user!.id, lessons.map((l) => l._id));
     res.json({
-      books: TEXTBOOK_BOOKS.map((book) => {
+      books: books.map((book) => {
         const own = lessons.filter((l) => l.level === book.level);
         const totals = own.reduce(
           (acc, l) => {
@@ -146,7 +167,7 @@ export const listTextbookBooks: RequestHandler = async (req, res, next) => {
           },
           { done: 0, total: 0 },
         );
-        return { ...book, lessonCount: own.length, available: own.length > 0, ...totals };
+        return { ...publicBook(book), lessonCount: own.length, available: own.length > 0, ...totals };
       }),
     });
   } catch (err) {
@@ -158,15 +179,15 @@ export const listTextbookBooks: RequestHandler = async (req, res, next) => {
 export const listTextbookLessons: RequestHandler = async (req, res, next) => {
   try {
     const level = parseLevel(req.params.level);
-    const book = TEXTBOOK_BOOKS.find((b) => b.level === level);
+    const book = level === null ? null : await TextbookBook.findOne({ level }).select(BOOK_LIST_FIELDS).lean();
     if (level === null || !book) {
       res.status(404).json({ error: "Book not found" });
       return;
     }
-    const lessons = await TextbookLesson.find({ level }).sort({ lessonNumber: 1 });
+    const lessons = await TextbookLesson.find({ level, status: "published" }).sort({ lessonNumber: 1 });
     const byLesson = await userProgressByLesson(req.user!.id, lessons.map((l) => l._id));
     res.json({
-      book,
+      book: publicBook(book),
       lessons: lessons.map((l) => ({
         _id: l._id,
         level: l.level,
@@ -368,7 +389,7 @@ export const checkStoryAnswer: RequestHandler = async (req, res, next) => {
 
     const lesson =
       lessonId && Types.ObjectId.isValid(lessonId)
-        ? await TextbookLesson.findById(lessonId)
+        ? await TextbookLesson.findOne({ _id: lessonId, status: "published" })
         : await findLesson(level ?? 0, lessonNumber);
     if (!lesson) {
       res.status(404).json({ error: "Lesson not found" });
@@ -460,6 +481,25 @@ export const mistakeStats: RequestHandler = async (req, res, next) => {
       { $sort: { count: -1 } },
     ]);
     res.json(stats);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/textbook/books/:level/cover — the admin-uploaded cover image
+// (public: used directly in <img>, no auth header).
+export const bookCover: RequestHandler = async (req, res, next) => {
+  try {
+    const level = parseLevel(req.params.level);
+    const book = level === null ? null : await TextbookBook.findOne({ level }).select("coverImage").lean();
+    if (!book?.coverImage) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Content-Type", book.coverImage.contentType);
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    const data = book.coverImage.data as unknown as { buffer?: Uint8Array } | Uint8Array;
+    res.send(Buffer.from(data instanceof Uint8Array ? data : (data.buffer as Uint8Array)));
   } catch (err) {
     next(err);
   }

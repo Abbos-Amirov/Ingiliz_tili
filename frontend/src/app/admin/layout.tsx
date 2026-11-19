@@ -19,6 +19,7 @@ import type { AdminDict } from "@/lib/i18n/admin";
 const navLinks: { href: string; labelKey: keyof AdminDict["shell"]; icon: AdminIconName }[] = [
   { href: "/admin", labelKey: "dashboard", icon: "home" },
   { href: "/admin/students", labelKey: "students", icon: "users" },
+  { href: "/admin/textbooks", labelKey: "textbooks", icon: "library" },
   { href: "/admin/words", labelKey: "words", icon: "book" },
   { href: "/admin/words/upload", labelKey: "csvUpload", icon: "upload" },
   { href: "/admin/sentences", labelKey: "sentences", icon: "pen" },
@@ -30,7 +31,7 @@ const navLinks: { href: string; labelKey: keyof AdminDict["shell"]; icon: AdminI
 ];
 
 // Phone bottom bar: the most-used four + "More" (opens the full list).
-const mobileTabs = ["/admin", "/admin/students", "/admin/words", "/admin/sentences"];
+const mobileTabs = ["/admin", "/admin/students", "/admin/textbooks", "/admin/words"];
 
 function isActiveHref(pathname: string, href: string): boolean {
   if (href === "/admin") return pathname === "/admin";

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  bookCover,
   checkDrill,
   checkPuzzle,
   checkStoryAnswer,
@@ -11,6 +12,9 @@ import {
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
+
+// Public (used in <img>), so it is registered before the auth middleware.
+router.get("/books/:level/cover", bookCover);
 
 router.use(authMiddleware);
 

@@ -35,3 +35,29 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.src = src;
   });
 }
+
+// Downscales a photo to a JPEG Blob for multipart upload (phone photos are
+// 3–8 MB) — admin textbook page photos and book covers.
+export async function shrinkImage(file: File, maxSide: number, quality: number): Promise<Blob> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new window.Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("Image failed to load"));
+      i.src = url;
+    });
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b ?? file), "image/jpeg", quality));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

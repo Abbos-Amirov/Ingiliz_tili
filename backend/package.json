@@ -10,7 +10,7 @@
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@anthropic-ai/sdk": "^1.10.0",
     "@capacitor/push-notifications": "^8.1.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
