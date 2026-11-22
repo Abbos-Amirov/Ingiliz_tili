@@ -9,7 +9,7 @@ import { useLocale, useT } from "@/hooks/useT";
 import { apiFetch } from "@/lib/api";
 import { pick, type KeywordPos, type TextbookLessonResponse } from "@/lib/textbook";
 import { Asterisk, DotGrid, Ring } from "@/components/ui/Shapes";
-import { TextbookAudioContext } from "@/components/textbook/PronunciationButton";
+import { PlayAllButton, TextbookAudioContext } from "@/components/textbook/PronunciationButton";
 import { KeywordCard } from "@/components/textbook/KeywordCard";
 import { VerbOverview } from "@/components/textbook/VerbOverview";
 import { VerbClassificationQuiz } from "@/components/textbook/VerbClassificationQuiz";
@@ -32,12 +32,14 @@ function Section({
   number,
   title,
   subtitle,
+  action,
   children,
 }: {
   id: string;
   number?: string;
   title: string;
   subtitle?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -48,9 +50,10 @@ function Section({
             {number}
           </span>
         )}
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold">{title}</h2>
           {subtitle && <p className="text-sm text-foreground/60 mt-0.5">{subtitle}</p>}
+          {action && <div className="mt-2.5">{action}</div>}
         </div>
       </div>
       {children}
@@ -185,7 +188,13 @@ export default function TextbookLessonPage() {
           </div>
 
           {/* 0. Keywords + 동사 한눈에 보기 + verb quiz */}
-          <Section id="keywords" number="0" title={t.keywordsTitle} subtitle={t.keywordsSubtitle}>
+          <Section
+            id="keywords"
+            number="0"
+            title={t.keywordsTitle}
+            subtitle={t.keywordsSubtitle}
+            action={<PlayAllButton texts={POS_ORDER.flatMap((pos) => lesson.keywords.filter((k) => k.partOfSpeech === pos).map((k) => k.word))} />}
+          >
             <div className="grid gap-3 sm:grid-cols-3 mb-5">
               {lesson.partOfSpeechGuide.map((g) => (
                 <div key={g.partOfSpeech} className="rounded-2xl border border-border bg-surface p-4 text-center">
@@ -202,9 +211,12 @@ export default function TextbookLessonPage() {
                 if (items.length === 0) return null;
                 return (
                   <div key={pos}>
-                    <p className={`mb-2.5 rounded-xl px-4 py-2 text-center font-bold ${POS_STYLE[pos]}`}>
-                      {t.pos[pos]} ({items.length})
-                    </p>
+                    <div className={`mb-2.5 flex items-center justify-center gap-2 rounded-xl py-1.5 pl-4 pr-1.5 font-bold ${POS_STYLE[pos]}`}>
+                      <span className="flex-1 text-center">
+                        {t.pos[pos]} ({items.length})
+                      </span>
+                      <PlayAllButton variant="icon" texts={items.map((k) => k.word)} label={`${t.pos[pos]} — ${t.listenAll}`} />
+                    </div>
                     <div className="grid gap-2.5">
                       {items.map((k) => (
                         <KeywordCard key={k.word} keyword={k} />
@@ -227,8 +239,15 @@ export default function TextbookLessonPage() {
           </Section>
 
           {/* 1. 오늘의 퍼즐 */}
-          <Section id="puzzle" number="1" title={t.puzzleTitle} subtitle={t.puzzleSubtitle}>
+          <Section
+            id="puzzle"
+            number="1"
+            title={t.puzzleTitle}
+            subtitle={t.puzzleSubtitle}
+            action={<PlayAllButton texts={data.playlists?.puzzles.flat() ?? lesson.puzzles.map((p) => p.baseSentence)} />}
+          >
             <PuzzleSection
+              playlists={data.playlists?.puzzles}
               lessonPath={lessonPath}
               puzzles={lesson.puzzles}
               completed={progress.completedExercises}
@@ -237,7 +256,13 @@ export default function TextbookLessonPage() {
           </Section>
 
           {/* 2. Our Story */}
-          <Section id="story" number="2" title={t.storyTitle} subtitle={t.storySubtitle}>
+          <Section
+            id="story"
+            number="2"
+            title={t.storyTitle}
+            subtitle={t.storySubtitle}
+            action={<PlayAllButton texts={lesson.storyQuestions.flatMap((q) => [q.question, q.examples[1] ?? ""])} />}
+          >
             <StorySection
               lessonId={lesson._id}
               questions={lesson.storyQuestions}
@@ -270,8 +295,15 @@ export default function TextbookLessonPage() {
 
           {/* 3. 스스로 변형하기 */}
           {lesson.selfTransform.length > 0 && (
-            <Section id="self-transform" number="3" title={t.selfTransformTitle} subtitle={t.selfTransformSubtitle}>
+            <Section
+              id="self-transform"
+              number="3"
+              title={t.selfTransformTitle}
+              subtitle={t.selfTransformSubtitle}
+              action={data.playlists && <PlayAllButton texts={data.playlists.selfTransform.flat()} />}
+            >
               <SelfTransformSection
+                playlists={data.playlists?.selfTransform}
                 lessonPath={lessonPath}
                 blocks={lesson.selfTransform}
                 completed={progress.completedExercises}
@@ -282,12 +314,23 @@ export default function TextbookLessonPage() {
 
           {/* 4. 문장 연습 + 프리토킹 */}
           {lesson.sentencePractice.length > 0 && (
-            <Section id="practice" number="4" title={t.practiceTitle} subtitle={t.practiceSubtitle}>
+            <Section
+              id="practice"
+              number="4"
+              title={t.practiceTitle}
+              subtitle={t.practiceSubtitle}
+              action={<PlayAllButton texts={lesson.sentencePractice.map((x) => x.english)} />}
+            >
               <SentencePracticeSection sentences={lesson.sentencePractice} />
             </Section>
           )}
           {lesson.freeTalk.length > 0 && (
-            <Section id="free-talk" title={t.freeTalkTitle} subtitle={t.freeTalkSubtitle}>
+            <Section
+              id="free-talk"
+              title={t.freeTalkTitle}
+              subtitle={t.freeTalkSubtitle}
+              action={<PlayAllButton texts={lesson.freeTalk.map((x) => x.question)} />}
+            >
               <FreeTalkSection questions={lesson.freeTalk} />
             </Section>
           )}

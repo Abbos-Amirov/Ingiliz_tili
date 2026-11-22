@@ -4,7 +4,7 @@ import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useLocale, useT } from "@/hooks/useT";
 import { pick, type SelfTransformBlock, type SelfTransformRow } from "@/lib/textbook";
-import { PronunciationButton } from "./PronunciationButton";
+import { PlayAllButton, PronunciationButton } from "./PronunciationButton";
 
 type RowState = { status: "idle" | "wrong" | "done" | "revealed"; sentence?: string };
 
@@ -117,11 +117,13 @@ function DrillRow({
 
 // 스스로 변형하기 — one card per block (present/past × I/She, imperative).
 export function SelfTransformSection({
+  playlists,
   lessonPath,
   blocks,
   completed,
   onRowDone,
 }: {
+  playlists?: string[][];
   lessonPath: string;
   blocks: SelfTransformBlock[];
   completed: string[];
@@ -138,8 +140,13 @@ export function SelfTransformSection({
             i === blocks.length - 1 && blocks.length % 2 === 1 ? "lg:col-span-2" : ""
           }`}
         >
-          <div className={`px-4 py-3 font-bold ${i % 2 === 0 ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"}`}>
-            {pick(locale, b.titleKo, b.titleUz)}
+          <div
+            className={`flex items-center justify-between gap-2 px-4 py-2.5 font-bold ${i % 2 === 0 ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"}`}
+          >
+            <span>{pick(locale, b.titleKo, b.titleUz)}</span>
+            {playlists?.[i] && (
+              <PlayAllButton variant="icon" className="bg-white/70 dark:bg-surface/60" texts={playlists[i]} />
+            )}
           </div>
           {b.rows.map((r) => (
             <DrillRow

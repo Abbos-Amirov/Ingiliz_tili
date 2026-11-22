@@ -202,6 +202,8 @@ export interface TextbookLessonResponse {
   lesson: TextbookLesson;
   progress: LessonProgress;
   audio: Record<string, string>;
+  // Ordered sentences for "listen to all" (sections whose answers stay server-side).
+  playlists?: { puzzles: string[][]; selfTransform: string[][] };
 }
 
 export interface TextbookLessonSummary extends ProgressCounts {

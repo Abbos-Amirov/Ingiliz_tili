@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { playAudio, speak } from "@/lib/tts";
+import { createContext, useContext, useEffect, useId, useState } from "react";
+import { onSequenceChange, playAudio, playSequence, speak, stopSequence } from "@/lib/tts";
 import { useT } from "@/hooks/useT";
 
 // text → pre-generated clip URL for the current lesson (see backend
@@ -30,6 +30,77 @@ export function PronunciationButton({ text, size = "md" }: { text: string; size?
       }`}
     >
       🔊
+    </button>
+  );
+}
+
+// "Listen to all": plays every text of a group one after another (e.g. all
+// nouns, every sentence of a section). Tap again to stop. Sits next to the
+// per-item 🔊 buttons, which keep working as before.
+export function PlayAllButton({
+  texts,
+  label,
+  variant = "pill",
+  className = "",
+}: {
+  texts: string[];
+  label?: string;
+  variant?: "pill" | "icon";
+  className?: string;
+}) {
+  const audio = useContext(TextbookAudioContext);
+  const t = useT("textbook");
+  const id = useId();
+  const [playing, setPlaying] = useState<{ index: number } | null>(null);
+
+  useEffect(
+    () => onSequenceChange((current, index) => setPlaying(current === id && index >= 0 ? { index } : null)),
+    [id],
+  );
+  // Leaving the page (or this section) stops its playback.
+  useEffect(() => () => stopSequence(id), [id]);
+
+  const items = texts.filter((x) => x.trim()).map((text) => ({ text, url: audio[text.trim()] }));
+  if (items.length === 0) return null;
+
+  const onClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (playing) stopSequence();
+    else playSequence(id, items);
+  };
+  const title = playing ? t.stopListening : (label ?? t.listenAll);
+
+  if (variant === "icon") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={title}
+        title={title}
+        className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/25 text-sm transition-colors hover:bg-white/40 ${
+          playing ? "ring-2 ring-white animate-pulse" : ""
+        } ${className}`}
+      >
+        {playing ? "⏹" : "🔊"}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={title}
+      className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
+        playing ? "bg-primary text-white dark:text-[#1b1035]" : "bg-primary/10 text-primary hover:bg-primary/20"
+      } ${className}`}
+    >
+      <span aria-hidden>{playing ? "⏹" : "🔊"}</span>
+      {title}
+      {playing && (
+        <span className="tabular-nums opacity-80">
+          {playing.index + 1}/{items.length}
+        </span>
+      )}
     </button>
   );
 }

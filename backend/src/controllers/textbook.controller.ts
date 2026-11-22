@@ -224,6 +224,13 @@ export const getTextbookLesson: RequestHandler = async (req, res, next) => {
         ...progressSummary(lesson, progress),
       },
       audio: lessonAudioMap(lessonSpeakableTexts(lesson)),
+      // Ordered sentences for the "listen to all" buttons of sections whose
+      // answers aren't otherwise sent to the client: each puzzle table (base
+      // sentence + every transformed sentence) and each self-transform block.
+      playlists: {
+        puzzles: lesson.puzzles.map((p) => [p.baseSentence, ...p.rows.map((r) => fillPrompt(r.prompt, r.answers[0] ?? ""))]),
+        selfTransform: (lesson.selfTransform ?? []).map((b) => b.rows.map((r) => r.answers[0] ?? "").filter(Boolean)),
+      },
     });
   } catch (err) {
     next(err);

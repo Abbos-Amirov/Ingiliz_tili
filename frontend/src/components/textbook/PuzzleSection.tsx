@@ -4,7 +4,7 @@ import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useLocale, useT } from "@/hooks/useT";
 import { pick, type Puzzle, type PuzzleRow } from "@/lib/textbook";
-import { PronunciationButton } from "./PronunciationButton";
+import { PlayAllButton, PronunciationButton } from "./PronunciationButton";
 import { VERB_TYPE_STYLE } from "./VerbOverview";
 
 type RowState = { status: "idle" | "wrong" | "done" | "revealed"; sentence?: string; answer?: string };
@@ -131,11 +131,13 @@ function PuzzleRowItem({
 
 // 오늘의 퍼즐 — one table per verb type, blanks checked server-side.
 export function PuzzleSection({
+  playlists,
   lessonPath,
   puzzles,
   completed,
   onRowDone,
 }: {
+  playlists?: string[][];
   lessonPath: string;
   puzzles: Puzzle[];
   completed: string[];
@@ -146,13 +148,21 @@ export function PuzzleSection({
   const done = new Set(completed);
   return (
     <div className="space-y-5">
-      {puzzles.map((p) => {
+      {puzzles.map((p, pi) => {
         const style = VERB_TYPE_STYLE[p.verbType];
         return (
           <div key={p.verbType} className="rounded-2xl border border-border bg-surface card-shadow overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${style.tile} ${style.text}`}>{t.verbTypes[p.verbType]}</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${style.tile} ${style.text}`}>{t.verbTypes[p.verbType]}</span>
+                  <PlayAllButton
+                    variant="icon"
+                    className="bg-primary/10 text-primary hover:bg-primary/20"
+                    texts={playlists?.[pi] ?? [p.baseSentence]}
+                    label={`${t.verbTypes[p.verbType]} — ${t.listenAll}`}
+                  />
+                </span>
                 <span className="font-bold text-lg">{p.baseSentence}</span>
                 <PronunciationButton text={p.baseSentence} size="sm" />
               </div>
