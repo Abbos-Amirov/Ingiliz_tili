@@ -47,6 +47,7 @@ export interface AdminLesson {
   titleUz: string;
   status: "draft" | "published";
   source: "seed" | "ai" | "admin";
+  videoUrl?: string;
   keywords: { word: string; pronunciationKo: string; korean: string; uzbek: string; partOfSpeech: KeywordPos }[];
   puzzles: {
     verbType: VerbType;

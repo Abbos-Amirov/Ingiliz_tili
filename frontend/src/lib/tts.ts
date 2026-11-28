@@ -93,7 +93,7 @@ export function stopSequence(onlyId?: string): void {
 
 /**
  * Plays texts one after another (pre-generated clip when there is one, with a
- * short pause between items). Must be called from the tap handler: the single
+ * short pause between items), over and over until stopSequence() is called. Must be called from the tap handler: the single
  * reused <audio> element is unlocked by that gesture, so iOS / in-app
  * browsers let the following items play too. Texts without a clip are read
  * with speechSynthesis when the browser has it, otherwise skipped.
@@ -114,8 +114,9 @@ export function playSequence(id: string, items: { text: string; url?: string | n
   const playAt = (i: number) => {
     if (token !== seqToken) return;
     if (i >= list.length) {
-      seqId = null;
-      notify(-1);
+      // Loops from the start (after a slightly longer pause) until the
+      // learner presses Stop — see stopSequence().
+      seqTimer = setTimeout(() => playAt(0), gapMs * 2);
       return;
     }
     notify(i);

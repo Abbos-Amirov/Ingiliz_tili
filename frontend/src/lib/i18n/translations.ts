@@ -640,6 +640,8 @@ const uz = {
     loadError: "Darsni yuklab bo'lmadi.",
     keywordsTitle: "Bugungi 15 ta kalit so'z",
     keywordsSubtitle: "Avval o'rganib oling, keyin boshlaymiz",
+    videoTitle: "Dars videosi",
+    videoSubtitle: "Avval videoni ko'ring — unda bugungi so'zlar ishlatilgan",
     pos: {
       noun: "Ot",
       verb: "Fe'l",
@@ -1387,6 +1389,8 @@ const en = {
     loadError: "Couldn't load the lesson.",
     keywordsTitle: "Today's 15 keywords",
     keywordsSubtitle: "Learn these first, then we begin",
+    videoTitle: "Lesson video",
+    videoSubtitle: "Watch first — it uses today's words",
     pos: {
       noun: "Noun",
       verb: "Verb",
@@ -2134,6 +2138,8 @@ const ko = {
     loadError: "수업을 불러오지 못했습니다.",
     keywordsTitle: "오늘의 키워드 15",
     keywordsSubtitle: "먼저 익히고 시작합니다",
+    videoTitle: "오늘의 영상",
+    videoSubtitle: "먼저 보세요 — 오늘의 단어가 나와요",
     pos: {
       noun: "명사",
       verb: "동사",

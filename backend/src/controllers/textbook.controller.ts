@@ -80,6 +80,7 @@ function publicLesson(lesson: TextbookLessonDoc) {
     title: lesson.title,
     titleKo: lesson.titleKo,
     titleUz: lesson.titleUz,
+    videoUrl: lesson.videoUrl ?? "",
     partOfSpeechGuide: lesson.partOfSpeechGuide,
     keywords: lesson.keywords,
     verbTypes: lesson.verbTypes,

@@ -197,6 +197,9 @@ const textbookLessonSchema = new Schema({
   selfTransform: { type: [selfTransformBlockSchema], default: [] },
   sentencePractice: { type: [practiceSentenceSchema], default: [] },
   freeTalk: { type: [freeTalkSchema], default: [] },
+  // The lesson video (made with this lesson's words), uploaded in the admin
+  // and stored in public/videos like Shadowing videos. "" = no video.
+  videoUrl: { type: String, default: "" },
   // Lifecycle: AI-imported lessons start as "draft" and are only visible to
   // learners once an admin publishes them. Lessons that predate this field
   // are treated as published (see syncTextbookLessons migration).

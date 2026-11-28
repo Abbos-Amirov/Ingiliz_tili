@@ -10,6 +10,7 @@ import {
   createBook,
   deleteBook,
   deleteLesson,
+  deleteLessonVideo,
   getLesson,
   importStatus,
   listBooks,
@@ -18,9 +19,10 @@ import {
   updateBook,
   updateLesson,
   uploadBookCover,
+  uploadLessonVideo,
 } from "../controllers/adminTextbook.controller";
 import { authMiddleware } from "../middleware/auth";
-import { imageUpload } from "../middleware/upload";
+import { imageUpload, videoUpload } from "../middleware/upload";
 import { RequestHandler } from "express";
 import { requireAdmin } from "../middleware/requireAdmin";
 
@@ -39,7 +41,7 @@ const images = (mw: RequestHandler): RequestHandler => (req, res, next) =>
     if (!err) return next();
     const e = err as { code?: string; message?: string; status?: number };
     const message =
-      e.code === "LIMIT_FILE_SIZE" ? "Each image must be under 10 MB." :
+      e.code === "LIMIT_FILE_SIZE" ? "The file is too large." :
       e.code === "LIMIT_FILE_COUNT" ? "Up to 12 pages per import." :
       e.message || "Upload failed";
     res.status(e.status ?? 400).json({ error: message });
@@ -57,5 +59,7 @@ router.get("/textbook/lessons/:id", admin, getLesson);
 router.put("/textbook/lessons/:id", admin, updateLesson);
 router.post("/textbook/lessons/:id/publish", admin, publishLesson);
 router.delete("/textbook/lessons/:id", admin, deleteLesson);
+router.post("/textbook/lessons/:id/video", admin, images(videoUpload.single("video")), uploadLessonVideo);
+router.delete("/textbook/lessons/:id/video", admin, deleteLessonVideo);
 
 export default router;

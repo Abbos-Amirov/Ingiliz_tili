@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api";
 import { AdminIcon } from "@/components/admin/AdminIcons";
+import { LessonVideoPanel } from "@/components/admin/LessonVideoPanel";
 import { tf, useAdminT } from "@/hooks/useAdminT";
 import {
   GRAMMAR_TYPES,
@@ -465,6 +466,7 @@ function EditorContent() {
 
   const published = lesson.status === "published";
   const sections = [
+    { id: "video", label: t.secVideo, warn: 0 },
     {
       id: "basics",
       label: t.secBasics,
@@ -656,6 +658,15 @@ function EditorContent() {
       </nav>
 
       <div key={rev} className="space-y-5">
+        {/* lesson video — saved on upload, separate from the Save button */}
+        <Section id="video" title={t.secVideo} hint={t.videoHint} warn={[]}>
+          <LessonVideoPanel
+            lessonId={lesson._id}
+            videoUrl={lesson.videoUrl ?? ""}
+            onChange={(videoUrl) => setLesson((l) => (l ? { ...l, videoUrl } : l))}
+          />
+        </Section>
+
         {/* basics */}
         <Section
           id="basics"

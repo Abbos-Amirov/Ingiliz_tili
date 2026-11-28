@@ -187,6 +187,19 @@ export default function TextbookLessonPage() {
             <WeaknessInsight refreshKey={mistakeRefresh} className="mt-4" />
           </div>
 
+          {/* Lesson video (uploaded in the admin) */}
+          {lesson.videoUrl && (
+            <Section id="video" title={t.videoTitle} subtitle={t.videoSubtitle}>
+              <video
+                src={lesson.videoUrl}
+                controls
+                playsInline
+                preload="metadata"
+                className="aspect-video w-full max-w-3xl rounded-2xl bg-black card-shadow"
+              />
+            </Section>
+          )}
+
           {/* 0. Keywords + 동사 한눈에 보기 + verb quiz */}
           <Section
             id="keywords"

@@ -1,4 +1,7 @@
 import { randomUUID } from "crypto";
+import { unlink } from "fs/promises";
+import path from "path";
+import { PUBLIC_BASE_URL } from "../config/env";
 import { RequestHandler } from "express";
 import { Types } from "mongoose";
 import { TextbookBook } from "../models/TextbookBook";
@@ -387,8 +390,56 @@ export const deleteLesson: RequestHandler = async (req, res, next) => {
       UserLessonProgress.deleteMany({ lessonId: lesson._id }),
       UserMistake.deleteMany({ lessonId: lesson._id }),
     ]);
+    await removeVideoFile(lesson.videoUrl);
     await lesson.deleteOne();
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── Lesson video ──────────────────────────────────────────────────────────
+
+const VIDEOS_DIR = path.resolve(process.cwd(), "public/videos");
+
+async function removeVideoFile(url: string | null | undefined) {
+  const filename = url?.split("/").pop();
+  if (filename && !filename.includes("..")) await unlink(path.join(VIDEOS_DIR, filename)).catch(() => undefined);
+}
+
+// POST /api/admin/textbook/lessons/:id/video (multipart: video) — replaces
+// any previous video of the lesson.
+export const uploadLessonVideo: RequestHandler = async (req, res, next) => {
+  try {
+    const file = req.file;
+    if (!file) throw httpError(400, "Choose a video file.");
+    let lesson;
+    try {
+      lesson = await lessonById(req.params.id);
+    } catch (err) {
+      await unlink(file.path).catch(() => undefined);
+      throw err;
+    }
+    const old = lesson.videoUrl;
+    lesson.videoUrl = `${PUBLIC_BASE_URL}/videos/${file.filename}`;
+    lesson.updatedAt = new Date();
+    await lesson.save();
+    if (old) await removeVideoFile(old);
+    res.json({ lesson });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/admin/textbook/lessons/:id/video
+export const deleteLessonVideo: RequestHandler = async (req, res, next) => {
+  try {
+    const lesson = await lessonById(req.params.id);
+    await removeVideoFile(lesson.videoUrl);
+    lesson.videoUrl = "";
+    lesson.updatedAt = new Date();
+    await lesson.save();
+    res.json({ lesson });
   } catch (err) {
     next(err);
   }

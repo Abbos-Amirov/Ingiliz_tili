@@ -106,6 +106,7 @@ export interface TextbookLesson {
   title: string;
   titleKo: string;
   titleUz: string;
+  videoUrl?: string;
   partOfSpeechGuide: {
     partOfSpeech: KeywordPos;
     descriptionKo: string;
