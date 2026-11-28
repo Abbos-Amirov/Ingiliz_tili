@@ -10,6 +10,8 @@ import { TextbookBook } from "../models/TextbookBook";
 import { TextbookLesson, TextbookLessonDoc } from "../models/TextbookLesson";
 import type { UserLessonProgressDoc } from "../models/UserLessonProgress";
 import { Word } from "../models/Word";
+import { IrregularVerb } from "../models/IrregularVerb";
+import { verbSpeakableTexts } from "./irregularVerbs.service";
 import { generateWordAudio, synthesizeSpeechBuffer } from "./tts.service";
 
 // ─── Content sync ──────────────────────────────────────────────────────────
@@ -230,7 +232,11 @@ export async function generateMissingLessonAudio(): Promise<void> {
   }
   await mkdir(AUDIO_DIR, { recursive: true });
   const lessons = await TextbookLesson.find().lean();
-  const missing = Array.from(new Set(lessons.flatMap((l) => lessonSpeakableTexts(l)))).filter(
+  // Also every form on the Irregular Verbs page (same clip store).
+  const verbs = await IrregularVerb.find().select("base past participle ing").lean();
+  const missing = Array.from(
+    new Set([...lessons.flatMap((l) => lessonSpeakableTexts(l)), ...verbSpeakableTexts(verbs)]),
+  ).filter(
     (t) => !existsSync(path.join(AUDIO_DIR, audioFileName(t))),
   );
   if (missing.length === 0) return;

@@ -183,6 +183,8 @@ export interface IrregularVerb {
   base: string;
   past: string;
   participle: string;
+  ing?: string;
+  regular?: boolean;
   korean: string;
   uzbek: string;
   category: IrregularVerbCategory;

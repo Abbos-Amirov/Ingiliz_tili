@@ -2,11 +2,13 @@ import { env } from "./config/env";
 import { connectDb } from "./db/connect";
 import app from "./app";
 import { generateMissingLessonAudio, syncTextbookLessons } from "./services/textbook.service";
+import { syncBookVerbs } from "./services/irregularVerbs.service";
 
 async function main() {
   await connectDb();
   // A bad textbook seed must never take the whole API down — log and go on.
   await syncTextbookLessons().catch((err) => console.error("Textbook sync failed:", err));
+  await syncBookVerbs().catch((err) => console.error("Verb sync failed:", err));
   app.listen(Number(env.PORT), () => {
     console.log(`API listening on http://localhost:${env.PORT}`);
   });

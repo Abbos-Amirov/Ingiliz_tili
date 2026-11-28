@@ -5,6 +5,13 @@ import { UserIrregularVerbProgress } from "../models/UserIrregularVerbProgress";
 import { IRREGULAR_VERB_CATEGORIES, type IrregularVerbCategory } from "../config/irregularVerbs";
 import { reviewWord } from "../services/srs.service";
 import { bulkUploadIrregularVerbsFromCsv } from "../services/irregularVerbCsv.service";
+import { verbSpeakableTexts } from "../services/irregularVerbs.service";
+import { generateMissingLessonAudio, lessonAudioMap } from "../services/textbook.service";
+
+// Voice new/changed verb forms in the background (shared clip store).
+function refreshVerbAudio() {
+  generateMissingLessonAudio().catch((err) => console.error("Verb audio job failed:", (err as Error).message));
+}
 
 export const checkIrregularVerb: RequestHandler = async (req, res, next) => {
   try {
@@ -37,7 +44,8 @@ export const listIrregularVerbs: RequestHandler = async (req, res, next) => {
       IrregularVerb.find(filter).sort({ base: 1 }).limit(limitNum),
       IrregularVerb.countDocuments(filter),
     ]);
-    res.json({ verbs, total });
+    // text → clip URL for every form shown (🔊 on the page).
+    res.json({ verbs, total, audio: lessonAudioMap(verbSpeakableTexts(verbs)) });
   } catch (err) {
     next(err);
   }
@@ -65,6 +73,7 @@ export const createIrregularVerb: RequestHandler = async (req, res, next) => {
       category: IRREGULAR_VERB_CATEGORIES.includes(category) ? category : "other",
       frequency: frequency === undefined || frequency === null || frequency === "" ? null : Number(frequency),
     });
+    refreshVerbAudio();
     res.status(201).json({ verb });
   } catch (err) {
     next(err);
@@ -95,6 +104,7 @@ export const updateIrregularVerb: RequestHandler = async (req, res, next) => {
       res.status(404).json({ error: "Irregular verb not found" });
       return;
     }
+    refreshVerbAudio();
     res.json({ verb });
   } catch (err) {
     next(err);
@@ -121,6 +131,7 @@ export const bulkUploadIrregularVerbs: RequestHandler = async (req, res, next) =
       return;
     }
     const result = await bulkUploadIrregularVerbsFromCsv(req.file.buffer);
+    refreshVerbAudio();
     res.json(result);
   } catch (err) {
     next(err);

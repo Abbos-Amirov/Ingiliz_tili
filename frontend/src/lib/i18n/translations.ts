@@ -295,6 +295,15 @@ const uz = {
     resultSuffix: "ta fe'l ustida ishladingiz",
     anotherRound: "Yana bosqich",
     bonusPractice: "🎉 Siz hozircha barcha fe'llarni ko'rib chiqdingiz! Bu — qo'shimcha mashq.",
+    ing: "-ing",
+    tapToListen: "So'zni bosing — talaffuzi eshitiladi",
+    patterns: {
+      regular: { title: "① Muntazam fe'llar", note: "O'tgan zamon va III shakl — ikkalasi ham -ed" },
+      abb: { title: "② Notekis fe'llar A-B-B", note: "O'tgan zamon va III shakl bir xil" },
+      aaa: { title: "③ Notekis fe'llar A-A-A", note: "Uchala shakl bir xil" },
+      aba: { title: "④ Notekis fe'llar A-B-A", note: "III shakl asl ko'rinishiga qaytadi" },
+      abc: { title: "⑤ Notekis fe'llar A-B-C", note: "Uchala shakl har xil" },
+    },
     categories: {
       movement: "Harakat fe'llari",
       thinking: "Fikrlash fe'llari",
@@ -1044,6 +1053,15 @@ const en = {
     resultSuffix: "verbs practiced",
     anotherRound: "Another round",
     bonusPractice: "🎉 You've been through all your verbs for now! This is bonus practice.",
+    ing: "-ing",
+    tapToListen: "Tap a word to hear it",
+    patterns: {
+      regular: { title: "① Regular verbs", note: "Past and past participle both end in -ed" },
+      abb: { title: "② Irregular verbs A-B-B", note: "Past and past participle are the same" },
+      aaa: { title: "③ Irregular verbs A-A-A", note: "All three forms are the same" },
+      aba: { title: "④ Irregular verbs A-B-A", note: "The past participle goes back to the base form" },
+      abc: { title: "⑤ Irregular verbs A-B-C", note: "All three forms are different" },
+    },
     categories: {
       movement: "Movement verbs",
       thinking: "Thinking verbs",
@@ -1793,6 +1811,15 @@ const ko = {
     resultSuffix: "개 동사를 연습했어요",
     anotherRound: "한 판 더",
     bonusPractice: "🎉 지금까지의 모든 동사를 살펴봤어요! 이건 보너스 연습이에요.",
+    ing: "-ing",
+    tapToListen: "단어를 누르면 발음이 나와요",
+    patterns: {
+      regular: { title: "① 규칙 동사", note: "과거 · 과거분사 모두 -ed" },
+      abb: { title: "② 불규칙 동사 A-B-B", note: "과거와 과거분사가 같음" },
+      aaa: { title: "③ 불규칙 동사 A-A-A", note: "세 모양이 모두 같음" },
+      aba: { title: "④ 불규칙 동사 A-B-A", note: "과거분사가 원래 모양으로 돌아옴" },
+      abc: { title: "⑤ 불규칙 동사 A-B-C", note: "세 모양이 모두 다름" },
+    },
     categories: {
       movement: "이동 동사",
       thinking: "사고 동사",

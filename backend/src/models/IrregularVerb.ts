@@ -7,6 +7,11 @@ const irregularVerbSchema = new Schema({
   base: { type: String, required: true, trim: true, lowercase: true },
   past: { type: String, required: true, trim: true, lowercase: true },
   participle: { type: String, required: true, trim: true, lowercase: true },
+  // -ing form (from the textbook's verb tables); "" when not filled in.
+  ing: { type: String, default: "", trim: true, lowercase: true },
+  // Regular (-ed) verbs from the textbook's ① table share this page with the
+  // irregular ones; the page groups them by this flag and by form pattern.
+  regular: { type: Boolean, default: false },
   korean: { type: String, required: true, trim: true },
   uzbek: { type: String, default: "" },
   category: { type: String, enum: IRREGULAR_VERB_CATEGORIES, default: "other" },
